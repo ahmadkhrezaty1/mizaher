@@ -827,7 +827,8 @@ class Admin extends Home
                 $this->add_user(); 
             }
             else
-            {               
+            {   
+                $users = 0;                  
                 $name=$this->input->post('name');
                 $email=$this->input->post('email');
                 $mobile=$this->input->post('mobile');
@@ -835,10 +836,13 @@ class Admin extends Home
                 $confirm_password=$this->input->post('confirm_password');
                 $address=$this->input->post('address');
                 $user_type=$this->input->post('user_type');
+                $manager_type=$this->input->post('manager_type');
                 $status=$this->input->post('status');
                 $package_id=$this->input->post('package_id');
                 $expired_date=$this->input->post('expired_date');
                 if($status=='') $status='0';
+                if($manager_type == null) $manager_type ='';
+                if($manager_type == 'Manager 2') $users =$this->input->post('users');
                                                        
                 $data=array
                 (
@@ -848,6 +852,8 @@ class Admin extends Home
                     'password'=>$password,
                     'address'=>$address,
                     'user_type'=>$user_type,
+                    'manager_type'=>$manager_type,
+                    'users'=>$users,
                     'status'=>$status,
                     'add_date' => date("Y-m-d H:i:s")
                 );
@@ -927,15 +933,19 @@ class Admin extends Home
             }
             else
             {               
+                $users = 0;  
                 $name=$this->input->post('name');
                 $email=$this->input->post('email');
                 $mobile=$this->input->post('mobile');                
                 $address=$this->input->post('address');
                 $user_type=$this->input->post('user_type');
+                $manager_type=$this->input->post('manager_type');
                 $status=$this->input->post('status');
                 $package_id=$this->input->post('package_id');
                 $expired_date=$this->input->post('expired_date');
                 if($status=='') $status='0';
+                if($manager_type == null) $manager_type ='';
+                if($manager_type == 'Manager 2') $users =$this->input->post('users');
                                                        
                 $data=array
                 (
@@ -944,6 +954,8 @@ class Admin extends Home
                     'mobile'=>$mobile,
                     'address'=>$address,
                     'user_type'=>$user_type,
+                    'manager_type'=>$manager_type,
+                    'users'=>$users,
                     'status'=>$status
                 );
                 if($user_type=='Member')

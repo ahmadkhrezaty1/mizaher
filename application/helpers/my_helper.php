@@ -850,5 +850,118 @@ if ( ! function_exists('is_mobile')) {
 }
 
 
+if ( ! function_exists('is_manager')) { 
 
+  function is_manager() {
+    $CI = &get_instance();
+    $CI->db->where(['id'=> $CI->session->userdata('user_id'), 'manager_type!=' => '']);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user))
+      return true;
+    return false;
+  }
+
+}
+
+if ( ! function_exists('is_manager_2')) { 
+
+  function is_manager_2() {
+    $CI = &get_instance();
+    $CI->db->where(['id'=> $CI->session->userdata('user_id'), 'manager_type!=' => '']);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user))
+      if($user->manager_type == 'Manager 2')
+        return true;
+    return false;
+  }
+
+}
+
+if ( ! function_exists('is_limited')) { 
+
+  function is_limited() {
+    $CI = &get_instance();
+    $user_id = $CI->session->userdata('user_id');
+    $CI->db->where(['id'=> $user_id, 'manager_type' => 'Manager 2']);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user)){
+      $CI->db->where(['added_by'=> $user_id]);
+      $users = $CI->db->count_all_results('users'); 
+      //var_dump($user->users. "  " . $users); exit;
+      if($user->users <= $users)
+        return true;
+    }
+    return false;
+  }
+
+}
+
+if ( ! function_exists('get_expired_date')) { 
+
+  function get_expired_date() {
+    $CI = &get_instance();
+    $user_id = $CI->session->userdata('user_id');
+    $CI->db->where(['id'=> $user_id]);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user)){
+        return $user->expired_date;
+    }
+    return false;
+  }
+
+}
+
+if ( ! function_exists('get_package_id')) { 
+
+  function get_package_id($user_id) {
+    $CI = &get_instance();
+    $user_id = $user_id;
+    $CI->db->where(['id'=> $user_id]);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user)){
+        return $user->package_id;
+    }
+    return false;
+  }
+
+}
+
+if ( ! function_exists('is_admin')) { 
+
+  function is_admin($id) {
+    $CI = &get_instance();
+    $CI->db->where(['id' => $id, 'user_type'=> 'Admin']);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user)){
+      return true;
+    }
+    return false;
+  }
+
+}
+
+if ( ! function_exists('get_user_email')) { 
+
+  function get_user_email($id) {
+    $CI = &get_instance();
+    $CI->db->where(['id' => $id]);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user)){
+      return $user->email;
+    }
+    return false;
+  }
+
+}
+
+if ( ! function_exists('get_admins_email')) { 
+
+  function get_admins_email() {
+    $CI = &get_instance();
+    $CI->db->where(['user_type'=> 'Admin']);
+    $admins = $CI->db->get('users')->result();
+      return $admins;
+  }
+
+}
 

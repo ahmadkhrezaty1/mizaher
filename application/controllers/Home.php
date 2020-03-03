@@ -6011,6 +6011,7 @@ class Home extends CI_Controller
 
     public function user_delete_action($user_id=0)
     {
+        
         $this->ajax_check();
 
         if($this->is_demo == '1' && $this->session->userdata('user_type')=="Admin")

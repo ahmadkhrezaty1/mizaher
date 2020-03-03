@@ -3,7 +3,7 @@
     <h1><i class="fas fa-plus-circle"></i> <?php echo $page_title; ?></h1>
     <div class="section-header-breadcrumb">
       <div class="breadcrumb-item"><?php echo $this->lang->line("Subscription"); ?></div>
-      <div class="breadcrumb-item active"><a href="<?php echo base_url('admin/user_manager'); ?>"><?php echo $this->lang->line("User Manager"); ?></a></div>
+      <div class="breadcrumb-item active"><a href="<?php echo base_url('member/user_manager'); ?>"><?php echo $this->lang->line("User Manager"); ?></a></div>
       <div class="breadcrumb-item"><?php echo $page_title; ?></div>
     </div>
   </div>
@@ -13,7 +13,7 @@
   <div class="row">
     <div class="col-12">
 
-      <form class="form-horizontal" action="<?php echo site_url().'admin/add_user_action';?>" method="POST">
+      <form class="form-horizontal" action="<?php echo site_url().'member/add_user_action';?>" method="POST">
         <div class="card">
           <div class="card-body">
             <div class="form-group">
@@ -75,20 +75,15 @@
                             <span class="custom-switch-description"><?php echo $this->lang->line('Member'); ?></span>
                           </label>
                         </div>   
+                      <!--
                         <div class="col-6 col-md-4">
                           <label class="custom-switch">
                             <input type="radio" name="user_type" id="manager" value="Member" class="user_type custom-switch-input">
                             <span class="custom-switch-indicator"></span>
                             <span class="custom-switch-description"><?php echo $this->lang->line('Manager'); ?></span>
                           </label>
-                        </div>                        
-                        <div class="col-6 col-md-4">
-                          <label class="custom-switch">
-                            <input type="radio" name="user_type" value="Admin" class="user_type custom-switch-input">
-                            <span class="custom-switch-indicator"></span>
-                            <span class="custom-switch-description"><?php echo $this->lang->line('Admin'); ?></span>
-                          </label>
-                        </div>
+                        </div> 
+                      -->
                       </div>                                  
                     </div>
                     <span class="red"><?php echo form_error('user_type'); ?></span>
@@ -136,16 +131,12 @@
                     <span class="custom-switch-description"><?php echo $this->lang->line('Manager 1'); ?></span>
                   </label>
                 </div>   
-                <div class="col-6 col-md-4 mb-5 mt-5">
+                <div class="col-6 col-md-4">
                   <label class="custom-switch">
                     <input type="radio" name="manager_type" id="Manager_2" value="Manager 2" class="manager_type custom-switch-input">
                     <span class="custom-switch-indicator"></span>
                     <span class="custom-switch-description"><?php echo $this->lang->line('Manager 2'); ?></span>
                   </label>
-                  <div class="form-group">
-                    <label for="users"> <?php echo $this->lang->line("Number of users")?> </label>
-                    <input name="users"  class="form-control" type="number">
-                  </div>
                 </div>                        
                 <div class="col-6 col-md-4">
                   <label class="custom-switch">
@@ -179,7 +170,7 @@
     // else $("#validity").show();
     $("#hidden_manager").hide();
     $(".user_type").click(function(){
-      if($(this).val()=="Admin") $("#hidden").hide();
+      if($(this).val()=="Admin" || $(this).attr("id")=="manager") $("#hidden").hide();
       else $("#hidden").show();
     });
 

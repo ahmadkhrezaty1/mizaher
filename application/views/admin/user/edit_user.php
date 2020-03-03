@@ -56,18 +56,25 @@
                       <div class="row">   
                         <div class="col-6 col-md-4">
                           <label class="custom-switch">
-                            <input type="radio" name="user_type" value="Member"  <?php if($xdata['user_type']=='Member') echo 'checked'; ?> class="user_type custom-switch-input">
+                            <input type="radio" name="user_type" id="member" value="Member"  <?php if($xdata['user_type']=='Member' and $xdata['manager_type']=='') echo 'checked'; ?> class="user_type custom-switch-input">
                             <span class="custom-switch-indicator"></span>
                             <span class="custom-switch-description"><?php echo $this->lang->line('Member'); ?></span>
                           </label>
-                        </div>                        
+                        </div>    
                         <div class="col-6 col-md-4">
                           <label class="custom-switch">
-                            <input type="radio" name="user_type" value="Admin" <?php if($xdata['user_type']=='Admin') echo 'checked'; ?> class="user_type custom-switch-input">
+                            <input type="radio" name="user_type" id="manager" value="Member" <?php if($xdata['user_type']=='Member' and $xdata['manager_type']!='') echo 'checked'; ?> class="user_type custom-switch-input">
+                            <span class="custom-switch-indicator"></span>
+                            <span class="custom-switch-description"><?php echo $this->lang->line('Manager'); ?></span>
+                          </label>
+                        </div> 
+                        <div class="col-6 col-md-4">
+                          <label class="custom-switch">
+                            <input type="radio" name="user_type" id="member" value="Admin"  <?php if($xdata['user_type']=='Admin') echo 'checked'; ?> class="user_type custom-switch-input">
                             <span class="custom-switch-indicator"></span>
                             <span class="custom-switch-description"><?php echo $this->lang->line('Admin'); ?></span>
                           </label>
-                        </div>
+                        </div>   
                       </div>                                  
                     </div>
                     <span class="red"><?php echo form_error('user_type'); ?></span>
@@ -112,6 +119,38 @@
               </div>
             </div>
 
+            <div class="row" id="hidden_manager">
+              <div class="col-md-6">   
+                <div class="col-6 col-md-4">
+                  <label class="custom-switch">
+                    <input type="radio" name="manager_type" id="Manager_1" value="Manager 1"  <?php if($xdata['manager_type']=='Manager 1') echo 'checked'; ?> class="manager_type custom-switch-input">
+                    <span class="custom-switch-indicator"></span>
+                    <span class="custom-switch-description"><?php echo $this->lang->line('Manager 1'); ?></span>
+                  </label>
+                </div>   
+
+                <div class="col-6 col-md-4 mb-5 mt-5">
+                  <label class="custom-switch">
+                    <input type="radio" name="manager_type" id="Manager_2" value="Manager 2"  <?php if($xdata['manager_type']=='Manager 2') echo 'checked'; ?> class="manager_type custom-switch-input">
+                    <span class="custom-switch-indicator"></span>
+                    <span class="custom-switch-description"><?php echo $this->lang->line('Manager 2'); ?></span>
+                  </label>
+                  <div class="form-group">
+                    <label for="users"> <?php echo $this->lang->line("Number of users")?> </label>
+                    <input name="users" value="<?php echo $xdata['users'];?>"  class="form-control" type="number">
+                  </div>
+                </div>     
+
+                <div class="col-6 col-md-4">
+                  <label class="custom-switch">
+                    <input type="radio" name="manager_type" id="Manager_3" value="Manager 3"  <?php if($xdata['manager_type']=='Manager 3') echo 'checked'; ?> class="manager_type custom-switch-input">
+                    <span class="custom-switch-indicator"></span>
+                    <span class="custom-switch-description"><?php echo $this->lang->line('Manager 3'); ?></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
 
           </div>
 
@@ -131,11 +170,36 @@
 <script type="text/javascript">
   $(document).ready(function() {
     var user_type = '<?php echo $xdata["user_type"];?>';
-    if(user_type=="Admin") $("#hidden").hide();
+    var manager_type = '<?php echo $xdata["manager_type"];?>';
+    if(user_type=="Admin" || manager_type!='') $("#hidden").hide();
     else $("#validity").show();
+
+    $("#hidden_manager").hide();
+    if(manager_type == ''){
+     $('[name="manager_type"]').val('');
+     $("#hidden_manager").hide();
+    }
+    else $("#hidden_manager").show();
     $(".user_type").click(function(){
       if($(this).val()=="Admin") $("#hidden").hide();
       else $("#hidden").show();
     });
+
+    $(".user_type").click(function(){
+      if($(this).val()=="Admin" || $(this).attr("id")=="member") {
+        $('[name="manager_type"]').val('');
+        $("#hidden_manager").hide();
+      }
+      else {
+        $('#Manager_1').val('Manager 1');
+        $('#Manager_2').val('Manager 2');
+        $('#Manager_3').val('Manager 3');
+        $("#hidden_manager").show();
+        console.log($(this).val());
+      }
+    });
+    $(".manager_type").click(function(){
+      console.log($(this).val());
+    });  
   });
 </script>

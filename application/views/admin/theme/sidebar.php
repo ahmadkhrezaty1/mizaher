@@ -25,6 +25,22 @@
             if($single_menu['url']=='social_apps/index' && $single_menu['only_member']=='1' && $this->config->item('backup_mode')==='0' && $this->session->userdata('user_type')=='Member') continue; // static condition not to
             if($single_menu['header_text']!='') $menu_html .= '<li class="menu-header">'.$this->lang->line($single_menu['header_text']).'</li>';
 
+            if($single_menu["header_text"]=='Administration' and $this->session->userdata('user_type') == 'Member' and is_manager())
+              echo '<li class="menu-header">'.$single_menu["header_text"].'</li>
+                    <li class="nav-item dropdown">
+                      <a href="http://localhost/milana2/" class="nav-link has-dropdown">
+                        <i class="fas fa-coins"></i> 
+                        <span>Subscription</span>
+                      </a>
+                      <ul class="dropdown-menu" style="display: none;">
+                        <li class="">
+                          <a href="http://localhost/milana2/member/user_manager" class="nav-link">
+                            <i class="fas fa-users"></i>User Manager
+                          </a></li>
+                      </ul>
+                    </li>
+              ';
+
             $extraText='';
             if($single_menu['add_ons_id']!='0' && $this->is_demo=='1') $extraText=' <label class="label label-warning" style="font-size:9px;padding:4px 3px;">Addon</label>';
 
