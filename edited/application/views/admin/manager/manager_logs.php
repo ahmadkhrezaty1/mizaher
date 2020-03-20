@@ -1,11 +1,6 @@
 <section class="section section_custom">
   <div class="section-header">
     <h1><i class="fas fa-users"></i> <?php echo $page_title; ?></h1>
-    <div class="section-header-button">
-     <a class="btn btn-primary"  href="<?php echo site_url('admin/add_user');?>">
-        <i class="fas fa-plus-circle"></i> <?php echo $this->lang->line("New User"); ?>
-     </a> 
-    </div>
     <div class="section-header-breadcrumb">
       <div class="breadcrumb-item"><?php echo $this->lang->line("Subscription"); ?></div>
       <div class="breadcrumb-item"><?php echo $page_title; ?></div>
@@ -26,21 +21,12 @@
                 <thead>
                   <tr>
                     <th>#</th>      
-                    <th style="vertical-align:middle;width:20px">
-                        <input class="regular-checkbox" id="datatableSelectAllRows" type="checkbox"/><label for="datatableSelectAllRows"></label>        
-                    </th>
-                    <th><?php echo $this->lang->line("ID"); ?></th>      
-                    <th><?php echo $this->lang->line("Avatar"); ?></th>      
-                    <th><?php echo $this->lang->line("Name"); ?></th>   
-                    <th><?php echo $this->lang->line("Email"); ?></th>
-                    <th><?php echo $this->lang->line("Type"); ?></th>   
-                    <th><?php echo $this->lang->line("Package"); ?></th>
-                    <th><?php echo $this->lang->line("Status"); ?></th>
-                    <th><?php echo $this->lang->line("Expiry"); ?></th>
-                    <th style="min-width: 150px"><?php echo $this->lang->line("Actions"); ?></th>
-                    <th><?php echo $this->lang->line("Registered"); ?></th>
-                    <th><?php echo $this->lang->line("Last Login"); ?></th>
-                    <th><?php echo $this->lang->line("Last IP"); ?></th>
+                    <th><?php echo $this->lang->line("Method"); ?></th>      
+                    <th><?php echo $this->lang->line("Manager Name"); ?></th>      
+                    <th><?php echo $this->lang->line("User Name"); ?></th>   
+                    <th><?php echo $this->lang->line("Package Name"); ?></th>
+                    <th><?php echo $this->lang->line("Expired Date"); ?></th>   
+                    <th><?php echo $this->lang->line("Limit Users"); ?></th>   
                   </tr>
                 </thead>
                 <tbody>
@@ -56,13 +42,6 @@
   </div>
 </section>
 
-<?php
-$drop_menu = '<div class="btn-group dropleft float-right"><button type="button" class="btn btn-primary btn-lg dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">  '.$this->lang->line("Options").'  </button>  <div class="dropdown-menu dropleft"> <a class="dropdown-item has-icon send_email_ui pointer"><i class="fas fa-paper-plane"></i> '.$this->lang->line("Send Email").'</a> <a class="dropdown-item has-icon" href="'.base_url('admin/login_log').'"><i class="fas fa-history"></i> '.$this->lang->line("Login Log").'</a>';
-if($this->session->userdata('license_type') == 'double')
-  $drop_menu .= '<a target="_BLANK" class="dropdown-item has-icon" href="'.base_url('dashboard/index/system').'"><i class="fas fa-tachometer-alt"></i> '.$this->lang->line("System Dashboard").'</a><a target="_BLANK" class="dropdown-item has-icon" href="'.base_url('admin/activity_log').'"><i class="fas fa-history"></i> '.$this->lang->line("User Activity Log").'</a>';
-$drop_menu .= '</div> </div>';
-?> 
-
 
 
 <script>       
@@ -71,11 +50,6 @@ $drop_menu .= '</div> </div>';
     $(document).ready(function() {
 
       $('div.note-group-select-from-files').remove();
-
-      var drop_menu = '<?php echo $drop_menu;?>';
-      setTimeout(function(){ 
-        $("#mytable_filter").append(drop_menu); 
-      }, 2000);
       
       var perscroll;
       var table = $("#mytable").DataTable({
@@ -85,7 +59,7 @@ $drop_menu .= '</div> </div>';
           order: [[ 2, "desc" ]],
           pageLength: 10,
           ajax: {
-              "url": base_url+'admin/user_manager_data',
+              "url": base_url+'admin/manager_logs_data',
               "type": 'POST'
           },
           language: 
@@ -93,20 +67,6 @@ $drop_menu .= '</div> </div>';
             url: "<?php echo base_url('assets/modules/datatables/language/'.$this->language.'.json'); ?>"
           },
           dom: '<"top"f>rt<"bottom"lip><"clear">',
-          columnDefs: [
-            {
-                targets: [2,8],
-                visible: false
-            },
-            {
-                targets: [0,1,3,7,9,10,11,13],
-                className: 'text-center'
-            },
-            {
-                targets: [0,1,3,10],
-                sortable: false
-            }
-          ],
           fnInitComplete:function(){  // when initialization is completed then apply scroll plugin
               if(areWeUsingScroll)
               {

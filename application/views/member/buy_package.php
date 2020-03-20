@@ -49,7 +49,7 @@
               </div>
             </div>
             <div class="pricing-cta">
-              <a href="" class="choose_package" data-fastspring="<?php echo $pack['fastspring'];?>" data-id="<?php echo $pack['id'];?>"><?php echo $this->lang->line("Select Package"); ?> <i class="fas fa-arrow-right"></i></a>
+              <a href="" class="" data-fsc-item-path-value="<?php echo $pack['fastspring'];?>" data-fsc-item-path="<?php echo $pack['fastspring'];?>" data-fsc-action="Add, Checkout" data-id="<?php echo $pack['id'];?>"><?php echo $this->lang->line("Select Package"); ?> <i class="fas fa-arrow-right"></i></a>
             </div>
           </div>
         </div>
