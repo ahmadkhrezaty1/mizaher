@@ -41,23 +41,25 @@ class Member extends Home
         $package_name = get_package_name($data['package_id']);
         $expired_date = $data['expired_date'];
         $manager_name = $this->session->userdata('username');
-        $subject = $manager_name." | Added New User [ Username : ". $user_name ." ]";
+        $subject = get_manger_type() ." Has Added User ( ". $user_name ." )";
         $details_url = site_url()."admin/user_manager/";
-        $message = "<p>Package Name: ".$package_name." Expiry Date:".$expired_date." ".$this->lang->line("To show all users you can go to<br>")."<a href='".$details_url."'>All Users</a>";
-        if(get_limit()){
+        $message = "<p>".$manager_name." Has Added Package<br>Package Name: ".$package_name."<br>Expiry Date:".$expired_date."<br>".$this->lang->line("To show all users you can go to")."<br><a href='".$details_url."'>All Users</a>";
+        if(has_limit()){
             $message .= '<br>And This Manager Can Added '.get_limit().' Users';
             $limit = get_limit();
         }
+        $message .= '</p>';
         $this->basic->insert_data('manager_logs',[
             'user_name' => $user_name,
             'manager_name' => $manager_name,
             'package_name' => $package_name,
+            'manager_type' => get_manger_type(),
             'expired_date' => $expired_date,
             'limit_users' => $limit,
             'method' => 'Add'
         ]);
         $message .= "</p>";
-        $from = $this->session->userdata("user_login_email");
+        $from = $this->config->item('institute_email');
         $mask = $this->config->item("product_name");
         $html = 1;
 
@@ -78,23 +80,25 @@ class Member extends Home
         $package_name = get_package_name($data['package_id']);
         $expired_date = $data['expired_date'];
         $manager_name = $this->session->userdata('username');
-        $subject = $manager_name." | Edited User [ Username : ". $user_name ." ]";
+        $subject = get_manger_type() ." Has Edited User ( ". $user_name ." )";
         $details_url = site_url()."admin/user_manager/";
-        $message = "<p>Package Name: ".$package_name." Expiry Date:".$expired_date." ".$this->lang->line("To show all users you can go to<br>")."<a href='".$details_url."'>All Users</a>";
-        if(get_limit()){
+        $message = "<p>".$manager_name." Has Updated Package<br>Package Name: ".$package_name."<br>Expiry Date:".$expired_date."<br>".$this->lang->line("To show all users you can go to")."<br><a href='".$details_url."'>All Users</a>";
+        if(has_limit()){
             $message .= '<br>And This Manager Can Added '.get_limit().' Users';
             $limit = get_limit();
         }
+        $message .= '</p>';
         $this->basic->insert_data('manager_logs',[
             'user_name' => $user_name,
             'manager_name' => $manager_name,
             'package_name' => $package_name,
+            'manager_type' => get_manger_type(),
             'expired_date' => $expired_date,
             'limit_users' => $limit,
             'method' => 'Update'
         ]);
         $message .= "</p>";
-        $from = $this->session->userdata("user_login_email");
+        $from = $this->config->item('institute_email');
         $mask = $this->config->item("product_name");
         $html = 1;
 

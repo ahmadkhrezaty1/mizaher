@@ -21,7 +21,8 @@
                 <thead>
                   <tr>
                     <th>#</th>      
-                    <th><?php echo $this->lang->line("Method"); ?></th>      
+                    <th><?php echo $this->lang->line("Method"); ?></th>     
+                    <th><?php echo $this->lang->line("Manager Type"); ?></th>      
                     <th><?php echo $this->lang->line("Manager Name"); ?></th>      
                     <th><?php echo $this->lang->line("User Name"); ?></th>   
                     <th><?php echo $this->lang->line("Package Name"); ?></th>

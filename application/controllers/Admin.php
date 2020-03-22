@@ -798,7 +798,8 @@ class Admin extends Home
     {           
         $this->ajax_check();
         $search_value = $_POST['search']['value'];
-        $display_columns = array("#",'method','manager_name','user_name', 'package_name', 'expired_date','limit_users');
+        $display_columns = array("#",'method','manager_type','manager_name','user_name', 'package_name', 'expired_date','limit_users');
+        $search_columns = array('method','manager_type','manager_name','user_name', 'package_name', 'expired_date','limit_users');
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
         $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
         $limit = isset($_POST['length']) ? intval($_POST['length']) : 10;

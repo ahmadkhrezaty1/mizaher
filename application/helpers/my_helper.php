@@ -863,6 +863,19 @@ if ( ! function_exists('is_manager')) {
 
 }
 
+if ( ! function_exists('get_manger_type')) { 
+
+  function get_manger_type() {
+    $CI = &get_instance();
+    $CI->db->where(['id'=> $CI->session->userdata('user_id'), 'manager_type!=' => '']);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user))
+      return $user->manager_type;
+    return false;
+  }
+
+}
+
 if ( ! function_exists('is_manager_2')) { 
 
   function is_manager_2() {
@@ -916,7 +929,9 @@ if ( ! function_exists('get_limit')) {
   function get_limit() {
     $CI = &get_instance();
     $user_id = $CI->session->userdata('user_id');
-    $CI->db->where(['id'=> $user_id, 'manager_type' => 'Manager 2']);
+    $CI->db->where(['id'=> $user_id]);
+    $where = "manager_type='Manager 2' or manager_type='Manager 3'";
+    $CI->db->where($where);
     $user = $CI->db->get('users')->row();
     if(is_object($user)){
       $CI->db->where(['added_by'=> $user_id]);
@@ -924,6 +939,20 @@ if ( ! function_exists('get_limit')) {
       //var_dump($user->users. "  " . $users); exit;
       return $user->users-$users;
     }
+    return false;
+  }
+
+}
+
+if ( ! function_exists('has_limit')) { 
+
+  function has_limit() {
+    $CI = &get_instance();
+    $CI->db->where(['id'=> $CI->session->userdata('user_id'), 'manager_type!=' => '']);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user))
+      if($user->manager_type == 'Manager 3' or $user->manager_type == 'Manager 2')
+        return true;
     return false;
   }
 
