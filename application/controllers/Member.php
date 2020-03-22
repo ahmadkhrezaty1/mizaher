@@ -369,8 +369,10 @@ class Member extends Home
 
             if($this->input->post("user_type")=="Member")     
             {
-                $this->form_validation->set_rules('package_id', '<b>'.$this->lang->line("Package").'</b>', 'trim|required');      
-                if(!is_manager_2()){
+                if(!is_manager_3()){
+                    $this->form_validation->set_rules('package_id', '<b>'.$this->lang->line("Package").'</b>', 'trim|required');      
+                }
+                if(!is_manager_2() and !is_manager_3()){
                     $this->form_validation->set_rules('expired_date', '<b>'.$this->lang->line("Expiry Date").'</b>', 'trim|required');
                 }
             }
@@ -391,13 +393,18 @@ class Member extends Home
                 //$package_id=get_expired_date($id);get_package_id
                 if(is_manager_2()){
                     //$package_id=    get_package_id($id);
+                    $package_id=$this->input->post('package_id');
                     $expired_date = get_expired_date();
+                }elseif(is_manager_3()){
+                    //$package_id=    get_package_id($id);
+                    $package_id=get_package_id($this->session->userdata('user_id'));
+                    $days = get_package($package_id)->premium_days;
+                    $expired_date = date('Y-m-d H:i:s', strtotime(date("Y-m-d H:i:s"). ' + '.$days.' days'));
                 }
                 else{
-                    //$package_id=$this->input->post('package_id');
+                    $package_id=$this->input->post('package_id');
                     $expired_date=$this->input->post('expired_date');
                 }
-                $package_id=$this->input->post('package_id');
                 if($status=='') $status='0';
                 if($manager_type == null) $manager_type ='';
                 if($user_type == 'Admin') redirect('home/access_forbidden','location');
@@ -496,8 +503,12 @@ class Member extends Home
 
             if($this->input->post("user_type")=="Member")     
             {
-                $this->form_validation->set_rules('package_id', '<b>'.$this->lang->line("Package").'</b>', 'trim|required');      
-                $this->form_validation->set_rules('expired_date', '<b>'.$this->lang->line("Expiry Date").'</b>', 'trim|required');
+                if(!is_manager_3()){
+                    $this->form_validation->set_rules('package_id', '<b>'.$this->lang->line("Package").'</b>', 'trim|required');      
+                }
+                if(!is_manager_2() and !is_manager_3()){
+                    $this->form_validation->set_rules('expired_date', '<b>'.$this->lang->line("Expiry Date").'</b>', 'trim|required');
+                }
             }
                 
             if ($this->form_validation->run() == FALSE)
@@ -520,10 +531,16 @@ class Member extends Home
                 //$expired_date=$this->input->post('expired_date');
                 if(is_manager_2()){
                     //$package_id=    get_package_id($id);
+                    $package_id=$this->input->post('package_id');
                     $expired_date = get_expired_date();
+                }elseif(is_manager_3()){
+                    //$package_id=    get_package_id($id);
+                    $package_id=get_package_id($this->session->userdata('user_id'));
+                    $days = get_package($package_id)->premium_days;
+                    $expired_date = date('Y-m-d H:i:s', strtotime(date("Y-m-d H:i:s"). ' + '.$days.' days'));
                 }
                 else{
-                    //$package_id=$this->input->post('package_id');
+                    $package_id=$this->input->post('package_id');
                     $expired_date=$this->input->post('expired_date');
                 }
                 if($status=='') $status='0';

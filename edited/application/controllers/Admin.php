@@ -898,6 +898,12 @@ class Admin extends Home
                 if($status=='') $status='0';
                 if($manager_type == null) $manager_type ='';
                 if($manager_type == 'Manager 2') $users =$this->input->post('users');
+                if($manager_type == 'Manager 3'){
+                    $package = get_package($package_id);
+                    $users =$package->premium_users;
+                    $days = $package->premium_days;
+                    $expired_date = date('Y-m-d H:i:s', strtotime(date("Y-m-d H:i:s"). ' + '.$days.' days'));
+                }
                                                        
                 $data=array
                 (
@@ -1001,6 +1007,12 @@ class Admin extends Home
                 if($status=='') $status='0';
                 if($manager_type == null) $manager_type ='';
                 if($manager_type == 'Manager 2') $users =$this->input->post('users');
+                /*if($manager_type == 'Manager 3'){
+                    $package = get_package($package_id);
+                    $users =$package->premium_users;
+                    $days = $package->premium_days;
+                    $expired_date = date('Y-m-d H:i:s', strtotime(date("Y-m-d H:i:s"). ' + '.$days.' days'));
+                }*/
                                                        
                 $data=array
                 (

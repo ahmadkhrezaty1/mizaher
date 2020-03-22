@@ -877,19 +877,34 @@ if ( ! function_exists('is_manager_2')) {
 
 }
 
+if ( ! function_exists('is_manager_3')) { 
+
+  function is_manager_3() {
+    $CI = &get_instance();
+    $CI->db->where(['id'=> $CI->session->userdata('user_id'), 'manager_type!=' => '']);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user))
+      if($user->manager_type == 'Manager 3')
+        return true;
+    return false;
+  }
+
+}
+
 if ( ! function_exists('is_limited')) { 
 
   function is_limited() {
     $CI = &get_instance();
     $user_id = $CI->session->userdata('user_id');
-    $CI->db->where(['id'=> $user_id, 'manager_type' => 'Manager 2']);
+    $CI->db->where(['id'=> $user_id]);
+    $CI->db->where("(manager_type='Manager 2' or manager_type='Manager 3')", NULL, FALSE);
     $user = $CI->db->get('users')->row();
     if(is_object($user)){
       $CI->db->where(['added_by'=> $user_id]);
       $users = $CI->db->count_all_results('users'); 
       //var_dump($user->users. "  " . $users); exit;
       if($user->users <= $users)
-        return $users - $user->users;
+        return true;
     }
     return false;
   }
@@ -943,11 +958,24 @@ if ( ! function_exists('get_package_expired_date')) {
 
 }
 
+if ( ! function_exists('get_package')) { 
+
+  function get_package($id) {
+    $CI = &get_instance();
+    $CI->db->where(['id'=> $id]);
+    $package = $CI->db->get('package')->row();
+    if(is_object($package)){
+        return $package;
+    }
+    return false;
+  }
+
+}
+
 if ( ! function_exists('get_package_id')) { 
 
   function get_package_id($user_id) {
     $CI = &get_instance();
-    $user_id = $user_id;
     $CI->db->where(['id'=> $user_id]);
     $user = $CI->db->get('users')->row();
     if(is_object($user)){

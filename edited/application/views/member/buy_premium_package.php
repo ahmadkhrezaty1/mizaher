@@ -4,7 +4,7 @@
     <h1><i class="fas fa-cart-plus"></i> <?php echo $page_title; ?></h1>
     <div class="section-header-button">
       <a href="<?php echo base_url('payment/transaction_log'); ?>" class="btn btn-primary"><i class="fas fa-history"></i> <?php echo $this->lang->line("Transaction Log"); ?></a>
-      <a href="<?php echo base_url('payment/buy_premium_package'); ?>" class="btn btn-danger"><?php echo $this->lang->line("Buy Premium Package"); ?></a>
+      <a href="<?php echo base_url('payment/buy_package'); ?>" class="btn btn-danger"><?php echo $this->lang->line("Buy Default Package"); ?></a>
     </div>
     <div class="section-header-breadcrumb">
       <div class="breadcrumb-item"><?php echo $page_title; ?></a></div>
@@ -20,12 +20,13 @@
         <div class="col-12 col-md-4 col-lg-4">
           <div class="pricing <?php if($pack['highlight']=='1') echo 'pricing-highlight';?>">
             <div class="pricing-title">
-              <?php echo $pack["package_name"]; ?>
+              <?php echo $pack["premium_name"]; ?>
             </div>
             <div class="pricing-padding">
               <div class="pricing-price">
-                <div><?php echo $curency_icon; ?></sup><?php echo $pack["price"]?></div>
-                <div><?php echo $pack["validity"]?> <?php echo $this->lang->line("days"); ?></div>
+                <div><?php echo $curency_icon; ?></sup><?php echo $pack["premium_price"]?></div>
+                <div><?php echo $pack["premium_days"]?> <?php echo $this->lang->line("Days For Each User"); ?></div>
+                <div><?php echo $pack["premium_users"]?> <?php echo $this->lang->line("Users"); ?></div>
               </div>
               <div class="pricing-details nicescroll" style="height: 180px;">
                 <?php 
@@ -50,7 +51,7 @@
               </div>
             </div>
             <div class="pricing-cta">
-              <a class="choose_package" href="#" data-fsc-item-path-value="<?php echo $pack['fastspring'];?>" data-fsc-item-path="<?php echo $pack['fastspring'];?>" data-fsc-action="Add, Checkout" data-id="<?php echo $pack['id'];?>"><?php echo $this->lang->line("Select Package"); ?> <i class="fas fa-arrow-right"></i></a>
+              <a class="choose_package" href="#" data-fsc-item-path-value="<?php echo $pack['premium_fastspring'];?>" data-fsc-item-path="<?php echo $pack['premium_fastspring'];?>" data-fsc-action="Add, Checkout" data-id="<?php echo $pack['id'];?>"><?php echo $this->lang->line("Select Package"); ?> <i class="fas fa-arrow-right"></i></a>
             </div>
           </div>
         </div>
@@ -387,7 +388,7 @@
            var packageId = $('#selected-package-id').val();
            console.log(orderReference.id);
            fastspring.builder.reset();
-           window.location.replace("<?php echo base_url() ?>payment/fastspring_pay/" + orderReference.id + "/" + packageId);
+           window.location.replace("<?php echo base_url() ?>payment/premium_fastspring_pay/" + orderReference.id + "/" + packageId);
       } else {
            console.log("no order ID");
     }
