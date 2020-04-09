@@ -1539,7 +1539,7 @@ class Comment_automation extends Home
         $info = $this->basic->get_data('facebook_ex_autoreply',array('where'=>array('id'=>$table_id,'user_id'=>$this->user_id)));
 
         $page_table_id = $info[0]['page_info_table_id'];
-        $postback_data=$this->basic->get_data("messenger_bot_postback",array("where"=>array("user_id"=>$this->user_id,"is_template"=>"1",'template_for'=>'reply_message','page_id'=>$page_table_id)),'','','',$start=NULL,'');
+        $postback_data=$this->basic->get_data("messenger_bot_postback",array("where"=>array("user_id"=>$this->user_id,"is_template"=>"1",'template_for'=>'reply_message')),'','','',$start=NULL,'');
         $str = "<option value=''>".$this->lang->line('Please select a message template')."</option>";
 
         foreach ($postback_data as $key => $value) 
@@ -4255,9 +4255,10 @@ class Comment_automation extends Home
 
                                         $reply_message['messaging_type'] = "RESPONSE";
                                         $reply_message=json_encode($reply_message);
-                                        $replace_search=array('{"id":"replace_id"}');
-                                        $replace_with=array('{"comment_id":"'.$comment_id.'"}');
+                                        $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
+                                        $replace_with=array('{"comment_id":"'.$comment_id.'"}',$commenter_id);
                                         $reply_message=str_replace($replace_search, $replace_with, $reply_message);
+
 
                                         if(isset($commenter_first_name))
                                           $reply_message=str_replace('#LEAD_USER_FIRST_NAME#', $commenter_first_name, $reply_message);
@@ -4573,8 +4574,8 @@ class Comment_automation extends Home
 
                             $reply_message['messaging_type'] = "RESPONSE";
                             $reply_message=json_encode($reply_message);
-                            $replace_search=array('{"id":"replace_id"}');
-                            $replace_with=array('{"comment_id":"'.$comment_id.'"}');
+                            $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
+                            $replace_with=array('{"comment_id":"'.$comment_id.'"}',$commenter_id);
                             $reply_message=str_replace($replace_search, $replace_with, $reply_message);
 
                             if(isset($commenter_first_name))
@@ -4958,8 +4959,8 @@ class Comment_automation extends Home
 
                                       $reply_message['messaging_type'] = "RESPONSE";
                                       $reply_message=json_encode($reply_message);
-                                      $replace_search=array('{"id":"replace_id"}');
-                                      $replace_with=array('{"comment_id":"'.$comment_id.'"}');
+                                      $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
+                                      $replace_with=array('{"comment_id":"'.$comment_id.'"}',$commenter_id);
                                       $reply_message=str_replace($replace_search, $replace_with, $reply_message);
 
                                       if(isset($commenter_first_name))
@@ -5274,8 +5275,8 @@ class Comment_automation extends Home
 
                           $reply_message['messaging_type'] = "RESPONSE";
                           $reply_message=json_encode($reply_message);
-                          $replace_search=array('{"id":"replace_id"}');
-                          $replace_with=array('{"comment_id":"'.$comment_id.'"}');
+                          $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
+                          $replace_with=array('{"comment_id":"'.$comment_id.'"}',$commenter_id);
                           $reply_message=str_replace($replace_search, $replace_with, $reply_message);
 
                           if(isset($commenter_first_name))

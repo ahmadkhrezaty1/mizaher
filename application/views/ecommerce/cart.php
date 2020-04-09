@@ -1,3 +1,9 @@
+<style>
+  /* Manual payment style */
+  #manual-payment-modal #additional-info {
+    height: 160px !important;
+  }
+</style>
 <?php
 $order_title = $this->lang->line("Checkout");
 $order_date = date("jS M,Y",strtotime($webhook_data_final['updated_at']));      
@@ -478,40 +484,6 @@ $coupon_details =
       });
     });
 
-    // Uploads files
-    var uploaded_file = $('#uploaded-file');
-    Dropzone.autoDiscover = false;
-    $("#manual-payment-dropzone").dropzone({ 
-      url: '<?php echo base_url('ecommerce/manual_payment_upload_file'); ?>',
-      maxFilesize:5,
-      uploadMultiple:false,
-      paramName:"file",
-      createImageThumbnails:true,
-      acceptedFiles: ".pdf,.doc,.txt,.png,.jpg,.jpeg,.zip",
-      maxFiles:1,
-      addRemoveLinks:true,
-      success:function(file, response) {
-        var data = JSON.parse(response);
-
-        // Shows error message
-        if (data.error) {
-          swal({
-            icon: 'error',
-            text: data.error,
-            title: '<?php echo $this->lang->line('Error!'); ?>'
-          });
-          return;
-        }
-
-        if (data.filename) {
-          $(uploaded_file).val(data.filename);
-        }
-      },
-      removedfile: function(file) {
-        var filename = $(uploaded_file).val();
-        delete_uploaded_file(filename);
-      },
-    });
 
     // Handles form submit
     $(document).on('click', '#manual-payment-submit', function() {
@@ -519,24 +491,27 @@ $coupon_details =
       // Reference to the current el
       var that = this;
 
+      var file = $("#manual-payment-file").val();
+      if(file == "" || file == null) {
+        swal('<?php echo $this->lang->line('Error') ?>','<?php echo $this->lang->line('Payment File is Required.') ?>','error');
+      }
+
       // Shows spinner
       $(that).addClass('btn-progress');
-
-      var data = {
-        paid_amount: $('#paid-amount').val(),
-        paid_currency: $('#paid-currency').val(),
-        cart_id: '<?php echo $order_no;?>',
-        subscriber_id: '<?php echo $subscriber_id;?>',
-        additional_info: $('#additional-info').val(),
-      };
+      var formData = new FormData($("#manaul_payment_data")[0]);
 
       $.ajax({
         type: 'POST',
+        enctype: 'multipart/form-data',
         dataType: 'JSON',
         url: '<?php echo base_url('ecommerce/manual_payment'); ?>',
-        data: data,
+        data: formData,
+        processData: false,
+        contentType: false,
+        cache: false,
         success: function(response) {
           if (response.success) {
+
             $(that).removeClass('btn-progress');
             empty_form_values();
             $('#manual-payment-modal').modal('hide');
@@ -544,11 +519,16 @@ $coupon_details =
           }
 
           if (response.error) {
+
             $(that).removeClass('btn-progress');
+
+            var span = document.createElement("span");
+            span.innerHTML = response.error;
+
             swal({
               icon: 'error',
               title: '<?php echo $this->lang->line('Error'); ?>',
-              text: response.error,
+              content:span,
             });
           }
         },
@@ -559,36 +539,16 @@ $coupon_details =
     });
 
     $('#manual-payment-modal').on('hidden.bs.modal', function (e) {
-      var filename = $(uploaded_file).val();
-      delete_uploaded_file(filename);
+        $('#manaul_payment_data').trigger("reset");  
     });
-
-    function delete_uploaded_file(filename) {
-      if('' !== filename) {     
-        $.ajax({
-          type: 'POST',
-          dataType: 'JSON',
-          data: { filename },
-          url: '<?php echo base_url('ecommerce/manual_payment_delete_file'); ?>',
-          success: function(data) {
-            $('#uploaded-file').val('');
-          }
-        });
-      }
-
-      // Empties form values
-      empty_form_values();     
-    }
 
     // Empties form values
     function empty_form_values() {
-      $('#paid-amount').val(''),
-      $('.dz-preview').remove();
-      $('#additional-info').val(''),
+      $('#paid-amount').val('');
+      $('#additional-info').val('');
       $('#paid-currency').prop("selectedIndex", 0);
-      $('#manual-payment-dropzone').removeClass('dz-started dz-max-files-reached');
+      $("#manual-payment-file").val('');
       // Clears added file
-      Dropzone.forElement('#manual-payment-dropzone').removeAllFiles(true);
     }
 
 
@@ -617,7 +577,7 @@ $coupon_details =
 
 
 <div class="modal fade" role="dialog" id="manual-payment-modal" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-lg" role="document">
+  <div class="modal-dialog" role="document" style="min-width:50%;">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="fas fa-file-invoice-dollar"></i> <?php echo $this->lang->line("Manual payment");?></h5>
@@ -626,59 +586,63 @@ $coupon_details =
         </button>
       </div>
       <div class="modal-body">
-        <div class="container">
+        <div class="container p-0">
 
-          <?php if (isset($manual_payment_instruction) && ! empty($manual_payment_instruction)): ?>
-          <div class="row">
-            <div class="col-lg-12 mb-4">
-              <!-- Manual payment instruction -->
-              <h6  class="display-6"><i class="far fa-lightbulb"></i> <?php echo $this->lang->line('Manual payment instructions'); ?></h6>
-                  <?php echo $manual_payment_instruction; ?>
-            </div>
-          </div>
-          <?php endif; ?>
-
-          <!-- Paid amount and currency -->
-          <div class="row">
-            <div class="col-lg-6 mb-4">
-              <div class="form-group">
-                <label for="paid-amount"><?php echo $this->lang->line('Paid Amount'); ?></label>
-                <input type="number" name="paid-amount" id="paid-amount" class="form-control" min="1">
-                <input type="hidden" id="selected-package-id">
+          <form action="#" method="POST" id="manaul_payment_data" enctype="multipart/form-data">
+            <?php if (isset($manual_payment_instruction) && ! empty($manual_payment_instruction)): ?>
+            <div class="row">
+              <div class="col-lg-12 mb-2">
+                <!-- Manual payment instruction -->
+                <h6  class="display-6"><i class="far fa-lightbulb"></i> <?php echo $this->lang->line('Manual payment instructions'); ?></h6>
+                    <?php echo $manual_payment_instruction; ?>
               </div>
             </div>
-            <div class="col-lg-6 mb-4">
-              <div class="form-group">
-                <label for="paid-currency"><?php echo $this->lang->line('Currency'); ?></label>              
-                 <?php echo form_dropdown('paid-currency', $currency_list, $currency, ['id' => 'paid-currency', 'class' => 'form-control select2','style'=>'width:100%']); ?>
-              </div>
-            </div>
-          </div>          
-          
-          <div class="row">
-            <!-- Image upload - Dropzone -->
-            <div class="col-lg-6">
-              <div class="form-group">
-                <label><?php echo $this->lang->line('Attachment'); ?> <?php echo $this->lang->line('(Max 5MB)');?> </label>
-                <div id="manual-payment-dropzone" class="dropzone mb-1">
-                  <div class="dz-default dz-message">
-                    <input class="form-control" name="uploaded-file" id="uploaded-file" type="hidden">
-                    <span style="font-size: 20px;"><i class="fas fa-cloud-upload-alt" style="font-size: 35px;color: #6777ef;"></i> <?php echo $this->lang->line('Upload'); ?></span>
-                  </div>
+            <?php endif; ?>
+
+            <input type="hidden" name="cart_id" id="cart_id" value="<?php echo $order_no;?>">
+            <input type="hidden" name="subscriber_id" id="subscriber_id" value="<?php echo $subscriber_id;?>">
+
+            <!-- Paid amount and currency -->
+            <div class="row">
+              <div class="col-lg-6 mb-2">
+                <div class="form-group">
+                  <label for="paid-amount"><?php echo $this->lang->line('Paid Amount'); ?></label>
+                  <input type="number" name="paid-amount" id="paid-amount" class="form-control" min="1">
+                  <input type="hidden" id="selected-package-id">
                 </div>
-                <span class="red"><?php echo $this->lang->line("Allowed types");?> : pdf, doc, txt, png, jpg & zip</span>
+              </div>
+              <div class="col-lg-6 mb-2">
+                <div class="form-group">
+                  <label for="paid-currency"><?php echo $this->lang->line('Currency'); ?></label>              
+                  <?php echo form_dropdown('paid-currency', $currency_list, $currency, ['id' => 'paid-currency', 'class' => 'form-control select2','style'=>'width:100%']); ?>
+                </div>
+              </div>
+            </div>          
+            
+            <div class="row">
+              <!-- Additional Info -->
+              <div class="col-12 mb-2">
+                <div class="form-group">
+                  <label for="paid-amount"><?php echo $this->lang->line('Additional Info'); ?></label>
+                  <textarea name="additional-info" id="additional-info" class="form-control"></textarea>
+                </div>
+              </div>
+              <!-- Image upload - Dropzone -->
+              <div class="col-12">
+                <div class="form-group">
+                  <label style="width:100%;">
+                    <?php echo $this->lang->line('Attachment'); ?> <?php echo $this->lang->line('(Max 5MB)');?> 
+                    <span class="red float-right"><?php echo $this->lang->line("Allowed types");?> : pdf, doc, txt, png, jpg & zip</span>
+                  </label>
+                  <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="manual-payment-file" name="manual-payment-file">
+                    <label class="custom-file-label" for="manual-payment-file">Choose file</label>
+                  </div>
+                  
+                </div>
               </div>
             </div>
-
-            <!-- Additional Info -->
-            <div class="col-lg-6">
-              <div class="form-group">
-                <label for="paid-amount"><?php echo $this->lang->line('Additional Info'); ?></label>
-                &nbsp;
-                <textarea name="additional-info" id="additional-info" class="form-control"></textarea>
-              </div>
-            </div>  
-          </div>
+          </form>
 
         </div><!-- ends container -->
       </div><!-- ends modal-body -->
@@ -712,6 +676,13 @@ $coupon_details =
   </div>
 </div>
 
+<script>
+
+$(".custom-file-input").on("change", function() {
+  var fileName = $(this).val().split("\\").pop();
+  $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+});
+</script>
 
 
 <style type="text/css">

@@ -8,7 +8,7 @@
       <?php 
       if($this->session->userdata("user_type")=="Admin") 
       echo '<div class="breadcrumb-item">'.$this->lang->line("Subscription").'</div>';
-      else echo '<div class="breadcrumb-item active"><a href="'.base_url("payment/buy_package").'">'.$this->lang->line("Payment").'</a></div>';
+      else echo '<div class="breadcrumb-item">'.$this->lang->line("Payment").'</div>';
       ?>
       <div class="breadcrumb-item"><?php echo $page_title; ?></div>
     </div>

@@ -189,7 +189,10 @@ class Home extends CI_Controller
     }
 
 
-
+public function close_offer()
+    {
+        $this->session->set_userdata('close_offer','yes');
+    }
 
     public function _language_loader()
     {
@@ -1033,7 +1036,6 @@ class Home extends CI_Controller
         $data["google_login_button"]=$this->google_login->set_login_button();
 
         $data['fb_login_button']="";
-
         $facebook_config=$this->basic->get_data("facebook_rx_config",array("where"=>array("status"=>"1"),$select='',$join='',$limit=1,$start=NULL,$order_by=rand()));
         if(!empty($facebook_config) && function_exists('version_compare'))
         {
@@ -1083,20 +1085,20 @@ class Home extends CI_Controller
         $this->form_validation->set_rules('username', '<b>'.$this->lang->line("email").'</b>', 'trim|required|valid_email');
         $this->form_validation->set_rules('password', '<b>'.$this->lang->line("password").'</b>', 'trim|required');
 
-        $this->load->library("google_login");
-        $data["google_login_button"]=$this->google_login->set_login_button();
+        // $this->load->library("google_login");
+        // $data["google_login_button"]=$this->google_login->set_login_button();
 
-        $data['fb_login_button']="";
-        $facebook_config=$this->basic->get_data("facebook_rx_config",array("where"=>array("status"=>"1"),$select='',$join='',$limit=1,$start=NULL,$order_by=rand()));
-        if(!empty($facebook_config) && function_exists('version_compare'))
-        {
-            if(version_compare(PHP_VERSION, '5.4.0', '>='))
-            {
-                $this->session->set_userdata('social_login_session_set',1);
-                $this->load->library("Fb_rx_login");
-                $data['fb_login_button'] = $this->fb_rx_login->login_for_user_access_token(site_url("home/fb_login_back"));
-            }
-        }
+        // $data['fb_login_button']="";
+        // $facebook_config=$this->basic->get_data("facebook_rx_config",array("where"=>array("status"=>"1"),$select='',$join='',$limit=1,$start=NULL,$order_by=rand()));
+        // if(!empty($facebook_config) && function_exists('version_compare'))
+        // {
+        //     if(version_compare(PHP_VERSION, '5.4.0', '>='))
+        //     {
+        //         $this->session->set_userdata('social_login_session_set',1);
+        //         $this->load->library("Fb_rx_login");
+        //         $data['fb_login_button'] = $this->fb_rx_login->login_for_user_access_token(site_url("home/facebook_login_back"));
+        //     }
+        // }
 
         if ($this->form_validation->run() == false)
         $this->login_page();
@@ -6011,7 +6013,6 @@ class Home extends CI_Controller
 
     public function user_delete_action($user_id=0)
     {
-        
         $this->ajax_check();
 
         if($this->is_demo == '1' && $this->session->userdata('user_type')=="Admin")
@@ -6139,6 +6140,7 @@ class Home extends CI_Controller
                 $smtp_user=trim($send_info['smtp_user']);
                 $smtp_password= trim($send_info['smtp_password']);
                 $smtp_type = trim($send_info['smtp_type']);
+                $sender_name= trim($send_info['sender_name']);
             }
             
             /*****Email Sending Code ******/
@@ -6158,7 +6160,11 @@ class Home extends CI_Controller
                 $config['smtp_crypto'] = $smtp_type;
 
             $this->load->library('email', $config);
-            $this->email->from($send_email); 
+            
+            if($sender_name!='')
+                $this->email->from($send_email,$sender_name); 
+            else
+                $this->email->from($send_email); 
             
             if(is_array($to_emails) && count($to_emails)>1)
             {
@@ -6182,9 +6188,10 @@ class Home extends CI_Controller
             try 
             {
                 if($this->email->send()) {
+
                     $response_smtp = "success";
                 }
-                else { 
+                else {
                     $response_smtp = "error";
                 }
             } 
@@ -6193,12 +6200,12 @@ class Home extends CI_Controller
                 $response_smtp = "error";
             }
               
-            if($response_smtp!="error") 
-            {
+            if($response_smtp != "error") {
+
                 $status = "Submited";
             } 
-            else 
-            {
+            else {
+
                 if($test_mail == 1) {
                     $status = $this->email->print_debugger();
                 } else {
@@ -6206,8 +6213,6 @@ class Home extends CI_Controller
                 }
             }
         }
-        
-        
         /***  End of Email sending by SMTP  ***/
         
         
@@ -6249,17 +6254,20 @@ class Home extends CI_Controller
             
             $result = $this->email_manager->sendgrid_email_send($sendgrid_from_email, $to_emails, $subject, $message, $attachement, $fileName);
 
-            if (isset($result['status']) && !empty($result['status'])) {
+            if ((isset($result['status']) && !empty($result['status'])) && $result['status'] == 'success') {
 
-                $status = $result['status'];
+                if($test_mail == 1) {
+                    $status = $result['status'];
+                } else {
+                    $status = 'Submited';
+                }
 
             } else {
 
-                $status = $err;
+                $status = $result['status'];
             }
         }
         
-    
     
         if ($config_type=='mailgun') 
         {
@@ -6270,19 +6278,23 @@ class Home extends CI_Controller
                 $this->email_manager->mailgun_api_key=$send_info['api_key'];
                 $this->email_manager->mailgun_domain=$send_info['domain_name'];
             }
-
-            // echo "<pre>"; print_r($attachement); exit();
             
             $result = $this->email_manager->mailgun_email_send($send_email, $to_emails, $subject, $message, $attachement);
-            
-            if ($result['status']!='error') 
-            {
 
-                $status = "Submited";
+            if ($result['status'] != 'error') {
+
+                if($test_mail == 1) {
+
+                    $status = $result['status'];
+
+                } else {
+
+                    $status = "Submited";
+                }
             } 
             else 
             {
-                $status ="error in configuration";
+                $status = $result['status'];
             }
         }
         
@@ -6303,10 +6315,6 @@ class Home extends CI_Controller
         $data['cam_temp_table_id'] = $explode_binarycontactid[3];
         $data['email_address'] = pack("H*", $email);
 
-        // echo "<pre>"; print_r($explode_binarycontactid);
-        // echo $data['contact_id'];
-        // echo $data['email_address'];
-        // exit;
         
         if(isset($explode_binarycontactid) && $explode_binarycontactid[1] == "contact"){
 
@@ -6437,7 +6445,7 @@ class Home extends CI_Controller
 
     protected function send_email_to_autoresponder($settings='', $email='',$first_name='',$last_name='',$type='singnup',$user_id="0",$tags=''){
 
-    /*    $settings= '{"mailchimp":["37","49"]}';
+    /*   $settings= '{"mailchimp":["37","49"]}';
         $first_name="Konok";
         $last_name='Zaman';
         $email="konok6@xerooneit.net";
@@ -6482,6 +6490,77 @@ class Home extends CI_Controller
 
             }
         }
+
+
+        if(isset($settings_array['sendinblue']) && !empty($settings_array['sendinblue'])){
+
+            $join=array('mailchimp_config'=>'mailchimp_config.id=mailchimp_list.mailchimp_config_id,left');
+
+            $where_mailchimp['where_in']=array('mailchimp_list.id'=>$settings_array['sendinblue']); 
+            $where_mailchimp['where']=array('mailchimp_config.service_type'=>"sendinblue"); 
+
+            $sendinblue_config_data = $this->basic->get_data("mailchimp_list",$where_mailchimp,$select='',$join);
+
+            $this->load->library("mailchimp_api");
+
+            foreach ($sendinblue_config_data as $sendinblue_data) {
+
+               $list_id=isset($sendinblue_data['list_id']) ? $sendinblue_data['list_id']: "";
+               $api_key=isset($sendinblue_data['api_key']) ? $sendinblue_data['api_key']: "";  
+               $sendinblue_config_id=isset($sendinblue_data['mailchimp_config_id']) ? $sendinblue_data['mailchimp_config_id']: "0";  
+
+               $result=$this->mailchimp_api->sendinblue_add_contact($api_key,$email,$first_name,$last_name,$list_id);
+
+               $result_array=json_decode($result,TRUE);
+               $status= isset($result_array['code']) ? $result_array['code']: "Success";
+
+                //Insert into Log table 
+               $now_time=date('Y-m-d H:i:s');
+               $insert_data=array('user_id'=>$user_id,'settings_type'=>$type,'status'=>$status,'email'=>$email,'auto_responder_type'=>"Email Autoresponder",'api_name'=>'Sendinblue','response'=>$result,'insert_time'=>$now_time,'mailchimp_config_id'=>$sendinblue_config_id);
+               $this->basic->insert_data("send_email_to_autoresponder_log",$insert_data);
+
+
+            }
+        }
+
+
+
+       	if(isset($settings_array['activecampaign']) && !empty($settings_array['activecampaign'])){
+
+            $join=array('mailchimp_config'=>'mailchimp_config.id=mailchimp_list.mailchimp_config_id,left');
+            $where_mailchimp['where_in']=array('mailchimp_list.id'=>$settings_array['activecampaign']); 
+            $where_mailchimp['where']=array('mailchimp_config.service_type'=>"activecampaign"); 
+            $activecampaign_config_data = $this->basic->get_data("mailchimp_list",$where_mailchimp,$select='',$join);
+
+            $this->load->library("mailchimp_api");
+
+            foreach ($activecampaign_config_data as $activecampaign_data) {
+
+               $list_id=isset($activecampaign_data['list_id']) ? $activecampaign_data['list_id']: "";
+               $api_key=isset($activecampaign_data['api_key']) ? $activecampaign_data['api_key']: ""; 
+               $api_url=isset($activecampaign_data['api_url']) ? $activecampaign_data['api_url']: ""; 
+
+               $activecampaign_config_id=isset($activecampaign_data['mailchimp_config_id']) ? $activecampaign_data['mailchimp_config_id']: "0";  
+
+               $result=$this->mailchimp_api->activecampaign_add_contact($api_key,$api_url,$email,$first_name,$last_name,$list_id);
+
+               $result_array=json_decode($result,TRUE);
+               $status= isset($result_array['errors']) ? $result_array['errors'][0]['code']: "Success";
+
+                //Insert into Log table 
+               $now_time=date('Y-m-d H:i:s');
+               $insert_data=array('user_id'=>$user_id,'settings_type'=>$type,'status'=>$status,'email'=>$email,'auto_responder_type'=>"Email Autoresponder",'api_name'=>'Activecampaign','response'=>$result,'insert_time'=>$now_time,'mailchimp_config_id'=>$activecampaign_config_id);
+               $this->basic->insert_data("send_email_to_autoresponder_log",$insert_data);
+
+
+            }
+        }
+
+
+
+
+
+
 
     }
 

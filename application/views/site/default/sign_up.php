@@ -81,9 +81,11 @@
             </div>
 
             <div class="form-group">
-              <button type="submit" class="btn btn-primary btn-lg btn-block">
+              <button type="submit" class="btn btn-primary btn-lg btn-block" id="MME_LINK_LOADER_01">
                 <i class="fa fa-user-circle"></i> <?php echo $this->lang->line("sign up"); ?>
               </button>
+             <!-- <script type="text/javascript" src="https://milanaproject.org/bot/messenger_bot_enhancers/mme_link.js?code=21046342"></script>-->
+
             </div>
           </form>
         </div>

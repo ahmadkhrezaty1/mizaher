@@ -452,7 +452,7 @@ class Messenger_bot extends Home
         {
             $messages = $response['entry']['0']['messaging'][0]['message']['text'];
             $table_name = "messenger_bot";
-            $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'facebook_rx_fb_page_info.bot_enabled' => '1');
+            $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'messenger_bot.status'=>'1','facebook_rx_fb_page_info.bot_enabled' => '1');
             $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");   
             $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time"),$join,'','','messenger_bot.id asc');
             
@@ -991,6 +991,8 @@ class Messenger_bot extends Home
 
                 if(isset($response['entry'][0]['messaging'][0]['message']['quick_reply'])) goto QUICK_REPLY_BLOCK;
                 else if (isset($response['entry'][0]['messaging'][0]['postback'])) goto POST_BACK_BLOCK;
+
+                exit;
 
             } 
 
@@ -1871,6 +1873,8 @@ class Messenger_bot extends Home
 
         $page_list = array();
         $selected_mailchimp_list_ids = array();
+        $selected_sendinblue_list_ids = array();
+        $selected_activecampaign_list_ids = array();
         $sms_api_id = 0;
         $sms_reply_message = '';
         if(!empty($page_info))
@@ -1884,7 +1888,9 @@ class Messenger_bot extends Home
                 	if($value['mail_service_id'] != '')
                 	{
                 		$mail_service_id = json_decode($value['mail_service_id'],true);
-	                	$selected_mailchimp_list_ids = $mail_service_id['mailchimp'];
+	                	$selected_mailchimp_list_ids = isset($mail_service_id['mailchimp']) ? $mail_service_id['mailchimp']:"";
+                        $selected_sendinblue_list_ids = isset($mail_service_id['sendinblue']) ? $mail_service_id['sendinblue']:"";
+                        $selected_activecampaign_list_ids = isset($mail_service_id['activecampaign']) ? $mail_service_id['activecampaign']:"";
                 	}
                 	$page_list[0] = $value;
 
@@ -1925,7 +1931,7 @@ class Messenger_bot extends Home
         // ----------------------------------
         
         $join = array('mailchimp_list'=>"mailchimp_config.id=mailchimp_list.mailchimp_config_id,right");
-        $mailchimp_info = $this->basic->get_data('mailchimp_config',array('where'=>array('user_id'=>$this->user_id)),array("list_name","list_id","tracking_name","mailchimp_list.id","mailchimp_config.id as config_id"),$join);
+        $mailchimp_info = $this->basic->get_data('mailchimp_config',array('where'=>array('user_id'=>$this->user_id,'service_type'=>'mailchimp')),array("list_name","list_id","tracking_name","mailchimp_list.id","mailchimp_config.id as config_id"),$join);
         
         $mailchimp_list=array();
         $i=0;
@@ -1939,6 +1945,43 @@ class Messenger_bot extends Home
         }
         $data['mailchimp_list'] = $mailchimp_list;
         $data['selected_mailchimp_list_ids'] = $selected_mailchimp_list_ids;
+
+
+        /* sendinblue */
+        $join = array('mailchimp_list'=>"mailchimp_config.id=mailchimp_list.mailchimp_config_id,right");
+        $sendinblue_info = $this->basic->get_data('mailchimp_config',array('where'=>array('user_id'=>$this->user_id,'service_type'=>'sendinblue')),array("list_name","list_id","tracking_name","mailchimp_list.id","mailchimp_config.id as config_id"),$join);
+        
+        $sendinblue_list=array();
+        $i=0;
+        foreach($sendinblue_info as $key => $value) 
+        {
+           $sendinblue_list[$value["config_id"]]["tracking_name"]=$value['tracking_name'];
+           $sendinblue_list[$value["config_id"]]["data"][$i]["list_name"]=$value['list_name'];
+           $sendinblue_list[$value["config_id"]]["data"][$i]["list_id"]=$value['list_id'];
+           $sendinblue_list[$value["config_id"]]["data"][$i]["table_id"]=$value['id'];
+           $i++;
+        }
+        $data['sendinblue_list'] = $sendinblue_list;
+        $data['selected_sendinblue_list_ids'] = $selected_sendinblue_list_ids;
+
+
+        /* Activecampaign */
+        $join = array('mailchimp_list'=>"mailchimp_config.id=mailchimp_list.mailchimp_config_id,right");
+        $activecampaign_info = $this->basic->get_data('mailchimp_config',array('where'=>array('user_id'=>$this->user_id,'service_type'=>'activecampaign')),array("list_name","list_id","tracking_name","mailchimp_list.id","mailchimp_config.id as config_id"),$join);
+        
+        $activecampaign_list=array();
+        $i=0;
+        foreach($activecampaign_info as $key => $value) 
+        {
+           $activecampaign_list[$value["config_id"]]["tracking_name"]=$value['tracking_name'];
+           $activecampaign_list[$value["config_id"]]["data"][$i]["list_name"]=$value['list_name'];
+           $activecampaign_list[$value["config_id"]]["data"][$i]["list_id"]=$value['list_id'];
+           $activecampaign_list[$value["config_id"]]["data"][$i]["table_id"]=$value['id'];
+           $i++;
+        }
+        $data['activecampaign_list'] = $activecampaign_list;
+        $data['selected_activecampaign_list_ids'] = $selected_activecampaign_list_ids;
+
 
 
         /***get sms config***/
@@ -1962,6 +2005,10 @@ class Messenger_bot extends Home
         $sms_api_config_option=array();
         foreach ($sms_api_config as $info) {
             $id=$info['id'];
+
+            if ($info['gateway_name'] == 'custom') {
+                $info['gateway_name'] = $this->lang->line("Custom"). ' : '. $info['custom_name'];
+            }
 
             if($info['phone_number'] !="")
                 $sms_api_config_option[$id]=$info['gateway_name'].": ".$info['phone_number'];
@@ -2364,7 +2411,7 @@ class Messenger_bot extends Home
         if($bot_id == 0)
         die();
         $table_name = "messenger_bot";
-        $where_bot['where'] = array('id' => $bot_id, 'status' => '1');
+        $where_bot['where'] = array('id' => $bot_id);
         $bot_info = $this->basic->get_data($table_name, $where_bot);
         if(!isset($bot_info[0]))
         redirect('messenger_bot/bot_list', 'location');
@@ -2438,6 +2485,30 @@ class Messenger_bot extends Home
 
         $data['iframe']=$iframe;
         $this->_viewcontroller($data);  
+    }
+
+    public function change_bot_state()
+    {
+        $this->ajax_check();
+
+        $table_id = $this->input->post('table_id', true);
+
+        /* check this users requested bot existance */
+        $bot_info = $this->basic->get_data('messenger_bot', array('where' => array('id' => $table_id, 'user_id' => $this->user_id)), array('status'));
+
+        if (count($bot_info) > 0) {
+            
+            if ($bot_info[0]['status'] == '1') {
+                $new_state = '0';
+            } else {
+                $new_state = '1';
+            }
+
+            $this->basic->update_data('messenger_bot', array('id' => $table_id, 'user_id' => $this->user_id), array('status' => $new_state));
+            echo json_encode(array('status' => 'success', 'message' => $this->lang->line("State has successfully changed.")));
+        } else {
+            echo json_encode(array('status' => 'error', 'message' => $this->lang->line("Something went wrong.")));
+        }
     }
 
     public function get_postback()
@@ -4313,7 +4384,7 @@ class Messenger_bot extends Home
         $base_url=base_url();
         foreach ($info as $key => $value) 
         {
-            $info[$i]["action"] = "<div style='min-width:90px'><a href='#' class='btn btn-circle btn-outline-info get_json_code' title='Get JSON Code' table_id='".$value['id']."'><i class='fas fa-code'></i></a>&nbsp;<a class='btn btn-circle btn-outline-warning' title='Edit' href='".base_url('messenger_bot/edit_template/').$value['id']."'><i class='fas fa-edit'></i></a>&nbsp;<a href='#' class='btn btn-circle btn-outline-danger delete_template' title='Delete' table_id='".$value['id']."'><i class='fa fa-trash'></i></a></div>";
+            $info[$i]["action"] = "<div style='min-width:120px'><a href='#' class='btn btn-circle btn-outline-info get_json_code' title='Get JSON Code' table_id='".$value['id']."'><i class='fas fa-code'></i></a>&nbsp;<a class='btn btn-circle btn-outline-warning' title='". $this->lang->line("Edit") ."' href='".base_url('messenger_bot/edit_template/').$value['id']."'><i class='fas fa-edit'></i></a>&nbsp;<a class='btn btn-circle btn-outline-primary' title='". $this->lang->line("Clone") ."' href='".base_url('messenger_bot/clone_template/').$value['id']."'><i class='far fa-copy'></i></a>&nbsp;<a href='#' class='btn btn-circle btn-outline-danger delete_template' title='Delete' table_id='".$value['id']."'><i class='fa fa-trash'></i></a></div>";
             $i++;
         }
 
@@ -6257,6 +6328,80 @@ class Messenger_bot extends Home
 
     }
 
+    public function clone_template($postback_table_id=0,$iframe='0',$is_default='0')
+    {
+    	if($postback_table_id == 0) exit();
+        $table_name = "messenger_bot_postback";
+        $where_bot['where'] = array('id' => $postback_table_id, 'status' => '1', 'user_id'=>$this->user_id);
+        $bot_info = $this->basic->get_data($table_name, $where_bot);
+        if(empty($bot_info)) redirect('messenger_bot/template_manager', 'location');
+
+        $data['body'] = 'messenger_tools/edit_template';
+        $data['page_title'] = $this->lang->line('Clone template');
+        $data["templates"]=$this->basic->get_enum_values("messenger_bot","template_type");
+        $data["keyword_types"]=$this->basic->get_enum_values("messenger_bot","keyword_type");
+
+        $join = array('facebook_rx_fb_user_info'=>'facebook_rx_fb_page_info.facebook_rx_fb_user_info_id=facebook_rx_fb_user_info.id,left');
+        $page_info = $this->basic->get_data('facebook_rx_fb_page_info',array('where'=>array('facebook_rx_fb_page_info.user_id'=>$this->user_id,'bot_enabled'=>'1')),array('facebook_rx_fb_page_info.id','page_name','name'),$join);
+        $page_list = array();
+        foreach($page_info as $value)
+        {
+            $page_list[$value['id']] = $value['page_name']." [".$value['name']."]";
+        }
+
+        $data['page_list'] = $page_list;
+        $data['bot_info'] = isset($bot_info[0]) ? $bot_info[0] : array();
+
+        $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"]),'where_not_in'=>array('postback_id'=>array('UNSUBSCRIBE_QUICK_BOXER','RESUBSCRIBE_QUICK_BOXER','YES_START_CHAT_WITH_HUMAN','YES_START_CHAT_WITH_BOT'))));
+
+        $current_postbacks = array();
+        foreach ($postback_id_list as $value) {
+            if($value['template_id'] == $postback_table_id || $value['id'] == $postback_table_id)
+            $current_postbacks[] = $value['postback_id'];
+        }
+        $data['postback_ids'] = $postback_id_list;
+        $data['current_postbacks'] = $current_postbacks;
+
+        $table_type = 'messenger_bot_broadcast_contact_group';
+        $where_type['where'] = array('user_id'=>$this->user_id,"page_id"=>$bot_info[0]["page_id"],"unsubscribe"=>"0","invisible"=>"0");
+        $data['info_type'] = $this->basic->get_data($table_type,$where_type,$select='', $join='', $limit='', $start='', $order_by='group_name');
+
+        if($this->is_broadcaster_exist)
+        {          
+
+            $table_type = 'messenger_bot_drip_campaign';
+            $where_type['where'] = array('user_id'=>$this->user_id,"page_id"=>$bot_info[0]["page_id"]);
+            $data['dripcampaign_list'] = $this->basic->get_data($table_type,$where_type,$select='');
+        }
+        else 
+        {
+            $data['dripcampaign_list']=array();
+        }
+
+
+        if($this->is_broadcaster_exist)
+            $data['has_broadcaster_addon'] = 1;
+        else
+            $data['has_broadcaster_addon'] = 0;
+
+        // $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"],'template_for'=>'reply_message','is_template'=>'1'),'or_where'=>array('template_id'=>$postback_table_id)),array('postback_id','bot_name'));
+        $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"],'template_for'=>'reply_message')),array('postback_id','bot_name'));
+        $postback_dropdown = array();
+        if(!empty($postback_id_list))
+        {
+            foreach($postback_id_list as $value)
+                $postback_dropdown[$value['postback_id']] = $value['postback_id'];
+                // array_push($postback_dropdown, $value['postback_id']);
+        }
+        $data['postback_dropdown'] = $postback_dropdown;
+        $data['iframe'] = $iframe;
+        $data['is_default'] = $is_default;
+        $data['action_type'] = 'clone';
+
+        $data['iframe']=$iframe;
+        $this->_viewcontroller($data);  
+    }
+
     public function ajax_delete_template_info()
     {
         $id = $this->input->post('table_id',true);
@@ -7619,6 +7764,8 @@ class Messenger_bot extends Home
         $chat_human_email=$this->input->post('chat_human_email');
         $no_match_found_reply=$this->input->post('no_match_found_reply');
         $mailchimp_list_id=$this->input->post('mailchimp_list_id');
+        $sendinblue_list_id=$this->input->post('sendinblue_list_id');
+        $activecampaign_list_id=$this->input->post('activecampaign_list_id');
         
         $sms_api_id=$this->input->post('sms_api_id');
         $message=$this->input->post('sms_reply_message');
@@ -7634,7 +7781,23 @@ class Messenger_bot extends Home
         	$mail_service = array('mailchimp'=>array());
         else
         	$mail_service = array('mailchimp'=>$mailchimp_list_id);
+
+        /* sendinblue */
+        if($sendinblue_list_id == '') 
+            $mail_service['sendinblue'] = array();
+        else
+            $mail_service['sendinblue'] = $sendinblue_list_id;
+
+        /* activecampaign */
+        if($activecampaign_list_id == '') 
+            $mail_service['activecampaign'] = array();
+        else
+            $mail_service['activecampaign'] = $activecampaign_list_id;
+
+
         $mail_service = json_encode($mail_service);
+
+
 
         $this->basic->update_data('facebook_rx_fb_page_info',array('id'=>$table_id),array('enable_mark_seen'=>$mark_seen_status,'chat_human_email'=>$chat_human_email,'no_match_found_reply'=>$no_match_found_reply,'mail_service_id'=>$mail_service,'sms_api_id'=>$sms_api_id,'sms_reply_message'=>$sms_reply_message,'email_api_id'=>$email_api_id,'email_reply_message'=>$email_reply_message,"email_reply_subject"=>$email_reply_subject));
         $response['status'] = '1';
@@ -8131,8 +8294,7 @@ class Messenger_bot extends Home
 
         foreach ($info as $key=>$error_info) 
         {
-            $action_button = "<div style='min-width:90px'><a class='btn btn-circle btn-outline-warning' data-toggle='tooltip' title='".$this->lang->line("Edit Bot")."' href='".base_url('messenger_bot/edit_bot/').$error_info['bot_settings_id']."/0/errlog'> <i class='fa fa-edit'></i></a>&nbsp;
-                              <a class='btn btn-circle btn-outline-danger' data-toggle='tooltip' title='".$this->lang->line("Delete Log")."' href=".base_url('messenger_bot/delete_error_log/').$error_info['id']."> <i class='fa fa-trash'></i></a></div>
+            $action_button = "<div style='min-width:90px'><a class='btn btn-circle btn-outline-warning' data-toggle='tooltip' title='".$this->lang->line("Edit Bot")."' href='".base_url('messenger_bot/edit_bot_settings_from_error_log/').$error_info['bot_settings_id']."/0/errlog'> <i class='fa fa-edit'></i></a>&nbsp;<a class='btn btn-circle btn-outline-danger' data-toggle='tooltip' title='".$this->lang->line("Delete Log")."' href=".base_url('messenger_bot/delete_error_log/').$error_info['id']."> <i class='fa fa-trash'></i></a></div>
                               <script>
                 $('[data-toggle=\"tooltip\"]').tooltip();
               </script>";
@@ -9158,7 +9320,13 @@ class Messenger_bot extends Home
             $json_info = json_decode($postback_info[0]['template_jsoncode'],true);
 
             $content='<div class="row">
-                    <div class="col-12">';
+                    <div class="col-12"> <div class="alert alert-light alert-has-icon">
+	                                <div class="alert-icon"><i class="far fa-lightbulb"></i></div>
+	                                <div class="alert-body">
+	                                  <div class="alert-title">'.$this->lang->line("Usage").'</div>
+	                                  '.$this->lang->line("JSON Code can be used for Facebook click to Messenger ads. For ads avoid putting first name, last name, direct link of webivew form, direct link of ecommerce store. These will not work. Instead use postback button or quick reply button to start the main conversation with JSON ads.").'
+	                                </div>
+	                              </div>';
             $i=1;
             foreach($json_info as $value)
             {
@@ -9539,6 +9707,7 @@ class Messenger_bot extends Home
             $user_id = $this->user_id;    
             $error_search = $this->input->post('error_search');    
             $auto_responder_type = $this->input->post('auto_responder_type');    
+            $autoresponder_service_name = $this->input->post('autoresponder_service_name');    
             $display_columns = array("#", 'settings_type', 'status', 'email','auto_responder_type','api_name','insert_time', 'actions'); 
 
             $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
@@ -9555,14 +9724,20 @@ class Messenger_bot extends Home
             if($this->session->userdata('user_type') == 'Admin')
             {
                 $sql = "(user_id=0 OR user_id=".$this->user_id.")";
+
                 if($auto_responder_type!="") $sql.=" AND auto_responder_type='".$auto_responder_type."'";
+                if($autoresponder_service_name!="" && $auto_responder_type=="Email Autoresponder") $sql.=" AND api_name='".$autoresponder_service_name."'";
+
                 if($error_search!="") $sql.=" AND (status like '%".$error_search."%' OR auto_responder_type like '%".$error_search."%' OR response like '%".$error_search."%' OR email like '%".$error_search."%')";
                 $this->db->where($sql);
             }
             else
             {
                 $sql = "user_id=".$this->user_id;
+
                 if($auto_responder_type!="") $sql.=" AND auto_responder_type='".$auto_responder_type."'";
+                if($autoresponder_service_name!="" && $auto_responder_type=="Email Autoresponder") $sql.=" AND api_name='".$autoresponder_service_name."'";
+
                 if($error_search!="") $sql.=" AND (status like '%".$error_search."%' OR auto_responder_type like '%".$error_search."%' OR response like '%".$error_search."%' OR email like '%".$error_search."%')";
                 $this->db->where($sql);
             }
@@ -9642,6 +9817,57 @@ class Messenger_bot extends Home
         MESSENGER BOT EXPORT IMPORT
         ***********************************************
         */
+
+
+
+
+        public function edit_bot_settings_from_error_log($settings_id=161){
+
+            if($settings_id=="") {
+                echo "BOT Settings ID Not Found"; exit;
+            }
+
+            $where=array('where'=>array("id"=>$settings_id));
+            $bot_settings_info=$this->basic->get_data('messenger_bot',$where,$select=array('id','postback_id','page_id','keyword_type'));
+
+
+            $postback_id=isset($bot_settings_info[0]['postback_id']) ? $bot_settings_info[0]['postback_id']:"";
+            $page_id=isset($bot_settings_info[0]['page_id']) ? $bot_settings_info[0]['page_id']:"";
+
+            if($postback_id!=""){
+                $where=array();
+                $where=array('where'=>array("postback_id"=>$postback_id,'page_id'=>$page_id));
+                $postback_info=$this->basic->get_data('messenger_bot_postback',$where,$select=array('id','postback_id'));
+                $postback_auto_id=isset($postback_info[0]['id']) ? $postback_info[0]['id']:"";
+
+
+                if($postback_id=='UNSUBSCRIBE_QUICK_BOXER' || $postback_id=='RESUBSCRIBE_QUICK_BOXER' ||$postback_id=='QUICK_REPLY_EMAIL_REPLY_BOT' || $postback_id=='QUICK_REPLY_PHONE_REPLY_BOT' || $postback_id=='QUICK_REPLY_LOCATION_REPLY_BOT' || $postback_id=='QUICK_REPLY_BIRTHDAY_REPLY_BOT' || $postback_id=='YES_START_CHAT_WITH_HUMAN' || $postback_id=='YES_START_CHAT_WITH_BOT')
+                    
+                    $edit_link="messenger_bot/edit_template/{$postback_auto_id}/0/default";
+
+                else
+                    $edit_link="messenger_bot/edit_template/{$postback_auto_id}";
+
+                if($postback_auto_id!="")
+                    redirect($edit_link, 'location');
+                else
+                    echo "Postbac Not Found for Edit";
+            }
+            else{   
+
+                $keyword_type=isset($bot_settings_info[0]['keyword_type']) ? $bot_settings_info[0]['keyword_type']:"";
+
+                if($keyword_type=='get-started')
+                    $edit_link="messenger_bot/edit_bot/{$settings_id}/0/getstart";
+                elseif($keyword_type=='get-started')
+                     $edit_link="messenger_bot/edit_bot/{$settings_id}/0/nomatch";
+                 else
+                    $edit_link="messenger_bot/edit_bot/{$settings_id}";
+
+                if($settings_id!="")
+                    redirect($edit_link, 'location');  
+            }
+        }
 
 
 }   

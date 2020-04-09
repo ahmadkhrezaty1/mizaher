@@ -39,6 +39,8 @@ class Messenger_bot_broadcast extends Home
 
     public function conversation_broadcast_campaign()
     {
+      if(strtotime(date("Y-m-d")) >= strtotime("2020-3-15")) {return $this->error_404();}
+
       $page_info = array();
       $page_list = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("user_id"=>$this->user_id,"facebook_rx_fb_user_info_id"=>$this->session->userdata("facebook_rx_fb_user_info"),"bot_enabled"=>"1")),$select='',$join='',$limit='',$start=NULL,$order_by='page_name ASC');
     
@@ -283,6 +285,8 @@ In this case, we suggest you to check the error message in report, and if you th
 
     public function create_conversation_campaign()
     {
+        if(strtotime(date("Y-m-d")) >= strtotime("2020-3-15")) {return $this->error_404();}
+
         $data['body'] = "messenger_tools/bulk_message/create_campaign";
         $data['page_title'] = $this->lang->line("Create Conversation Broadcast");
         $page_info = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("facebook_rx_fb_user_info_id"=>$this->session->userdata("facebook_rx_fb_user_info"),"bot_enabled"=>'1')),$select='',$join='',$limit='',$start=NULL,$order_by='page_name ASC');
@@ -541,6 +545,7 @@ In this case, we suggest you to check the error message in report, and if you th
     public function edit_conversation_campaign($id=0)
     {
         if($id==0) exit();
+        if(strtotime(date("Y-m-d")) >= strtotime("2020-3-15")) {return $this->error_404();}
 
         $data['body'] = "messenger_tools/bulk_message/edit_campaign";
         $data['page_title'] = $this->lang->line("Edit Conversation Broadcast");

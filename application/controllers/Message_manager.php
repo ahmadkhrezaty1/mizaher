@@ -232,7 +232,7 @@ class message_manager extends Home
                                      <th>'.$this->lang->line("message").'</th>
                                      <th class="text-center">'.$this->lang->line("sent time").'</th>
                                      <th class="text-center">'.$this->lang->line("total count").'</th>
-                                     <th class="text-center">'.$this->lang->line("see conversation & reply").'</th>
+                                     <th class="text-center">'.$this->lang->line("see conversation").'</th>
                                      <th class="text-center">'.$this->lang->line("go to inbox").'</th>
                                  </tr>
                              </thead>
@@ -249,7 +249,7 @@ class message_manager extends Home
                                 <td><p title="'.$data['last_snippet'].'">'.chunk_split($message_short, 50, '<br>').'</p></td>
                                 <td class="text-center">'.date("d M Y H:i:s",strtotime($last_update_time)).'</td>
                                 <td class="text-center">'.$data['message_count'].'</td>
-                                <td class="text-center"><span class="label label-light reply_button blue" page_name="'.$value['page_name'].'" page_table_id="'.$data['page_table_id'].'" thread_id="'.$data['thread_id'].'" style="cursor:pointer;"><i class="fa fa-mail-reply"></i> '.$this->lang->line("reply").'</span></td>
+                                <td class="text-center"><span class="label label-light reply_button blue" page_name="'.$value['page_name'].'" page_table_id="'.$data['page_table_id'].'" thread_id="'.$data['thread_id'].'" style="cursor:pointer;"><i class="fas fa-comments"></i> '.$this->lang->line("Conversation").'</span></td>
                                 <td class="text-center"><a href="'.$finalgo_to_link.'" target="_blank"><span class="label label-light blue"><i class="fa fa-hand-o-right"></i> '.$this->lang->line("go to inbox").'</span></a></td>
                             </tr>';
                 }

@@ -20,8 +20,8 @@ $unlimited_module_array=array();
 	<div class="section-header">
 		<h1><i class="fas fa-user-clock"></i> <?php echo $page_title; ?></h1>
 		<div class="section-header-breadcrumb">
-			<div class="breadcrumb-item active"><a href="<?php echo base_url('Dashboard'); ?>"><?php echo $this->lang->line("Dashboard"); ?></a></div>
-			<div class="breadcrumb-item"><?php echo $page_title; ?></a></div>
+			<div class="breadcrumb-item"><?php echo $this->lang->line("Payment"); ?></div>
+      <div class="breadcrumb-item"><?php echo $page_title; ?></a></div>
 		</div>
 	</div>
 

@@ -50,7 +50,9 @@ class Payment extends Home
             $user_data = [
                         'expired_date' => $cycle_expired_date, 
                         'package_id' => $package_id, 
-                        'bot_status' => '1'
+                        'bot_status' => '1',
+                        'users' => '0',
+                        'manager_type' => ''
                     ];
             $this->basic->update_data('users', $user_where, $user_data);
             $this->session->unset_userdata('expiry_date');
@@ -69,8 +71,7 @@ class Payment extends Home
 
         curl_close($ch);
     }
-
-    public function premium_fastspring_pay($order, $package_id){
+ public function premium_fastspring_pay($order, $package_id){
         $username = "I81LGQ7XT_6RVMNCGE6D7Q";
         $password = "1Yd2YMoESJO1avBsAVkQsA";
         $remote_url = 'https://api.fastspring.com/orders/'.$order;
@@ -102,13 +103,17 @@ class Payment extends Home
             $result['error'] = 'error';
         }else{
             $user_id = $this->session->userdata('user_id');
+            $old_users = 0;
+            if(has_limit()){
+                $old_users = get_number_of_users();
+            }
             $user_where = ['id' => $user_id];
             $package = get_package($package_id);
             $days = $package->premium_days;
             $cycle_expired_date = date('Y-m-d H:i:s', strtotime(date("Y-m-d H:i:s"). ' + '.$days.' days'));
             $user_data = [
                 'manager_type' => 'Manager 3', 
-                'users' => $package->premium_users, 
+                'users' => $old_users + $package->premium_users, 
                 'expired_date' => $cycle_expired_date, 
                 'package_id' => $package_id, 
                 'bot_status' => '1'
@@ -417,7 +422,7 @@ class Payment extends Home
        if($this->session->userdata('license_type') == 'double' && $this->session->userdata('user_type') == 'Member')
        {
            $data['body'] = "member/buy_package";
-           $data['page_title'] = $this->lang->line('Payment');
+           $data['page_title'] = $this->lang->line('Buy Package');
 
            $config_data=$this->basic->get_data("payment_config");
            $currency=isset($config_data[0]["currency"])?$config_data[0]["currency"]:"USD";
@@ -443,9 +448,15 @@ class Payment extends Home
         }
         else redirect('home/access_forbidden', 'location');
     }
-
+    
     public function buy_premium_package()
     {
+        if(is_manager_3()){
+            if(!is_limited()){
+                $this->session->set_flashdata('not_limited', 1);
+                redirect(base_url('payment/buy_package'));
+            }
+        }
        if($this->session->userdata('license_type') == 'double' && $this->session->userdata('user_type') == 'Member')
        {
            $data['body'] = "member/buy_premium_package";
@@ -588,7 +599,7 @@ class Payment extends Home
         }
 
         // Sets validation rules
-        $this->form_validation->set_rules('paid_amount', $this->lang->line('Paid amount'), 'required|is_natural_no_zero');
+        $this->form_validation->set_rules('paid_amount', $this->lang->line('Paid amount'), 'required|numeric');
         $this->form_validation->set_rules('paid_currency', $this->lang->line('Currency type'), 'required');
         $this->form_validation->set_rules('additional_info', $this->lang->line('Additional info'), 'trim');
         $this->form_validation->set_rules('package_id', $this->lang->line('Package ID'), 'required|numeric');
@@ -1682,10 +1693,16 @@ class Payment extends Home
                 $validity_type_arr['Y'] = 365;
 
                 $package_name=$this->input->post('name');
+                $description=$this->input->post('description');
                 $fastspring=$this->input->post('fastspring');
                 $price=$this->input->post('price');
                 $visible=$this->input->post('visible');
                 $highlight=$this->input->post('highlight');
+                 $name = explode(' ', $manual_transaction['name']);
+        $first_name = isset($name[0]) ? $name[0] : '';
+        $last_name = isset($name[1]) ? $name[1] : '';
+        $name = $first_name . ' ' . $last_name;
+        $email = $manual_transaction['email'];
                 $premium_name=$this->input->post('premium_name');
                 $premium_price=$this->input->post('premium_price');
                 $premium_days=$this->input->post('premium_days');
@@ -1731,6 +1748,7 @@ class Payment extends Home
                                
                 $data=array
                 (
+                    'description'=>$description,
                     'premium_name'=>$premium_name,
                     'premium_price'=>$premium_price,
                     'premium_days'=>$premium_days,
@@ -1747,9 +1765,32 @@ class Payment extends Home
                     'monthly_limit'=>json_encode($monthly_limit),
                     'bulk_limit'=>json_encode($bulk_limit)
                 );
-                
-                if($this->basic->insert_data('package',$data))                                      
-                $this->session->set_flashdata('success_message',1);   
+                $success = $this->basic->insert_data_and_return_insert_id('package',$data);
+                if($success){                         
+                    $this->session->set_flashdata('success_message',1);   
+                    if (!empty($_FILES['package_photo']['name'])) {
+                        $data = [];
+                        $val = uploadImage('package_photo', $success);
+                        $val == TRUE || redirect($_SERVER['HTTP_REFERER']);
+                        if(!empty($val['path'])){
+                            $data['package_photo'] = $val['path'];
+                        }else{
+                            $data['package_photo'] = null;
+                        }
+                        $this->basic->update_data('package',array("id"=>$success),$data);
+                    }
+                    if (!empty($_FILES['package_premium_photo']['name'])) {
+                        $data = [];
+                        $val = uploadImage_p('package_premium_photo', $success);
+                        $val == TRUE || redirect($_SERVER['HTTP_REFERER']);
+                        if(!empty($val['path'])){
+                            $data['package_premium_photo'] = $val['path'];
+                        }else{
+                            $data['package_premium_photo'] = null;
+                        }
+                        $this->basic->update_data('package',array("id"=>$success),$data);
+                    }
+                }   
                 else    
                 $this->session->set_flashdata('error_message',1);     
                 
@@ -1814,6 +1855,7 @@ class Payment extends Home
         $data['page_title']=$this->lang->line('Edit Package');     
         $data['modules']=$this->basic->get_data('modules',$where='',$select='',$join='',$limit='',$start='',$order_by='module_name asc',$group_by='',$num_rows=0);
         $data['value']=$this->basic->get_data('package',$where=array("where"=>array("id"=>$id)));
+        //echo '<pre>';var_dump($data['value']);exit;
         $data['payment_config']=$this->basic->get_data('payment_config');
         $data['validity_type'] = array('D' => $this->lang->line('Days'), 'W' => $this->lang->line('Weeks'), 'M' => $this->lang->line('Months'), 'Y' => $this->lang->line('Years'));
 
@@ -1881,7 +1923,8 @@ class Payment extends Home
             }
             else
             {
-
+                $description = $this->input->post('description');
+                $delete_files = $this->input->post('delete_files');
                 $package_name=$this->input->post('name');
                 $fastspring=$this->input->post('fastspring');
                 $price=$this->input->post('price');
@@ -1895,6 +1938,7 @@ class Payment extends Home
 
                 if($visible=='') $visible='0';
                 if($highlight=='') $highlight='0';
+
 
                 // $validity=$this->input->post('validity');
                 $validity_amount=$this->input->post('validity_amount');
@@ -1934,6 +1978,7 @@ class Payment extends Home
                 $validity="0"; 
                 $data=array
                 (
+                    'description'=>$description,
                     'premium_name'=>$premium_name,
                     'premium_price'=>$premium_price,
                     'premium_days'=>$premium_days,
@@ -1951,8 +1996,37 @@ class Payment extends Home
                     'bulk_limit'=>json_encode($bulk_limit)
                 );
                 
-                if($this->basic->update_data('package',array("id"=>$id),$data))                                      
-                $this->session->set_flashdata('success_message',1);   
+                if($this->basic->update_data('package',array("id"=>$id),$data)){                         
+                    $this->session->set_flashdata('success_message',1); 
+                   
+                    if (!empty($_FILES['package_photo']['name'])) {
+                        $data = array();  
+                        $val = uploadImage('package_photo', $id);
+                        $val == TRUE || redirect($_SERVER['HTTP_REFERER']);
+                        if(!empty($val['path'])){
+                            $data['package_photo'] = $val['path'];
+                        }else{
+                            $data['package_photo'] = null;
+                        }
+                        $this->basic->update_data('package',array("id"=>$id),$data);
+                    }
+                    if (!empty($_FILES['package_premium_photo']['name'])) {
+                        $data = array();  
+                        $val = uploadImage_p('package_premium_photo', $id);
+                        $val == TRUE || redirect($_SERVER['HTTP_REFERER']);
+                        if(!empty($val['path'])){
+                            $data['package_premium_photo'] = $val['path'];
+                        }else{
+                            $data['package_premium_photo'] = null;
+                        }
+                        $this->basic->update_data('package',array("id"=>$id),$data);
+                    }
+                    if($delete_files){
+                        deleteDirectory("upload/package/$id");
+                        deleteDirectory("upload/package/p_$id");
+                        $data['package_photo'] = '';
+                    }
+                }
                 else    
                 $this->session->set_flashdata('error_message',1);   
 
@@ -1976,16 +2050,19 @@ class Payment extends Home
         if($this->session->userdata('logged_in') == 1 && $this->session->userdata('user_type') != 'Admin') exit();
         if($id==0) exit();
 
-        if($this->basic->update_data('package',array("id"=>$id),array("deleted"=>"1")))                                      
-        echo json_encode(array("status"=>"1","message"=>$this->lang->line("Package has been deleted successfully"))); 
+        if($this->basic->update_data('package',array("id"=>$id),array("deleted"=>"1"))){
+            echo json_encode(array("status"=>"1","message"=>$this->lang->line("Package has been deleted successfully"))); 
+            deleteDirectory("upload/package/$id");
+            deleteDirectory("upload/package/p_$id");
+        }                                      
+        
         else echo json_encode(array("status"=>"0","message"=>$this->lang->line("Something went wrong, please try again")));
     } 
 
 
     public function usage_history()
     {        
-        //    echo "<pre>";var_dump($this->session->userdata());exit;
-
+         //    echo "<pre>";var_dump($this->session->userdata());exit;
         if($this->session->userdata('user_type') != 'Member') 
         redirect('home/login_page', 'location');
 

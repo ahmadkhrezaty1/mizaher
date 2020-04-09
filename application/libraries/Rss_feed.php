@@ -34,6 +34,17 @@ class Rss_feed{
 	    $element_list=array();
 	     
 	    $i=0;
+
+	    if(!isset($x->channel->item)){
+
+	    	$response['error']=1;
+	    	$response['error_message']=$this->CI->lang->line("RSS Feed has not any Channel");
+	    	return $response;
+	    }
+
+
+
+
 	    foreach($x->channel->item as $entry) 
 	    {
 	    	$element_list[$i]['title']= (string) $entry->title;

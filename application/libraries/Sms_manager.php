@@ -11,7 +11,8 @@ class Sms_manager{
 	protected $phone_numbner;
 	public $gateway_name;
 	protected $gateway_id;
-	protected $user_id; 
+	protected $user_id;
+	protected $finalized_http_url; 
 	
 	
 	function __construct(){
@@ -48,9 +49,11 @@ class Sms_manager{
     {
 		$where = array('where'=>array('id'=>$id));
 		$results = $this->CI->basic->get_data("sms_api_config",$where);
+
 		if(count($results)==0) return false;	
-		foreach($results as $info)
-		{	
+
+		foreach($results as $info) {
+
 			$gateway=$info['gateway_name'];
 			$auth_id=$info['username_auth_id'];
 			$token = $info['password_auth_token'];
@@ -58,6 +61,7 @@ class Sms_manager{
 			$phone_number=$info['phone_number'];
 			$api_id = $info['api_id'];
 			$gateway_id = $info['id'];
+			$finalized_http_url = $info['final_http_url'];
 		}
 		
 		$this->userid = $user_id;
@@ -68,6 +72,7 @@ class Sms_manager{
 		$this->gateway_id = $gateway_id;
 		$this->gateway_name = $gateway;
 		$this->phone_number = $phone_number;
+		$this->finalized_http_url = $finalized_http_url;
     }
 
     public function send_sms($msg, $recepient)
@@ -106,7 +111,6 @@ class Sms_manager{
 				return $message_info;
 			}
 		}
-	
 		/***Plivo sms sending option****/
 		// if($gateway=='plivo')
 		// {	
@@ -115,7 +119,7 @@ class Sms_manager{
 		// 		$message_info = $this->plivo_sms_send($this->phone_number,$to_number,$msg);
 		// 	}
 		// }
-		if($gateway=='plivo')
+		else if($gateway=='plivo')
 		{	
 			foreach($recepient as $to_number)
 			{
@@ -123,9 +127,8 @@ class Sms_manager{
 				$message_info = $this->plivo_sms_send($this->phone_number,$to_number,$msg);
 			}
 		}
-
 		/***Twilio sms sending option**/
-		if($gateway=='twilio')
+		else if($gateway=='twilio')
 		{
 			foreach($recepient as $to_number)
 			{
@@ -134,7 +137,7 @@ class Sms_manager{
 		}
 		/***2-way sms sending option****/
 		/***not used ****/
-		if($gateway=='2-way')
+		else if($gateway=='2-way')
 		{
 			foreach($recepient as $to_number)
 			{
@@ -142,15 +145,15 @@ class Sms_manager{
 			}
 		}
 		/**** Clickatell sending option *****/
-		if($gateway=='clickatell'){
+		else if($gateway=='clickatell'){
 				$msg=urlencode($msg);	
 			 	$message_info	= $this->clickatell_send_sms($recepient,$msg);
 		}
-		if($gateway=='clickatell-platform'){
+		else if($gateway=='clickatell-platform'){
 				$msg=urlencode($msg);	
 			 	$message_info = $this->clickatell_platform_send_sms($recepient,$msg);
 		}
-		if($gateway=='nexmo')
+		else if($gateway=='nexmo')
 		{
 			$msg=urlencode($msg);
 			
@@ -159,7 +162,7 @@ class Sms_manager{
 				$message_info	= $this->nexmo_send_sms($this->phone_number,$to_number,$msg);
 			}
 		}
-		if($gateway=='msg91.com')
+		else if($gateway=='msg91.com')
 		{
 			$msg=urlencode($msg);			
 			foreach($recepient as $to_number)
@@ -167,44 +170,42 @@ class Sms_manager{
 				$message_info	= $this->msg91_send_sms($this->phone_number,$to_number,$msg);
 			}
 		}
-		if($gateway == 'semysms.net')
+		else if($gateway == 'semysms.net')
 		{
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->semysms_send_sms($to_number,$msg);
 			}
 		}
-		if($gateway=='routesms.com')
+		else if($gateway=='routesms.com')
 		{				
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->send_sms_route($this->phone_number,$to_number,$msg,$hostname);
 			}
 		}
-
-		if($gateway=='textlocal.in')
+		else if($gateway=='textlocal.in')
 		{	
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->textlocal_in($this->phone_number,$to_number,$msg);
 			}
 		}
-		if($gateway=='sms4connect.com')
+		else if($gateway=='sms4connect.com')
 		{	
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->sms_4_connect($this->phone_number,$to_number,$msg);
 			}
 		}
-		if($gateway=='mvaayoo.com')
+		else if($gateway=='mvaayoo.com')
 		{	
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->mvaayoo_send_sms($this->phone_number,$to_number,$msg);
 			}
 		}
-
-		if($gateway=='telnor.com')
+		else if($gateway=='telnor.com')
 		{	
 			$auth_response_telnor=$this->telnor_session_id();
 			$session_id=$auth_response_telnor['session_id'];
@@ -213,62 +214,89 @@ class Sms_manager{
 				$message_info	= $this->telnor_send_sms($session_id,$this->phone_number,$to_number,$msg);
 			}	
 		}
-		if($gateway=='trio-mobile.com')
+		else if($gateway=='trio-mobile.com')
 		{	
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->cloudsm_trio_mobile_send_sms($this->phone_number,$to_number,$msg);
 			}
 		}
-		if($gateway == 'sms40.com')
+		else if($gateway == 'sms40.com')
 		{
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->send_sms_by_sms40($this->phone_number,$to_number,$msg);
 			}
 		}
-		if($gateway == 'africastalking.com')
+		else if($gateway == 'africastalking.com')
 		{
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->africastalking_send_sms($to_number,$msg);
 			}
 		}
-		
-		if($gateway == 'infobip.com')
+		else if($gateway == 'infobip.com')
 		{
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->infobip_send_sms($to_number,$msg);
 			}
 		}
-		if($gateway == 'smsgatewayme')
+		else if($gateway == 'smsgatewayme')
 		{
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->smsgatewayme_send_sms($to_number,$msg);
 			}
 		}
-		if($gateway == 'Shreeweb')
+		else if($gateway == 'Shreeweb')
 		{
 			foreach($recepient as $to_number)
 			{
 				$message_info	= $this->shreeweb_send_sms($to_number,$msg);
 			}
+		} else if ($gateway == 'custom'){
+
+
+			try {
+
+				$msg = urlencode($msg);
+		        $str_recepient = implode(',',$recepient);
+		        
+
+				$this->finalized_http_url = str_replace('#MESSAGE_CONTENT#', $msg, $this->finalized_http_url);
+				$this->finalized_http_url = str_replace('#DESTINATION_NUMBER#', $str_recepient, $this->finalized_http_url);
+
+		        $message_info['id'] = $this->run_curl($this->finalized_http_url); 
+
+		        if($message_info['id'] !='')
+					$message_info['status'] = "Submitted";
+				else
+					$message_info['status'] = "Something is wrong";
+
+		    } catch (Exception $e) {
+
+				$message_info['id'] ="";
+				$message_info['status'] = $e->getMessage();
+
+				return $message_info;
+			}
 		}
 		
 		/****Insert sms_history into database ****/
-		$user_id=$this->user_id;
-		$recepient_str=implode($recepient);
-		$time=date('Y-m-d H:i:s');
+		// $user_id=$this->user_id;
+		// $recepient_str=implode($recepient);
+		// $time=date('Y-m-d H:i:s');
 		
-		$message_id="";
-		if(isset($message_info['id']))$message_id=$message_info['id'];
+		// $message_id="";
+		// if(isset($message_info['id']))$message_id=$message_info['id'];
 
-		if(is_array($message_id)) $message_id=implode(',',$message_id);
+		// if(is_array($message_id)) $message_id=implode(',',$message_id);
 		
-		$message_status="";
-		if(isset($message_info['status']))$message_status=$message_info['status'];
+		// $message_status="";
+		// if(isset($message_info['status'])) {
+		// 	$message_status = $message_info['status'];
+		// }
 
 		// $in_data = array(
 		// 	'user_id' => $in_user_id,
@@ -562,13 +590,22 @@ class Sms_manager{
 				$response = trim($response);
 				$response_decode = json_decode($response,TRUE);
 				/** If no ID: is found then means error is occured **/
-				if(isset($response_decode['messages'][0]['apiMessageId']) && $response_decode['messages'][0]['accepted']== 'true' && $response_decode['messages'][0]['apiMessageId'] !='null')
-				{
+				if(isset($response_decode['messages'][0]['apiMessageId']) && $response_decode['messages'][0]['accepted']== 'true' && $response_decode['messages'][0]['apiMessageId'] !='null') {
+
 					$message_info['id'] = $response_decode['messages'][0]['apiMessageId'];
 				}
-				else
-				{
-					$message_info['status']= $response_decode['messages'][0]['errorDescription'];
+				else {
+					if(isset($response_decode['messages'][0]['errorDescription']) && !empty($response_decode['messages'][0]['errorDescription'])) {
+
+						$message_info['status']= $response_decode['messages'][0]['errorDescription'];
+
+					} else if(isset($response_decode['errorDescription']) && !empty($response_decode['errorDescription'])) {
+
+						$message_info['status']= $response_decode['errorDescription'];
+						
+					} else {
+						$message_info['status'] = $this->lang->line('something went wrong.');
+					}
 				}
 			}		
 			else

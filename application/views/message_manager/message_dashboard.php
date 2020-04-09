@@ -108,11 +108,11 @@
             <div class="modal-body" id="conversation_modal_body">                
 
             </div>
-            <div class="modal-footer">
+            <!-- <div class="modal-footer">
               <input class="form-control" type="text" placeholder="<?php echo $this->lang->line('type your reply message here');?>" id="reply_message" name="reply_message">
               <br>
               <button class="btn btn-primary btn-sm" id="final_reply_button" style="margin-top: 5px;"><i class="fa fa-send"></i> <?php echo $this->lang->line('send') ?></button>
-            </div>
+            </div> -->
         </div>
     </div>
 </div>

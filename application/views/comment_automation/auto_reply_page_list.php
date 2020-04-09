@@ -104,6 +104,16 @@
 		</div>
 	  </div>
 </section>
+<div class='text-center' style='padding:12px;border:.5px solid #dee2e6; color:#6777ef;background: #fff;'><?php echo $this->lang->line("الكومنت الاتوماتيكي : هو عبارة عن كومنت يتم وضعه على بوست محدد من الصفحة ويكون باسم الصفحة , بالتالي هذا البوست سيعود للظهور عند الفانز , خصوصا إولئك الذين وضعوا لايك, كومنت, تفاعل على هذا المنشور, وأيضا سيظهر لأصدقائهم بالتالي سيزيد تفاعل المنشور وبالتالي تفاعل الصفحة."); ?> 
+  <?php if(strtotime(date("Y-m-d")) <= strtotime("2024-3-4")) echo "<br><br><p class='text-danger'>".$this->lang->line("الرد التلقائي : يكون على مستوى الكومنتات والتعليقات فقط , فهو عبارة عن أدارة تستخدم للرد على تعليقات وتساؤلات الزبائن أو المستخدمين على المنشور الواحد الذي تم تفعيله للرد التلقائي, أو على مستوى كل منشورات الصفحة , وهنا يجب عليك استخدام الردود التلقائية على مستوى الصفحة .")."<p>"; ?>
+</div>
+
+	<!--<div class="section-header1">
+     
+<h1> ملاحظة هامة : هناك فرق كبير بين مصطلح الكومنت الاتوماتيكي والرد التلقائي.</h1>
+            <h1> <?php echo $this->lang->line("الكومنت التلقائي");?><a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("كومنت على البوست") ?>" data-content="<?php echo $this->lang->line("هو كومنت باسم الصفحة على بوستات محددة يهدف إلى زيادة التفاعل للصفحة وزيادة فرص رؤية البوستات من قبل الفانز") ?>"><i class='fas fa-info-circle'></i> </a></h1> <h1>هو كومنت باسم الصفحة لزيادة التفاعل, بينما</h1>
+            <h1> <?php echo $this->lang->line("الرد التلقائي");?><a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("على مستوى البوست المحدد فقط") ?>" data-content="<?php echo $this->lang->line("هو رد اتوماتيكي على كومنتات المستخدمين أو الفانز والذين وضعوا كومنت على بوستات الصفحة") ?>"><i class='fas fa-info-circle'></i> </a></h1><h1>هو رد باسم الصفحة على كومنت المستخدم</h1>
+        </div>-->
 
 
 <?php if(empty($page_info))

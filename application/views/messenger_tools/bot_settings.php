@@ -320,7 +320,7 @@
 
                             <div class="form-group">
                               <label><?php echo $this->lang->line("Please provide your media URL"); ?>
-                                <a href="#" class="media_template_modal" title="<?php echo $this->lang->line("How to get meida URL?"); ?>"><i class='fa fa-info-circle'></i> </a>
+                                <a href="#" class="media_template_modal" title="<?php echo $this->lang->line("How to get media URL?"); ?>"><i class='fa fa-info-circle'></i> </a>
                               </label>
                   
                               <div class="clearfix"></div>
@@ -988,7 +988,8 @@
         <th class="text-center"><?php echo $this->lang->line("SL");?></th>
         <th class="text-center"><?php echo $this->lang->line("Bot Name");?></th>
         <th class="text-center"><?php echo $this->lang->line("Keywords");?></th>
-        <th class="text-center"><?php echo $this->lang->line("Type");?></th>
+        <th class="text-center"><?php echo $this->lang->line("Status");?></th>
+        <!-- <th class="text-center"><?php echo $this->lang->line("Type");?></th> -->
         <th class="text-center"><?php echo $this->lang->line("Actions");?></th>
       </tr>
     </thead>
@@ -1014,13 +1015,30 @@
         }
         else $keywords_display =  "<span class='label label-light orange'><i class='fa fa-remove'></i></span>";
 
+        if ($value['status'] == '1') {
+            $current_status = '<i class="fas fa-dot-circle green"></i> '.$this->lang->line("Live");
+        } else {
+            $current_status = '<i class="fas fa-dot-circle gray"></i> '.$this->lang->line("Paused");
+        }
+
         echo "<tr>";
           echo "<td class='text-center'>".$i."</td>";
           echo "<td>".$value['bot_name']."</td>";
           echo "<td>".$keywords_display."</td>";
-          echo "<td class='text-center'>".$this->lang->line($value['keyword_type'])."</td>";
+          echo "<td class='text-center'>".$current_status."</td>";
+          // echo "<td class='text-center'>".$this->lang->line($value['keyword_type'])."</td>";
 
           $editurl = base_url("messenger_bot/edit_bot/".$value['id']);
+
+          if ($value['status'] == '1') {
+
+            $state_text = $this->lang->line("Stop");
+            $state_icon = '<i class="far fa-stop-circle"></i>';
+          } else {
+
+            $state_text = $this->lang->line("Start");
+            $state_icon = '<i class="far fa-play-circle"></i>';
+          }
 
           if(isset($iframe) && $iframe=='1') 
           {
@@ -1030,7 +1048,8 @@
             echo '<a href="#" data-toggle="dropdown" class="btn btn-outline-primary btn-circle dropdown-toggle bot_actions no_caret"><i class="fas fa-briefcase"></i></a> 
             
             <ul class="dropdown-menu dropdown-menu-sm dropdown-menu-right">
-             <div class="dropdown-title">Actions</div>
+             <div class="dropdown-title">الأجراءات</div>
+             <li><a class="dropdown-item has-icon bot_status_btn" href="#" table_id="'.$value['id'].'">'.$state_icon.' '.$state_text.'</a></li>
              <li><a class="dropdown-item has-icon" href="'.$editurl.'"><i class="fas fa-edit"></i> '.$this->lang->line("Edit Bot Reply").'</a></li>
              <div class="dropdown-divider"></div>
              <li><a class="dropdown-item has-icon delete_bot red" href="" id="'.$value['id'].'"><i class="fas fa-trash-alt"></i> '.$this->lang->line("Delete Bot Reply").'</a></li>
@@ -2888,6 +2907,49 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
     });
 
 
+    $(document).on('click', '.bot_status_btn', function(event) {
+        event.preventDefault();
+        
+        let table_id = $(this).attr('table_id');
+
+        swal({
+            title: 'تحذير',
+            text: '<?php echo $this->lang->line("Do you really want to change this state?"); ?>',
+            icon: 'warning',
+            buttons: true,
+            dangerMode: true
+        }).then(willChangeState => {
+            if (willChangeState) {
+                $.ajax({
+                  url: '<?php echo base_url("messenger_bot/change_bot_state"); ?>',
+                  type: 'POST',
+                  dataType: 'json',
+                  data: {table_id: table_id},
+                  success: function (response) {
+
+                      if (response.status == 'success') {
+                          iziToast.success({
+                              title: '<?php echo $this->lang->line("Success"); ?>',
+                              message: response.message,
+                              position: 'bottomRight'
+                          });
+                      } else if (response.status == 'error') {
+                          iziToast.error({
+                            title: '<?php echo $this->lang->line("Error"); ?>',
+                            message: response.message,
+                            position: 'bottomRight'
+                          });
+                      }
+
+                      window.location.reload();
+                  }
+                });
+                
+            }
+        });
+    });
+
+
   }); 
 
  function refresh_template(is_from_add_button='1')
@@ -2949,7 +3011,7 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("How to get meida URL?"); ?></h5>
+        <h5 class="modal-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("How to get media URL?"); ?></h5>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body">

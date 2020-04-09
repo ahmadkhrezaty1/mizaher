@@ -68,8 +68,7 @@
                 <div class="card">
                   <div class="card-header">
                     <h4><i class="fas fa-circle"></i> 
-                      <?php echo $this->lang->line("Messenger Broadcasting");?>
-                      <?php if($this->basic->is_exist("modules",array("id"=>263))) echo " & ".$this->lang->line("Email Sending"); ?>
+                      <?php echo $this->lang->line("Broadcasting");?>
                       <code><?php echo $this->lang->line("Once/Minute"); ?></code></h4>
                   </div>
                   <div class="card-body">

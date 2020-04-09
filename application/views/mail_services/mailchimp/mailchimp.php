@@ -1,6 +1,6 @@
 <section class="section section_custom">
 	<div class="section-header">
-		<h1><?php echo $this->lang->line("Mailchimp Integration"); ?></h1>
+		<h1><i class="fab fa-mailchimp"></i> <?php echo $this->lang->line("Mailchimp Integration"); ?></h1>
 		
 		<div class="section-header-button">
 			<a class="btn btn-primary add_connector" id="add_feed" href="#" data-target="#mailchimp-integration-modal" data-toggle="modal">
@@ -10,7 +10,6 @@
 
 		<div class="section-header-breadcrumb">
 		  <div class="breadcrumb-item active"><a href="<?php echo base_url('messenger_bot/index'); ?>"><?php echo $this->lang->line("Messenger Bot"); ?></a></div>
-		  <!-- <div class="breadcrumb-item active"><a href="<?php echo base_url('mailchimp/mailchimp_manager'); ?>"><?php echo $this->lang->line("Mailchimp Integration"); ?></a></div> -->
 		  <div class="breadcrumb-item"><?php echo $page_title; ?></div>
 		</div>
 	</div>
@@ -39,7 +38,7 @@
 	</div>
 </section>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="mailchimp-integration-modal" aria-hidden="true">
+<div class="modal fade" tabindex="-1" role="dialog" id="mailchimp-integration-modal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -73,10 +72,9 @@
                         </div>
                     </div>
                 
-                	<!-- <a href="#" data-toggle="tooltip" title="" data-original-title='To get mailchimp API key log into your mailchimp account, then go to "Account" menu where you would get a tab called "Extras". Click on the tab and you should see "API Keys" menu.'><?= $this->lang->line('How to get mailchimp api key?') ?></a> -->
-		            <div class="mt-4">           
-		            	<button type="submit" class="btn btn-primary btn-shadow float-left" id="mailchimp-submit-button"><?= $this->lang->line('Save') ?></button>
-		            	<button type="button" class="btn btn-secondary btn-shadow float-right" data-dismiss="modal"><?= $this->lang->line('Cancel') ?></button>
+		            <div class="mt-5">           
+		            	<button type="submit" class="btn btn-primary btn-shadow float-left" id="mailchimp-submit-button"><i class="fas fa-save"></i> <?= $this->lang->line('Save') ?></button>
+		            	<button type="button" class="btn btn-light btn-shadow float-right" data-dismiss="modal"><i class="fas fa-times"></i> <?= $this->lang->line('Cancel') ?></button>
 		            </div>
 	            </form>
             </div>
@@ -84,7 +82,7 @@
     </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="mailchimp-details-modal" aria-hidden="true">
+<div class="modal fade" tabindex="-1" role="dialog" id="mailchimp-details-modal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -116,7 +114,7 @@
 
 <script>
 	$(document).ready(function() {
-
+		var perscroll1;
 		var data_table = $('#mailchimp-datatable').DataTable({
 	      	processing: true,
 	      	serverSide: true,
@@ -124,11 +122,7 @@
 			pageLength: 10,	        
 	        ajax: {
 	        	url: '<?= base_url('email_auto_responder_integration/mailchimp_grid_data') ?>',
-	        	type: 'POST',
-	        	dataSrc: function (json) {
-	                $(".table-responsive").niceScroll();
-	                return json.data;
-	            },
+	        	type: 'POST'
 	        },
 	        columns: [
 			    {data: 'id'},
@@ -145,9 +139,28 @@
 				{
 				    targets: [0],
 				    visible: false
+				},
+				{
+				    targets: [4],
+				    className: 'text-center'
 				}
 			],
 			dom: '<"top"f>rt<"bottom"lip><"clear">',
+			fnInitComplete:function(){  // when initialization is completed then apply scroll plugin
+			  if(areWeUsingScroll)
+			  {
+			    if (perscroll1) perscroll1.destroy();
+			    perscroll1 = new PerfectScrollbar('#mailchimp-datatable_wrapper .dataTables_scrollBody');
+			  }
+			},
+			scrollX: 'auto',
+			fnDrawCallback: function( oSettings ) { //on paginition page 2,3.. often scroll shown, so reset it and assign it again 
+			  if(areWeUsingScroll)
+			  { 
+			    if (perscroll1) perscroll1.destroy();
+			    perscroll1 = new PerfectScrollbar('#mailchimp-datatable_wrapper .dataTables_scrollBody');
+			  }
+			}
 		});		
 
 		$(document).on('submit', '#mailchimp-integration-form', function(event) {

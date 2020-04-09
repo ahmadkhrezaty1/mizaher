@@ -19,6 +19,7 @@ class Sms_email_manager extends Home
         }
 
         $this->load->library('Sms_manager');
+        $this->load->library('Email_manager');
 
         set_time_limit(0);
         $this->important_feature();
@@ -87,10 +88,10 @@ class Sms_email_manager extends Home
         $total_rows_array = $this->basic->count_row($table,$where,$count="id",$join="",$group_by='');
         $total_result=$total_rows_array[0]['total_rows'];
 
-        // 'username_auth_id','password_auth_token','api_id','remaining_credetis',
 
         for($i = 0; $i < count($info); $i++)
         {
+
             $status = $info[$i]["status"];
             if($status=='1') $info[$i]["status"] = "<i title ='".$this->lang->line('Active')."'class='status-icon fas fa-toggle-on text-primary'></i>";
             else $info[$i]["status"] = "<i title ='".$this->lang->line('Inactive')."'class='status-icon fas fa-toggle-off gray'></i>";
@@ -100,13 +101,25 @@ class Sms_email_manager extends Home
             else
                 $info[$i]['phone_number'] = "-";
 
-            $info[$i]['actions'] = "<div style='min-width:100px;'><a href='#' title='".$this->lang->line("View Details")."' class='btn btn-circle btn-outline-primary see_api_details' table_id='".$info[$i]['id']."'><i class='fas fa-info-circle'></i></a>&nbsp;&nbsp;";
+            $info[$i]['actions'] = "<div style='min-width:100px;'><a href='#' title='".$this->lang->line("Send Test SMS")."' class='btn btn-circle btn-outline-primary test_sms' gateway_name='".$info[$i]['gateway_name']."' table_id='".$info[$i]['id']."'><i class='fa fa-paper-plane'></i></a>&nbsp;&nbsp;";
 
-            $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("Edit API")."' class='btn btn-circle btn-outline-warning edit_api' gateway='".$info[$i]['gateway_name']."' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
+            $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("View Details")."' class='btn btn-circle btn-outline-info see_api_details' table_id='".$info[$i]['id']."'><i class='fas fa-info-circle'></i></a>&nbsp;&nbsp;";
+            
+
+            $edit_class = '';
+            if ($info[$i]['gateway_name'] == 'custom') {
+                $edit_class = 'edit_custom_api';
+                $info[$i]['gateway_name'] = $this->lang->line("Custom")." - ". $info[$i]['custom_name'];
+            } else {
+                $edit_class = 'edit_api';
+            }
+
+            $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("Edit API")."' class='btn btn-circle btn-outline-warning ". $edit_class . "' gateway='".$info[$i]['gateway_name']."' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
 
             $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("Delete API")."' class='btn btn-circle btn-outline-danger delete_api' table_id='".$info[$i]['id']."'><i class='fa fa-trash-alt'></i></a></div>
-            	<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
+                <script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
         }
+
 
         $data['draw'] = (int)$_POST['draw'] + 1;
         $data['recordsTotal'] = $total_result;
@@ -214,6 +227,34 @@ class Sms_email_manager extends Home
     		echo json_encode($return_response);
     	}
 
+    }
+
+    public function send_test_sms()
+    {
+        if($this->session->userdata('user_type') != 'Admin' && !in_array(264,$this->module_access)) exit;
+        $this->ajax_check();
+
+        $result = [];
+        $table_id = $this->input->post('table_id',true);
+        $test_gateway_name = trim($this->input->post('test_gateway_name',true));
+        $number = trim($this->input->post('number',true));
+        $message = $this->input->post('message',true);
+        $user_id = $this->user_id;
+
+        if($table_id == "" || $table_id == 0) exit;
+
+        // set credential for sms api
+        $this->sms_manager->set_credentioal($table_id,$user_id);
+        $response = $this->sms_manager->send_sms($message, $number);
+        
+        if($test_gateway_name != 'custom') {
+            echo json_encode($response);
+        } else if($test_gateway_name == 'custom') {
+            unset($response['status']);
+            echo isset($response['id']) ? $response['id']: "";
+        } else {
+            echo json_encode(['response'=>"something went wrong, please try once again"]);
+        }
     }
 
     public function ajax_get_api_info_for_update()
@@ -357,7 +398,6 @@ class Sms_email_manager extends Home
             echo json_encode($return_response);
         }
     }
-    
 
     public function delete_sms_api()
     {
@@ -1436,9 +1476,9 @@ class Sms_email_manager extends Home
             if($status=='1') $info[$i]["status"] = "<i title ='".$this->lang->line('Active')."'class='status-icon fas fa-toggle-on text-primary'></i>";
             else $info[$i]["status"] = "<i title ='".$this->lang->line('Inactive')."'class='status-icon fas fa-toggle-off gray'></i>";
 
-            $info[$i]['actions'] = "<div style='min-width:140px'><a href='#' title='".$this->lang->line("Send Test Mail")."' class='btn btn-circle btn-outline-primary send_testmail' table_id='".$info[$i]['id']."'><i class='fa fa-paper-plane'></i></a>&nbsp;<a href='#' title='".$this->lang->line("Edit")."' class='btn btn-circle btn-outline-warning edit_smtp' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;";
+            $info[$i]['actions'] = "<div style='min-width:140px'><a href='#' data-toggle='tooltip' title='".$this->lang->line("Send Test Mail")."' class='btn btn-circle btn-outline-primary send_testmail' table_id='".$info[$i]['id']."'><i class='fa fa-paper-plane'></i></a>&nbsp;<a href='#' data-toggle='tooltip' title='".$this->lang->line("Edit")."' class='btn btn-circle btn-outline-warning edit_smtp' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;";
 
-            $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("Delete")."' class='btn btn-circle btn-outline-danger delete_smtp' table_id='".$info[$i]['id']."'><i class='fa fa-trash-alt'></i></a></div>
+            $info[$i]['actions'] .= "<a href='#' data-toggle='tooltip' title='".$this->lang->line("Delete")."' class='btn btn-circle btn-outline-danger delete_smtp' table_id='".$info[$i]['id']."'><i class='fa fa-trash-alt'></i></a></div>
                 <script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
         }
 
@@ -1452,7 +1492,7 @@ class Sms_email_manager extends Home
         
     }
 
-    public function send_test_mail_smtp()
+    public function send_test_mail()
     {
         if($this->session->userdata('user_type') != 'Admin' && !in_array(263,$this->module_access)) exit;
 
@@ -1467,7 +1507,26 @@ class Sms_email_manager extends Home
         if($_POST) {
 
             $email_table_id = $this->input->post("table_id",true);
-            $from_email = "smtp_".$email_table_id;
+            $service_type = $this->input->post("service_type",true);
+
+            if($service_type == "smtp") {
+
+                $from_email = "smtp_".$email_table_id;
+
+            } else if($service_type == "mailgun") {
+
+                $from_email = "mailgun_".$email_table_id;
+
+            } else if($service_type == "sendgrid") {
+
+                $from_email = "sendgrid_".$email_table_id;
+                
+            } else if($service_type == "mandrill") {
+
+                $from_email = "mandrill_".$email_table_id;
+                
+            }
+
             $to_email = trim($this->input->post("email"));
             $subject = trim($this->input->post("subject"));
             $message = $this->input->post("message");
@@ -1510,6 +1569,8 @@ class Sms_email_manager extends Home
             $save_data['smtp_password'] = trim(strip_tags($smtp_password));
             $save_data['smtp_type']     = trim(strip_tags($smtp_type));
             $save_data['status']        = trim(strip_tags($smtp_status));
+            $save_data['sender_name']   = trim(strip_tags($sender_name));
+
             if($this->basic->insert_data("email_smtp_config",$save_data))
             {
                 $ret['status'] = '1';
@@ -1544,6 +1605,7 @@ class Sms_email_manager extends Home
         $smtp_pass  = $smtp_api_info[0]['smtp_password'];
         $smtp_type  = $smtp_api_info[0]['smtp_type'];
         $status     = $smtp_api_info[0]['status'];
+        $sender_name= $smtp_api_info[0]['sender_name'];
 
         if($smtp_type == "Default") $default_selected = "selected";
         else $default_selected = ""; 
@@ -1611,6 +1673,15 @@ class Sms_email_manager extends Home
                                 </label>
                             </div>
                         </div>
+
+                          <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>'.$this->lang->line('Sender Name').'</label>
+                                <input type="text" class="form-control" id="updated_sender_name" name="sender_name" value="'.$sender_name.'">
+                            </div>
+                        </div>
+
+
                     </div>
                 </form>
             </div>
@@ -1650,6 +1721,8 @@ class Sms_email_manager extends Home
             $save_data['smtp_password'] = trim(strip_tags($smtp_password));
             $save_data['smtp_type']     = trim(strip_tags($smtp_type));
             $save_data['status']        = trim(strip_tags($smtp_status));
+            $save_data['sender_name']   = trim(strip_tags($sender_name));
+
             if($this->basic->update_data("email_smtp_config",array("user_id"=>$this->user_id,'id'=>$table_id),$save_data))
             {
                 $ret['status'] = '1';
@@ -1736,9 +1809,11 @@ class Sms_email_manager extends Home
             if($status=='1') $info[$i]["status"] = "<i title ='".$this->lang->line('Active')."'class='status-icon fas fa-toggle-on text-primary'></i>";
             else $info[$i]["status"] = "<i title ='".$this->lang->line('Inactive')."'class='status-icon fas fa-toggle-off gray'></i>";
 
-            $info[$i]['actions'] = "<div style='min-width:100px'><a href='#' title='".$this->lang->line("Edit")."' class='btn btn-circle btn-outline-warning edit_mailgun_api' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
+            $info[$i]['actions'] = "<div style='min-width:150px'><a href='#' data-toggle='tooltip' title='".$this->lang->line("Send Test Mail")."' class='btn btn-circle btn-outline-primary send_testmail' table_id='".$info[$i]['id']."'><i class='fa fa-send'></i></a>&nbsp;&nbsp;";
 
-            $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("Delete")."' class='btn btn-circle btn-outline-danger delete_mailgun_api' table_id='".$info[$i]['id']."'><i class='fa fa-trash-alt'></i></a></div>
+            $info[$i]['actions'] .= "<a href='#' data-toggle='tooltip' title='".$this->lang->line("Edit")."' class='btn btn-circle btn-outline-warning edit_mailgun_api' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
+
+            $info[$i]['actions'] .= "<a href='#' data-toggle='tooltip' title='".$this->lang->line("Delete")."' class='btn btn-circle btn-outline-danger delete_mailgun_api' table_id='".$info[$i]['id']."'><i class='fa fa-trash-alt'></i></a></div>
                 <script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
         }
 
@@ -1968,7 +2043,9 @@ class Sms_email_manager extends Home
             if($status=='1') $info[$i]["status"] = "<i title ='".$this->lang->line('Active')."'class='status-icon fas fa-toggle-on text-primary'></i>";
             else $info[$i]["status"] = "<i title ='".$this->lang->line('Inactive')."'class='status-icon fas fa-toggle-off gray'></i>";
 
-            $info[$i]['actions'] = "<div style='min-width:100px'><a href='#' title='".$this->lang->line("Edit")."' class='btn btn-circle btn-outline-warning edit_mandrill_api' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
+            $info[$i]['actions'] = "<div style='min-width:150px'><a href='#' data-toggle='tooltip' title='".$this->lang->line("Send Test Mail")."' class='btn btn-circle btn-outline-primary send_testmail' table_id='".$info[$i]['id']."'><i class='fa fa-send'></i></a>&nbsp;&nbsp;";
+
+            $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("Edit")."' class='btn btn-circle btn-outline-warning edit_mandrill_api' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
 
             $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("Delete")."' class='btn btn-circle btn-outline-danger delete_mandrill_api' table_id='".$info[$i]['id']."'><i class='fa fa-trash-alt'></i></a></div>
                 <script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
@@ -2200,9 +2277,11 @@ class Sms_email_manager extends Home
             if($status=='1') $info[$i]["status"] = "<i title ='".$this->lang->line('Active')."'class='status-icon fas fa-toggle-on text-primary'></i>";
             else $info[$i]["status"] = "<i title ='".$this->lang->line('Inactive')."'class='status-icon fas fa-toggle-off gray'></i>";
 
-            $info[$i]['actions'] = "<div style='min-width:100px'><a href='#' title='".$this->lang->line("Edit")."' class='btn btn-circle btn-outline-warning edit_sendgrid_api' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
+            $info[$i]['actions'] = "<div style='min-width:100px'><a href='#' data-toggle='tooltip' title='".$this->lang->line("Send Test Mail")."' class='btn btn-circle btn-outline-primary send_testmail' table_id='".$info[$i]['id']."'><i class='fa fa-send'></i></a>&nbsp;&nbsp;";
 
-            $info[$i]['actions'] .= "<a href='#' title='".$this->lang->line("Delete")."' class='btn btn-circle btn-outline-danger delete_sendgrid_api' table_id='".$info[$i]['id']."'><i class='fa fa-trash-alt'></i></a></div>
+            $info[$i]['actions'] .= "<a href='#' data-toggle='tooltip' title='".$this->lang->line("Edit")."' class='btn btn-circle btn-outline-warning edit_sendgrid_api' table_id='".$info[$i]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
+
+            $info[$i]['actions'] .= "<a href='#' data-toggle='tooltip' title='".$this->lang->line("Delete")."' class='btn btn-circle btn-outline-danger delete_sendgrid_api' table_id='".$info[$i]['id']."'><i class='fa fa-trash-alt'></i></a></div>
                 <script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
         }
 
@@ -2437,7 +2516,7 @@ class Sms_email_manager extends Home
 
         $where  = array('where'=>$where_simple);
         $join   = array("sms_api_config" => "sms_sending_campaign.api_id=sms_api_config.id,left");
-        $select = array("sms_sending_campaign.*","sms_api_config.gateway_name","sms_api_config.phone_number AS api_phone");
+        $select = array("sms_sending_campaign.*","sms_api_config.gateway_name","sms_api_config.custom_name","sms_api_config.phone_number AS api_phone");
 
         $table = "sms_sending_campaign";
         $info = $this->basic->get_data($table,$where,$select,$join,$limit,$start,$order_by,$group_by='');
@@ -2450,19 +2529,23 @@ class Sms_email_manager extends Home
             $action_count = 3;
             $posting_status = $info[$i]['posting_status'];
 
+            if ($info[$i]['gateway_name'] == 'custom') {
+                $info[$i]['gateway_name'] = $this->lang->line("Custom - "). $info[$i]['custom_name'];
+            }
+
             if($info[$i]['api_phone'] != "")
                 $info[$i]['send_as'] = $info[$i]['gateway_name'].' : '.$info[$i]['api_phone'];
             else
                 $info[$i]['send_as'] = $info[$i]['gateway_name'];
 
             if($info[$i]['schedule_time'] != "0000-00-00 00:00:00")
-                $info[$i]['schedule_time'] = "<div style='min-width:100px !important;'>".date("M j, y H:i",strtotime($info[$i]['schedule_time']))."</div>";
+                $info[$i]['schedule_time'] = "<div style='min-width:100px !important;'>".date("M j, Y H:i",strtotime($info[$i]['schedule_time']))."</div>";
             else 
                 $info[$i]['schedule_time'] = "<div style='min-width:100px !important;' class='text-muted'><i class='fas fa-exclamation-circle'></i> ".$this->lang->line('Not Scheduled')."</div>";
 
             // added date
             if($info[$i]['created_at'] != "0000-00-00 00:00:00")
-                $info[$i]['created_at'] = "<div style='min-width:100px !important;'>".date("M j, y H:i",strtotime($info[$i]['created_at']))."</div>";
+                $info[$i]['created_at'] = "<div style='min-width:100px !important;'>".date("M j, Y H:i",strtotime($info[$i]['created_at']))."</div>";
 
             // generating delete button
             if($posting_status=='1')
@@ -2585,7 +2668,6 @@ class Sms_email_manager extends Home
         }
     }
 
-
     public function ajax_get_sms_campaign_report_info()
     {
         if($this->session->userdata('user_type') != 'Admin' && !in_array(264,$this->module_access)) exit;
@@ -2593,9 +2675,10 @@ class Sms_email_manager extends Home
         $this->ajax_check();
 
         $table_id = $this->input->post('table_id');
-        $searching = trim($this->input->post("searching",true));
+        $search_value = trim($this->input->post("searching",true));  
 
-        $display_columns = array("#","contact_first_name","contact_last_name","contact_phone_number","sent_time","delivery_id");
+        $display_columns = array("#","id","contact_first_name","contact_last_name","contact_phone_number","sent_time","delivery_id");
+        $search_columns = array('contact_first_name','contact_last_name', 'contact_phone_number');
 
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
         $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
@@ -2605,118 +2688,55 @@ class Sms_email_manager extends Home
         $order = isset($_POST['order'][0]['dir']) ? strval($_POST['order'][0]['dir']) : 'desc';
         $order_by=$sort." ".$order;
 
-        $where['where'] = array('id'=> $table_id);
+        $where_custom ="campaign_id = ".$table_id." AND user_id = ".$this->user_id;
 
-        $table="sms_sending_campaign";
-        $info = $this->basic->get_data($table,$where,$select='');
+        if ($search_value != '') {
 
-        if(isset($info[0]['report']) && $info[0]['report'] != '')
-        {
-            $campaign_details = $info[0];
-
-            $report_info = json_decode($campaign_details['report'],true);
-            $reply_info = $report_info;
-
-            $reply_info = array_filter($reply_info, function($single_reply) use ($searching) 
-            {
-                if ($searching != '') {
-
-                    if (stripos($single_reply['contact_username'], $searching) !== false || stripos($single_reply['contact_phone_number'], $searching) !== false) 
-                    {
-                        return TRUE; 
-                    }
-                    else
-                    {
-                        return FALSE;  
-                    }
-                }
-                else
-                {
-                    return TRUE;
-                }
-
-            });
-
-
-            usort($reply_info, function($first, $second) use ($sort, $order)
-            {
-                if ($first[$sort] == $second[$sort]) {
-                    return 0;
-                }
-                else if ($first[$sort] > $second[$sort]) {
-                    if ($order == 'desc') return 1;
-                    else return -1;
-                }
-                else if ($first[$sort] < $second[$sort]) {
-                    if ($order == 'desc') return -1;
-                    else return 1;
-                }
-
-            });
-
-
-            $final_info = array();
-            $i = 0;
-            $upper_limit = $start + $limit;
-
-            foreach ($reply_info as $key => $value) { 
-
-                if ($i >= $start && $i < ($upper_limit))
-                    array_push($final_info, $value);
-
-                $i++;
-            }
-
-            $result = array();
-            foreach ($final_info as $value) {
-
-                $temp = array();
-                array_push($temp, ++$start);
-
-                $contact_first_name = $value['contact_first_name'];
-                $contact_last_name = $value['contact_last_name'];
-                $sentime = $value['sent_time'];
-
-                if($value['sent_time'] == "pending") $sentTime = "x";
-
-                foreach ($value as $key => $column) 
-                {
-                    if($key=='contact_first_name' && $contact_first_name == "")
-                        $column = "<div class='text-center'>-</div>";
-
-                    if($key=='contact_last_name' && $contact_last_name == "")
-                        $column = "<div class='text-center'>-</div>";
-
-                    if ($key == 'sent_time' && $sentime != "pending")
-                        $column = "<div style='min-width:110px;'>".date('M j, y H:i', strtotime($column))."</div>";                    
-
-                    if ($key == 'sent_time' && $column == 'pending')
-                        $column = 'x';
-
-                    if($key=='delivery_id' && $column == 'pending')
-                        $column = '<div style="min-width:100px"><span class="text-danger"><i class="fas fa-times"></i> '.ucfirst($column).'</span></div>';
-
-                    if (in_array($key, $display_columns)) 
-                        array_push($temp, $column);
-                }
-
-                array_push($result, $temp);
-            }
-
-        }
-        else {
-
-            $total_result = 0;
-            $reply_info = array();
-            $result = array();
+            foreach ($search_columns as $key => $value) 
+            $temp[] = $value." LIKE "."'%$search_value%'";
+            $imp = implode(" OR ", $temp);
+            $where_custom .=" AND (".$imp.") ";
         }
 
-        $total_result = count($reply_info);
+        $table = "sms_sending_campaign_send";
+        $this->db->where($where_custom);
+        $info = $this->basic->get_data($table,$where='',$select='',$join='',$limit,$start,$order_by,$group_by='');
+
+        $this->db->where($where_custom);
+        $total_rows_array = $this->basic->count_row($table,$where='',$count="id",$join='',$group_by='');
+        $total_result = $total_rows_array[0]['total_rows'];
+
+        for ($i=0; $i <count($info) ; $i++) { 
+
+            if($info[$i]['contact_first_name'] == "") $info[$i]['contact_first_name'] = "<div class='text-center'>-</div>";
+            if($info[$i]['contact_last_name'] == "") $info[$i]['contact_last_name'] = "<div class='text-center'>-</div>";
+
+            $info[$i]['contact_phone_number'] = '<div style="width:150px;">'.$info[$i]['contact_phone_number'].'</div>';
+
+            if($info[$i]['delivery_id'] != 'pending') {
+
+                $info[$i]['delivery_id'] = $info[$i]['delivery_id'];
+            }
+            else {
+
+                $info[$i]['delivery_id'] = '<div style="min-width:100px"><span class="text-danger badge"><i class="far fa-times-circle"> '.ucfirst($info[$i]['delivery_id']).'</span></div>';
+            }
+
+            if($info[$i]['sent_time'] != "0000-00-00 00:00:00") {
+
+                $info[$i]['sent_time'] = "<div style='min-width:120px !important;'>".date("M j, Y H:i",strtotime($info[$i]['sent_time']))."</div>";
+
+            } else {
+
+                $info[$i]['sent_time'] = "<div class='text-center'>x</div>";
+            }
+        }
+
+
         $data['draw'] = (int)$_POST['draw'] + 1;
         $data['recordsTotal'] = $total_result;
         $data['recordsFiltered'] = $total_result;
-        $data['data'] = $result;
-
+        $data['data'] = convertDataTableResult($info, $display_columns ,$start,$primary_key="id");
 
         echo json_encode($data);
     }
@@ -2982,14 +3002,19 @@ class Sms_email_manager extends Home
         }
 
         $sms_api_config_option=array();
-        foreach ($sms_api_config as $info) {
+        foreach ($sms_api_config as &$info) {
+
+            $info['gateway_name'] = ($info['gateway_name'] == 'custom') ? $this->lang->line('Custom API')." : ".$info['custom_name'] : $info['gateway_name'];
+            
             $id=$info['id'];
 
             if($info['phone_number'] !="")
                 $sms_api_config_option[$id]=$info['gateway_name'].": ".$info['phone_number'];
             else
                 $sms_api_config_option[$id]=$info['gateway_name'];
+
         }
+        unset($info);
 
         $data['sms_option'] = $sms_api_config_option;
         $data['groups_name']  = isset($group_name) ? $group_name: "";
@@ -3118,7 +3143,6 @@ class Sms_email_manager extends Home
                     }
                     else if(isset($country_code_remove) && $country_code_remove != '')
                     {
-                        // $lead_value['phone_number'] = preg_replace("/^\+?{$country_code_remove}/", '',$lead_value['phone_number']);
                         if(preg_match("/^\+?{$country_code_remove}/",$lead_value['phone_number'])) {
                             $lead_value['phone_number'] = preg_replace("/^\+?{$country_code_remove}/",'',$lead_value['phone_number']);
                         }
@@ -3177,7 +3201,6 @@ class Sms_email_manager extends Home
                     }
                     else if(isset($country_code_remove) && $country_code_remove != '')
                     {
-                        // $value2['phone_number'] = preg_replace("/^\+?{$country_code_remove}/", '',$value2['phone_number']);
                         if(preg_match("/^\+?{$country_code_remove}/",$value2['phone_number'])) {
                             $value2['phone_number'] = preg_replace("/^\+?{$country_code_remove}/",'',$value2['phone_number']);
                         }
@@ -3264,7 +3287,6 @@ class Sms_email_manager extends Home
             'manual_phone'      => $to_numbers,
             "posting_status"    => $posting_status, 
             "schedule_time"     => $schedule_time,
-            "report"            => json_encode($report),
             "time_zone"         => $time_zone,
             "total_thread"      => $thread,
             "successfully_sent" => $successfully_sent,
@@ -3410,6 +3432,9 @@ class Sms_email_manager extends Home
         $sms_api_config_option = array();
 
         foreach ($sms_api_config as $info) {
+
+            $info['gateway_name'] = ($info['gateway_name'] == 'custom') ? $this->lang->line('Custom API')." : ".$info['custom_name'] : $info['gateway_name'];
+
             $id = $info['id'];
             if($info['phone_number'] != "")
                 $sms_api_config_option[$id] = $info['gateway_name'].": ".$info['phone_number'];
@@ -3702,7 +3727,6 @@ class Sms_email_manager extends Home
             'manual_phone'      => $to_numbers,
             "posting_status"    => $posting_status, 
             "schedule_time"     => $schedule_time,
-            "report"            => json_encode($report),
             "time_zone"         => $time_zone,
             "total_thread"      => $thread,
             "successfully_sent" => $successfully_sent,
@@ -4181,7 +4205,7 @@ class Sms_email_manager extends Home
         $search_value = trim($this->input->post("searching",true));
         $rate_type = trim($this->input->post("rate_type",true));    
 
-        $display_columns = array("#","id","contact_first_name","contact_last_name","contact_email","sent_time","delivery_id","is_open","number_of_time_open",'is_clicked',"number_of_clicked","is_unsubscribed","email_opened_at","last_clicked_at");
+        $display_columns = array("#","id","contact_first_name","contact_last_name","contact_email","sent_time","delivery_id","is_open","number_of_time_open","email_opened_at",'is_clicked',"number_of_clicked","is_unsubscribed","last_clicked_at");
         $search_columns = array('contact_first_name','contact_last_name', 'contact_email');
 
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
@@ -4250,23 +4274,6 @@ class Sms_email_manager extends Home
                 $info[$i]['sent_time'] = "<div class='text-center'>x</div>";
             }
 
-            if($info[$i]['last_clicked_at'] != "0000-00-00 00:00:00") {
-
-                $info[$i]['last_clicked_at'] = "<div style='min-width:100px !important;'>".date("M j, y H:i",strtotime($info[$i]['last_clicked_at']))."</div>";
-
-            } else {
-
-                $info[$i]['last_clicked_at'] = "<div class='text-center'>x</div>";
-            }
-
-            if($info[$i]['email_opened_at'] != "0000-00-00 00:00:00") {
-
-                $info[$i]['email_opened_at'] = "<div class='text-center' style='min-width:100px !important;'>".date("M j, y H:i",strtotime($info[$i]['email_opened_at']))."</div>";
-
-            } else {
-
-                $info[$i]['email_opened_at'] = "<div class='text-center'>x</div>";
-            }
 
             if($this->config->item("enable_open_rate") == "1") {
 
@@ -4283,11 +4290,20 @@ class Sms_email_manager extends Home
                     $info[$i]['number_of_time_open'] = "<div class='text-center text-muted'>".$info[$i]['number_of_time_open']."</div>";
                 }
 
+                if($info[$i]['email_opened_at'] != "0000-00-00 00:00:00") {
+
+                    $info[$i]['email_opened_at'] = "<div class='text-center' style='min-width:100px !important;'>".date("M j, Y H:i",strtotime($info[$i]['email_opened_at']))."</div>";
+
+                } else {
+
+                    $info[$i]['email_opened_at'] = "<div class='text-center'>x</div>";
+                }
+
             } else {
 
                 unset($display_columns[7]);
                 unset($display_columns[8]);
-                unset($display_columns[12]);
+                unset($display_columns[9]);
             }
 
             if($this->config->item("enable_click_rate") == "1") {
@@ -4317,11 +4333,19 @@ class Sms_email_manager extends Home
                     $info[$i]['is_unsubscribed'] = "<div class='font-weight-bold text-muted text-center'>".$this->lang->line('No')."</div>";
                 }
 
-            } else {
+                if($info[$i]['last_clicked_at'] != "0000-00-00 00:00:00") {
 
-                unset($display_columns[9]);
+                    $info[$i]['last_clicked_at'] = "<div style='min-width:100px !important;'>".date("M j, Y H:i",strtotime($info[$i]['last_clicked_at']))."</div>";
+
+                } else {
+
+                    $info[$i]['last_clicked_at'] = "<div class='text-center'>x</div>";
+                }
+
+            } else {
                 unset($display_columns[10]);
                 unset($display_columns[11]);
+                unset($display_columns[12]);
                 unset($display_columns[13]);
             }
         }
@@ -4532,7 +4556,7 @@ class Sms_email_manager extends Home
 
     public function ajax_email_campaign_play()
     {
-        if($this->session->userdata('user_type') != 'Admin' && !in_array(264,$this->module_access)) exit;
+        if($this->session->userdata('user_type') != 'Admin' && !in_array(263,$this->module_access)) exit;
         $this->ajax_check();
         $table_id = $this->input->post('table_id');
         $post_info = $this->basic->update_data('email_sending_campaign',array('id'=>$table_id),array('posting_status'=>'1','is_try_again'=>'1'));
@@ -4554,7 +4578,7 @@ class Sms_email_manager extends Home
 
     public function get_subscribers_email()
     {
-        if($this->session->userdata('user_type') != 'Admin' && !in_array(264,$this->module_access)) exit;
+        if($this->session->userdata('user_type') != 'Admin' && !in_array(263,$this->module_access)) exit;
 
         if($this->session->userdata('logged_in') != 1) exit();
 
@@ -4647,7 +4671,7 @@ class Sms_email_manager extends Home
 
     public function contacts_total_emails()
     {
-        if($this->session->userdata('user_type') != 'Admin' && !in_array(264,$this->module_access)) exit;
+        if($this->session->userdata('user_type') != 'Admin' && !in_array(263,$this->module_access)) exit;
 
         if(!$_POST) exit;
         $this->ajax_check();
@@ -5817,6 +5841,298 @@ class Sms_email_manager extends Home
     	);
 
     	return $gateway_lists;
+    }
+
+
+    private function create_table_string_for_analyzing($form_array, $query_pieces = array(), $table_id = 0)
+    {
+        /* if for edit call then get necessary data and do the initialization */
+        if ($table_id != 0) {
+            
+            $api_info = $this->basic->get_data('sms_api_config', array('where' => array('id' => $table_id, 'user_id' => $this->user_id)));
+
+            if (count($api_info) == 0) {
+                return "";
+            }
+
+            $input_http_url = $api_info[0]['input_http_url'];
+            $finalized_input_url = $api_info[0]['final_http_url'];
+
+            /* input url parsing */
+            $parse_result = parse_url($input_http_url);
+            $query = $parse_result['query'];
+            $input_query_pieces = explode('&', $query);
+
+            /* finalized url parsing */
+            $parse_result = parse_url($finalized_input_url);
+            $query = $parse_result['query'] . '#' . $parse_result['fragment'];
+            $query_pieces = explode('&', $query);
+        } else {
+
+            $final_form = preg_replace("/(\r?\n){2,}/", "", form_dropdown('', $form_array, 'fixed', 'class="form-control select_option"'));
+        }
+
+
+        if (count($query_pieces) > 0 && empty($query_pieces[0])) {
+            $query_pieces = array();
+        }
+
+
+        $i = 0;
+        $final_query_pieces = array();
+
+        /* start building the table string */
+
+        $final_string = '<div class="card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-cog"></i> HTTP Query Parameter</h4>
+                            </div><div class="card-body p-0">
+                            <table class="table table-bordered m-0">
+                                <thead>
+                                    <tr>
+                                      <th scope="col">'.$this->lang->line("Key").'</th>
+                                      <th scope="col">'.$this->lang->line("Type").'</th>
+                                      <th scope="col">'.$this->lang->line("Value").'</th>
+                                    </tr>
+                                </thead>
+                                <tbody>';
+
+
+
+        foreach ($query_pieces as $single_query) {
+            
+            $pieces = explode('=', $single_query);
+            $final_query_pieces[$pieces[0]] = array();
+            $input_disabled = '';
+
+            /* $table_id = 0 means for creating call and $table_id != 0 means for edit call */
+            if ($table_id != 0) {
+
+                $initial_value = explode('=', $input_query_pieces[$i]);
+
+                $final_query_pieces[$pieces[0]]['has_changed'] = true;
+                $final_query_pieces[$pieces[0]]['initial_value'] = $initial_value[1];
+                $final_query_pieces[$pieces[0]]['changed_value'] = $pieces[1];
+
+                $form_select = 'fixed';
+                if ($pieces[1] == '#DESTINATION_NUMBER#') {
+
+                    $form_select = 'destination_number';
+                    $input_disabled = 'disabled';
+                } elseif ($pieces[1] == '#MESSAGE_CONTENT#') {
+
+                    $form_select = 'message_content';
+                    $input_disabled = 'disabled';
+                }
+
+
+                $final_form = preg_replace("/(\r?\n){2,}/", "", form_dropdown('', $form_array, $form_select, 'class="form-control select_option"'));
+
+                $i++;
+            } else {
+
+                $final_query_pieces[$pieces[0]]['has_changed'] = false;
+                $final_query_pieces[$pieces[0]]['initial_value'] = $pieces[1];
+                $final_query_pieces[$pieces[0]]['changed_value'] = '';
+            }
+            
+            $final_string .= '<tr>
+                                 <td>'.$pieces[0].'</td>';
+            $final_string .=    '<td>'.$final_form.'</td>';
+            $final_string .=    '<td><input type="text" class="form-control parsed_single_value" value="'.$pieces[1].'" '. $input_disabled .'></td>
+                              </tr>';
+
+        }
+        $final_string .= '</tbody>
+                    </table></div></div>';
+
+        return array('table_string' => $final_string, 'final_query_pieces' => $final_query_pieces);
+    }
+
+    public function analize_custom_api_url()
+    {
+        $this->ajax_check();
+
+        $custom_url = $this->input->post('custom_url', true);
+
+        /* if is called for edit */
+        $action_type = $this->input->post('action_type', true);
+        $table_id = $this->input->post('table_id', true);
+        $is_first_time_edit_request = $this->input->post('is_first_time_edit_request', true);
+
+
+        /* parse the url */
+        $parse_result = parse_url($custom_url);
+        $scheme = isset($parse_result['scheme']) ? $parse_result['scheme'] : '';
+        $host = isset($parse_result['host']) ? $parse_result['host'] : '';
+        $path = isset($parse_result['path']) ? $parse_result['path'] : '';
+        $query = isset($parse_result['query']) ? $parse_result['query'] : '';
+        $query_pieces = explode('&', $query);
+        $final_query_pieces = array();
+        // echo "<pre>";print_r($scheme);exit;
+
+
+        /* check valid url */
+        if ($scheme == '') {
+            
+            echo json_encode(array('base_url' => '','message' => 'error','query_pieces' => ''));
+            exit;
+        } else if (!($scheme == 'http' || $scheme == 'https')) {
+            
+            echo json_encode(array('base_url' => '','message' => 'error','query_pieces' => ''));
+            exit;
+        }
+
+        
+        /* replacement constant */
+        $DESTINATION_NUMBER = '#DESTINATION_NUMBER#';
+        $SENDER_ID = '#SENDER_ID#';
+        $MESSAGE_CONTENT = '#MESSAGE_CONTENT#';
+
+
+        $form_array = array(
+            'fixed' => $this->lang->line("Fixed"),
+            'destination_number' => $this->lang->line("Destination Number"),
+            'message_content' => $this->lang->line("Message Content")
+        );
+
+
+        /* build the output string */
+        $final_string = '';
+
+        if ($action_type != 'edit') {
+
+            $final_form = preg_replace("/(\r?\n){2,}/", "", form_dropdown('', $form_array, 'fixed', 'class="form-control select_option"'));
+        }
+
+        if (!($action_type == 'edit' && $is_first_time_edit_request == 'yes')) {
+            
+            $api_response = $this->run_curl($custom_url);
+
+            // Test response
+            $final_string .= '<div class="card">
+                  <div class="card-header">
+                    <h4><i class="fas fa-code"></i> '.$this->lang->line("Test response : ").'</h4>
+                  </div>
+                  <div class="card-body">
+                    <label style="word-break: break-all;" class="p-0 m-0">'.$api_response.'</label>
+                  </div>
+                </div>';
+        }
+
+        // Base URL
+        $final_string .= '<div class="card" style="padding:20px;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.09);"><label style="word-break: break-all;margin-bottom: 0;"><span style="font-size: 16px;color: #6777ef;padding-right: 10px;margin-bottom: 0;font-weight: bold;"><i class="fas fa-link"></i> '.$this->lang->line("Base URL : ").'</span> '. $scheme . '://'. $host. $path .'</label></div>';
+
+
+        /* get ta table string */
+        if ($action_type == 'edit' && $is_first_time_edit_request == 'yes') {
+            $cumputed_table_info = $this->create_table_string_for_analyzing($form_array, $query_pieces, $table_id);
+        } else {
+            $cumputed_table_info = $this->create_table_string_for_analyzing($form_array, $query_pieces);
+        }
+
+
+        $final_string .= $cumputed_table_info['table_string'];
+
+        // Generated URL
+        $final_string .= '<div class="card m-0" style="padding:20px;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.09);"><label style="word-break: break-all;margin-bottom: 0;"><span style="font-size: 16px;color: #6777ef;padding-right: 10px;margin-bottom: 0;font-weight: bold;"><i class="fas fa-link"></i> '.$this->lang->line("Generated URL : ").'</span> <span id="updated_url"> '. $custom_url.'</span></label></div>';
+
+
+        /* prepare the output */
+        $final_response = array(
+            'base_url' => $scheme . '://'. $host. $path,
+            'message' => $final_string,
+            'query_pieces' => $cumputed_table_info['final_query_pieces']
+        );
+
+        echo json_encode($final_response);
+    }
+
+    public function create_custom_api()
+    {
+        $this->ajax_check();
+
+        $custom_api_name = $this->input->post('custom_api_name', true);
+        $custom_api_url = $this->input->post('custom_api_url', true);
+        $updated_url = $this->input->post('updated_url', true);
+
+        $action_type = $this->input->post('action_type', true);
+        $table_id = $this->input->post('table_id', true);
+
+        /* validate inputs */
+        if ($custom_api_name == '' ||
+             $custom_api_url == '' || 
+             $updated_url == '' || 
+             strpos($updated_url, '#DESTINATION_NUMBER#') === false || 
+             strpos($updated_url, '#MESSAGE_CONTENT#') === false) {
+
+            $message = $this->lang->line("Something went wrong");
+            if (strpos($updated_url, '#DESTINATION_NUMBER#') === false || strpos($updated_url, '#MESSAGE_CONTENT#') === false) {
+                $message = $this->lang->line("Final URL must have both #DESTINATION_NUMBER# and #MESSAGE_CONTENT#");
+            }
+
+            echo json_encode(array('status' => 'error', 'message' => $message));
+        } else {
+
+            $insert_data = array(
+                'user_id' => $this->user_id,
+                'gateway_name' => 'custom',
+                'custom_name' => $custom_api_name,
+                'input_http_url' => $custom_api_url,
+                'final_http_url' => $updated_url,
+            );
+
+            if ($action_type == 'edit') {
+                $this->basic->update_data('sms_api_config', array('id' => $table_id), $insert_data);
+                echo json_encode(array('status' => 'success', 'message' => $this->lang->line("Your API has updated successfully.")));
+            } else {
+                $this->basic->insert_data('sms_api_config', $insert_data);
+                echo json_encode(array('status' => 'success', 'message' => $this->lang->line("Your API has created successfully.")));
+            }
+        }
+    }
+
+
+    public function edit_custom_api_info()
+    {
+        $this->ajax_check();
+
+        $table_id = $this->input->post('table_id', true);
+
+        $api_info = $this->basic->get_data('sms_api_config', array('where' => array('id' => $table_id, 'user_id' => $this->user_id)));
+
+        if (count($api_info) > 0) {
+            
+            $api_info = $api_info[0];
+
+            echo json_encode(array(
+                'status' => 'success',
+                'name' => $api_info['custom_name'], 
+                'input_http_url' => $api_info['input_http_url']
+            ));
+        } else {
+            echo json_encode(array('status' => 'error', 'message' => $this->lang->line("Something went wrong")));
+        }
+    }
+
+
+    private function run_curl($url)
+    {
+        $ch = curl_init();
+        // set URL and other appropriate options
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+        curl_setopt($ch, CURLOPT_COOKIEJAR, "my_cookies.txt");  
+        curl_setopt($ch, CURLOPT_COOKIEFILE, "my_cookies.txt");  
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
+        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3"); 
+        // grab URL and pass it to the browser
+        $response=curl_exec($ch);
+
+        // close cURL resource, and free up system resources
+        curl_close($ch);
+        return $response;   
     }
 
 }

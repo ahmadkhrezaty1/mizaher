@@ -61,6 +61,7 @@
 
 </style>
 
+
 <section class="section">
   <div class="section-header m-0">
     <h1><i class="fas fa-store"></i> <?php echo $page_title; ?></h1>
@@ -75,13 +76,13 @@
     <div class="card">
       <div class="card-body">
         <div class="row">
-          <div class="col-12 col-md-6">
+          <!-- <div class="col-12 col-md-6">
             <a href="<?php echo base_url('messenger_bot'); ?>"><?php echo $this->lang->line("Messenger Bot"); ?></a>
             / <?php echo $this->lang->line("Ecommerce"); ?>
-          </div>
+          </div> -->
 
           <?php if(!empty($store_data)){ ?>
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-sm-12 col-md-12 col-lg-8">
             <div class="breadcrumb-item">
               <form method="POST" action="<?php echo base_url('ecommerce/store_list') ?>">          
                 <div class="input-group">
@@ -92,7 +93,22 @@
                   </div>
                   <input type="hidden" name="store_id" id="store_id">
                   <input type="text" class="form-control datepicker_x" value="<?php echo $this->session->userdata("ecommerce_from_date"); ?>" id="from_date" name="from_date" style="width:115px"> 
-                  <input type="text" class="form-control datepicker_x" value="<?php echo $this->session->userdata("ecommerce_to_date"); ?>" id="to_date" name="to_date" style="width:115px">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      -
+                    </div>
+                  </div>
+                  <input type="text" class="form-control datepicker_x" value="<?php echo $this->session->userdata("ecommerce_to_date"); ?>" id="to_date" name="to_date" style="width:115px">                 
+                  <select name='currency' id='currency' class='form-control select2' style="width: 85px;">
+                  <?php
+                  foreach ($currecny_list_all as $key => $value)
+                  {
+                    if($this->session->userdata("ecommerce_currency")==$key) $selected_curr = "selected='selected'";
+                    else $selected_curr = '';
+                    echo '<option value="'.$key.'" '.$selected_curr.' >'.$key.'</option>';
+                  }
+                  ?>
+                  </select>
                   <button class="btn btn-outline-primary" style="margin-left:1px" id="search_submit" type="submit"><i class="fa fa-search"></i> <?php echo $this->lang->line("Search");?></button>
                 </div>
             </form>
@@ -202,7 +218,8 @@
         </div>
 
         <?php 
-        $store_currency = isset($currency_icons[$current_store_data['store_name']]) ? $currency_icons[$current_store_data['store_name']] : "$"; 
+        $config_currency  = isset($ecommerce_config['currency']) ? $ecommerce_config['currency'] : "USD";
+        $store_currency = isset($currency_icons[$config_currency]) ? $currency_icons[$config_currency] : "$"; 
         ?>
 
         <div class="col-12 col-md-8 col-lg-10 colrig" id="right_column">

@@ -456,7 +456,10 @@ class Fb_rx_login
 		// $video_list = $this->run_curl_for_fb($url);
 		// return json_decode($video_list,TRUE);
 
-		$request = $this->fb->get("$page_id/posts?fields=id,message,permalink_url,picture,created_time&limit=100", $access_token);	
+		// Temporary Fix get unsupported request bug of Facebook 
+		//$request = $this->fb->get("$page_id/published_posts?fields=id,message,permalink_url,picture,created_time&limit=50", $access_token);	
+
+		$request = $this->fb->get("$page_id/posts?fields=id,message,permalink_url,picture,created_time&limit=50", $access_token);	
 		$response = $request->getGraphList()->asArray();
 
 		$response= json_encode($response);
@@ -1220,7 +1223,7 @@ class Fb_rx_login
 			if($instore_code!="")
 				$params['instore_code']=$instore_code;
 
-			$response = $this-> fb->post("{$page_id}/nativeoffers",$params,$post_access_token);
+			$response = $this->fb->post("{$page_id}/nativeoffers",$params,$post_access_token);
 
 			return $response->getGraphObject()->asArray();
 			

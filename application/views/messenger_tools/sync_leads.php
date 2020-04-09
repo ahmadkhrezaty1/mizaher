@@ -284,17 +284,17 @@ else
             }
         });
       }
-      else table1.draw();
+      else table1.draw(false);
     });
 
 
     $(document).on('click', '#search_subscriber', function(e) {
         e.preventDefault(); 
-        table1.draw();
+        table1.draw(false);
     });
 
     $(document).on('change', '#label_id', function(e) {
-        table1.draw();
+        table1.draw(false);
     });
 
 
@@ -472,7 +472,7 @@ else
                   swal('<?php echo $this->lang->line("Label Assign") ?>', groupshavebeenassignedsuccessfully+" ("+selected+")", 'success')
                   .then((value) => {
                    $("#assign_group_modal").modal('hide');  
-                   table1.draw();
+                   table1.draw(false);
                   });
 
                  }

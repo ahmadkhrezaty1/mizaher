@@ -381,12 +381,12 @@ if ( ! function_exists('get_current_url_without_subdomain'))
 { 
   function get_current_url_without_subdomain()
   {
-  		$CI =& get_instance();
-		
-		$url=current_url();
-		$info = parse_url($url);
-		$url_without_subdomain=$CI->config->item('fb_like_doamin').$info['path'];
-		return $url_without_subdomain;
+      $CI =& get_instance();
+    
+    $url=current_url();
+    $info = parse_url($url);
+    $url_without_subdomain=$CI->config->item('fb_like_doamin').$info['path'];
+    return $url_without_subdomain;
   }
 }
 
@@ -397,11 +397,11 @@ if ( ! function_exists('get_current_url_without_subdomain'))
 
 if ( ! function_exists('random_value_from_array'))
 { 
- 	 function random_value_from_array($array, $default=null)
-		{
-		    $k = mt_rand(0, count($array) - 1);
-		    return isset($array[$k])? $array[$k]: $default;
-		}
+   function random_value_from_array($array, $default=null)
+    {
+        $k = mt_rand(0, count($array) - 1);
+        return isset($array[$k])? $array[$k]: $default;
+    }
 }
 
 
@@ -409,33 +409,33 @@ if ( ! function_exists('random_value_from_array'))
 if ( ! function_exists('addHttp'))
 { 
 function addHttp( $url ){
-	
-	    if ( !preg_match("~^(?:f|ht)tps?://~i", $url) )
-	    {
-	        $url = "http://" . $url;
-	    }
-	
-	    return $url;
-	}
+  
+      if ( !preg_match("~^(?:f|ht)tps?://~i", $url) )
+      {
+          $url = "http://" . $url;
+      }
+  
+      return $url;
+  }
 }
 
 
 if ( ! function_exists('get_domain_only'))
 { 
-	function get_domain_only($url) {
-		$url=str_replace("www.","",$url);
-		$url=str_replace("WWW.","",$url);
-		
-	    if (!preg_match("@^https?://@i", $url) && !preg_match("@^ftps?://@i", $url)) {
-	        $url = "http://" . $url;
-	    }
-		
-		
-	  	$parsed=@parse_url($url);
-		
-		return $parsed['host'];
-	  
-	}
+  function get_domain_only($url) {
+    $url=str_replace("www.","",$url);
+    $url=str_replace("WWW.","",$url);
+    
+      if (!preg_match("@^https?://@i", $url) && !preg_match("@^ftps?://@i", $url)) {
+          $url = "http://" . $url;
+      }
+    
+    
+      $parsed=@parse_url($url);
+    
+    return $parsed['host'];
+    
+  }
 }
 
 
@@ -460,7 +460,7 @@ if ( ! function_exists('get_domain_only_with_http'))
 
 if ( ! function_exists('is_web_page'))
 { 
-	function is_web_page($domain)
+  function is_web_page($domain)
         {
             $ext=explode(".", $domain);
             $extension=array_pop($ext);
@@ -731,42 +731,42 @@ function custom_number_format($n, $precision = 2) {
 
 
 function ultraresponse_addon_module_exist(){
-	
-	$ci = &get_instance();
+  
+  $ci = &get_instance();
     $ci->load->model('basic');  
-	   
-	   
-	$addon_id="29";
-	$module_id="88";
-	$addon_unique_name="comment_reply_enhancers";
-	
-	$is_module_access=0;  // initially no module access
-	$is_addon_installed=0; // Initially ad on not installed
-	
-	$package_info = $ci->session->userdata("package_info");
-	$module_acces= isset($package_info['module_ids']) ? $package_info['module_ids'] : "";
-	$module_acces=explode(",",$module_acces);
-	
-	/* Check if the memeber have the module access*/
-	if(in_array($module_id,$module_acces))
-		 $is_module_access=1; 
-		
-	/**Check if the addon is installed **/
-	$where['where']=array("unique_name"=>$addon_unique_name);
-	$addon_info = $ci->basic->get_data("add_ons", $where);
-	
-	if(isset($addon_info[0]['id']))
-		 $is_addon_installed=1; 
-		
-		
-	/**If admin and have module installed, then return true***/
-	if($ci->session->userdata("user_type")=="Admin" && $is_addon_installed==1)
-		return TRUE;
-	/**If member and have module installed and have module access, then true***/
-	if($ci->session->userdata("user_type")=="Member" && $is_addon_installed==1 && $is_module_access==1)
-		return TRUE;
-	
-	return FALSE;
+     
+     
+  $addon_id="29";
+  $module_id="88";
+  $addon_unique_name="comment_reply_enhancers";
+  
+  $is_module_access=0;  // initially no module access
+  $is_addon_installed=0; // Initially ad on not installed
+  
+  $package_info = $ci->session->userdata("package_info");
+  $module_acces= isset($package_info['module_ids']) ? $package_info['module_ids'] : "";
+  $module_acces=explode(",",$module_acces);
+  
+  /* Check if the memeber have the module access*/
+  if(in_array($module_id,$module_acces))
+     $is_module_access=1; 
+    
+  /**Check if the addon is installed **/
+  $where['where']=array("unique_name"=>$addon_unique_name);
+  $addon_info = $ci->basic->get_data("add_ons", $where);
+  
+  if(isset($addon_info[0]['id']))
+     $is_addon_installed=1; 
+    
+    
+  /**If admin and have module installed, then return true***/
+  if($ci->session->userdata("user_type")=="Admin" && $is_addon_installed==1)
+    return TRUE;
+  /**If member and have module installed and have module access, then true***/
+  if($ci->session->userdata("user_type")=="Member" && $is_addon_installed==1 && $is_module_access==1)
+    return TRUE;
+  
+  return FALSE;
 }
 
 
@@ -958,6 +958,20 @@ if ( ! function_exists('has_limit')) {
 
 }
 
+if ( ! function_exists('get_number_of_users')) { 
+
+  function get_number_of_users() {
+    $CI = &get_instance();
+    $CI->db->where(['id'=> $CI->session->userdata('user_id'), 'manager_type!=' => '']);
+    $user = $CI->db->get('users')->row();
+    if(is_object($user))
+      if($user->manager_type == 'Manager 3' or $user->manager_type == 'Manager 2')
+        return $user->users;
+    return false;
+  }
+
+}
+
 if ( ! function_exists('get_expired_date')) { 
 
   function get_expired_date() {
@@ -1064,6 +1078,89 @@ if ( ! function_exists('get_admins_email')) {
     $CI->db->where(['user_type'=> 'Admin']);
     $admins = $CI->db->get('users')->result();
       return $admins;
+  }
+
+}
+
+if ( ! function_exists('deleteDirectory')) { 
+
+  function deleteDirectory($dir) {
+      if (!file_exists($dir)) {
+          return true;
+      }
+
+      if (!is_dir($dir)) {
+          return unlink($dir);
+      }
+
+      foreach (scandir($dir) as $item) {
+          if ($item == '.' || $item == '..') {
+              continue;
+          }
+
+          if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+              return false;
+          }
+
+      }
+
+      return rmdir($dir);
+  }
+
+}
+
+if ( ! function_exists('uploadImage')) { 
+
+  function uploadImage($field, $id){
+    $ci = &get_instance();
+    deleteDirectory("upload/package/$id");
+    mkdir('upload/package/'.$id, 0777, true);
+    $config['upload_path'] = 'upload/package/'.$id.'/';
+    //png, jpg, jpeg, gif, txt, pdf, xls, xlsx, doc, docx
+    $config['allowed_types'] = 'gif|jpg|png|jpeg|pdf';
+    $ci->load->library('upload', $config);
+    $ci->upload->initialize($config);
+    if (!$ci->upload->do_upload($field)) {
+        $error = $ci->upload->display_errors();
+        $type = "error";
+        $message = $error;
+        echo $message;
+        exit;
+        // uploading failed. $error will holds the errors.
+    } else {
+        $fdata = $ci->upload->data();
+        $file['path'] = $config['upload_path'] . $fdata['file_name'];
+        return $file;
+        // uploading successfull, now do your further actions
+    }
+  }
+
+}
+
+if ( ! function_exists('uploadImage_p')) { 
+
+  function uploadImage_p($field, $id){
+    $ci = &get_instance();
+    deleteDirectory("upload/package/p_$id");
+    mkdir('upload/package/p_'.$id, 0777, true);
+    $config['upload_path'] = 'upload/package/p_'.$id.'/';
+    //png, jpg, jpeg, gif, txt, pdf, xls, xlsx, doc, docx
+    $config['allowed_types'] = 'gif|jpg|png|jpeg|pdf';
+    $ci->load->library('upload', $config);
+    $ci->upload->initialize($config);
+    if (!$ci->upload->do_upload($field)) {
+        $error = $ci->upload->display_errors();
+        $type = "error";
+        $message = $error;
+        echo $message;
+        exit;
+        // uploading failed. $error will holds the errors.
+    } else {
+        $fdata = $ci->upload->data();
+        $file['path'] = $config['upload_path'] . $fdata['file_name'];
+        return $file;
+        // uploading successfull, now do your further actions
+    }
   }
 
 }

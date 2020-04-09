@@ -51,12 +51,16 @@
                           if(set_value('coupon_type')!='' && $value==set_value('coupon_type')) $checked="checked";
                           else if($i==1)  $checked="checked";
                           else $checked="";
+                          if(set_value('coupon_detail')!='' && $value==set_value('coupon_detail')) ;
+                          
                           ?>
+                          
                           <div class="col-4">
                             <label class="custom-switch">
                               <input type="radio" name="coupon_type" value="<?php echo $value; ?>" <?php echo $checked; ?> class="coupon_type custom-switch-input">
                               <span class="custom-switch-indicator"></span>
                               <span class="custom-switch-description"><?php echo ucfirst($value);?></span>
+                              
                             </label>
                           </div>
                         <?php

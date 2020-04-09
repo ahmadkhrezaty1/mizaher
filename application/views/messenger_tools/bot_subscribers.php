@@ -208,7 +208,7 @@
             data:{page_id:page_id},
             success:function(response){
                $("#label_dropdown").html(response);
-               table1.draw();
+               table1.draw(false);
             }
           });
       });
@@ -221,11 +221,11 @@
       
       $(document).on('click', '#search_subscriber', function(e) {
           e.preventDefault(); 
-          table1.draw();
+          table1.draw(false);
       });
 
       $(document).on('change', '#label_id', function(e) {
-          table1.draw();
+          table1.draw(false);
       });
 
 
@@ -318,7 +318,7 @@
                     swal('<?php echo $this->lang->line("Label Assign") ?>', groupshavebeenassignedsuccessfully+" ("+selected+")", 'success')
                     .then((value) => {
                      $("#assign_group_modal").modal('hide');  
-                     table1.draw();
+                     table1.draw(false);
                     });
 
                    }
@@ -367,7 +367,7 @@
                    {
                     swal('<?php echo $this->lang->line("Delete Subscribers") ?>', contactshavebeendeletedsuccessfully+" ("+selected+")", 'success')
                     .then((value) => {                   
-                     table1.draw();
+                     table1.draw(false);
                     });
 
                    }
@@ -615,7 +615,7 @@
       }
 
     $('#subscriber_actions_modal').on('hidden.bs.modal', function () { 
-      table1.draw();
+      table1.draw(false);
     });
     $('#subscriber_actions_modal').on('shown.bs.modal', function() {
         $(document).off('focusin.modal');

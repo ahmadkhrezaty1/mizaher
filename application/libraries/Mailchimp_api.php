@@ -75,15 +75,136 @@ class Mailchimp_api
        
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
      
-        $result = curl_exec($ch);
+        $response = curl_exec($ch);
         
         $curl_info=curl_getinfo($ch);
         if($curl_info['http_code']!='200'){
             $result=array();
+            if($response!="")
+                $result['error_message']=$response;
+            else{
+                 $result['error_message']="Http Code - ". $curl_info['http_code']." : ".curl_error($ch);
+            }
             $result['error']=true;
             return json_encode($result);    
         }
 
-        return $result;  
+        return $response;  
     }
+
+
+
+    public function sendinblue_contact_list($api_key){
+
+        $url="https://api.sendinblue.com/v3/contacts/lists";
+        $header=array("api-key: {$api_key}","Content-Type: application/json");
+        $ch=curl_init($url);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
+        curl_setopt($ch, CURLOPT_HTTPHEADER,$header);
+        $response = curl_exec( $ch );
+        $response=json_decode($response,true);
+
+        return $response;
+
+    }
+
+
+
+    public function sendinblue_add_contact($api_key,$email,$firstname,$lastname,$list_id){
+
+        $url="https://api.sendinblue.com/v3/contacts";
+        $header=array("api-key: {$api_key}","Content-Type: application/json");
+        $postdata['email']=$email;
+        $postdata['attributes']['FIRSTNAME']=$firstname;
+        $postdata['attributes']['LASTNAME']=$lastname;
+        $postdata['listIds'][0]=(int)$list_id;
+        $postdata=json_encode($postdata);
+
+        $ch=curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata); 
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
+        curl_setopt($ch, CURLOPT_HTTPHEADER,$header);
+        $response = curl_exec( $ch );
+        return $response;
+    }
+
+
+    public function activecampaign_contact_list($api_key,$url){
+
+        $url=$url."/api/3/lists";
+
+        $header=array("Api-Token: {$api_key}","Content-Type: application/json");
+        
+        $ch=curl_init($url);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
+        curl_setopt($ch, CURLOPT_HTTPHEADER,$header);
+        $response = curl_exec( $ch );
+        $response=json_decode($response,true);
+
+        return $response;
+
+    }
+
+
+
+    public function activecampaign_add_contact($api_key,$url,$email,$firstname,$lastname,$list_id){
+
+        $url_add=$url."/api/3/contacts";
+        $header=array("Api-Token: {$api_key}","Content-Type: application/json");
+        $postdata['contact']['email']=$email;
+        $postdata['contact']['firstName']=$firstname;
+        $postdata['contact']['lastName']=$lastname;
+        $postdata=json_encode($postdata);
+
+        $ch=curl_init($url_add);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata); 
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
+        curl_setopt($ch, CURLOPT_HTTPHEADER,$header);
+        $response = curl_exec( $ch );
+
+        $curl_info=curl_getinfo($ch);
+
+        if($curl_info['http_code']=='403'){
+            $response=array();
+            $response['errors']=true;
+            $response['errors'][0]['code']="The request could not be authenticated or the authenticated user is not authorized to access the requested resource";
+            return json_encode($response);    
+        }
+
+        $response_arr=json_decode($response,true);
+
+        if(isset($response_arr['errors']))
+            return $response;
+
+        $contact_id=$response_arr['contact']['id'];
+        $url_list_update=$url."/api/3/contactLists";
+
+        $postdata=array();
+        $postdata['contactList']['list']=(int)$list_id;
+        $postdata['contactList']['contact']=$contact_id;
+        $postdata['contactList']['status']=1;
+
+        $postdata=json_encode($postdata);
+
+        $ch=curl_init($url_list_update);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata); 
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
+        curl_setopt($ch, CURLOPT_HTTPHEADER,$header);
+        $response = curl_exec( $ch );
+        return $response;
+
+    }
+
+
+
+
+
 }

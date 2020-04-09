@@ -18,7 +18,7 @@
           <div class="card-body">
             <div class="section-title mt-0"><?php echo $this->lang->line("Title"); ?> :<small> <?php echo $xdata['title'];?></small> </div>
             <div class="section-title"><?php echo $this->lang->line("Description"); ?></div>
-            <div class="p-3 mb-2 bg-light text-dark" style="margin-left: 45px;"><?php echo nl2br($xdata['description']);?></div>
+            <div class="p-3 mb-2 bg-light text-dark" style="margin-left: 45px;text-align: right;direction: rtl;"><?php echo nl2br($xdata['description']);?></div>
             <div class="section-title"><?php echo $this->lang->line("Published"); ?> <small><?php echo date_time_calculator($xdata['created_at'],true); ?></small></div>
           </div>
         </div>

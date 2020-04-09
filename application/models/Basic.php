@@ -270,56 +270,6 @@ class Basic extends CI_Model
 		
 	}
 
-	public function get_manager_users($table,$where='',$select='',$join='',$limit='',$start=NULL,$order_by='',$group_by='',$num_rows=0,$csv='') //selects data from a table as well as counts number of affected rows
-	{
-				
-		
-		// only get data except deleted values
-		// $col_name=$table.".deleted";
-		// if($this->db->field_exists('deleted',$table) && $show_deleted==0)
-		// $where['where'][$col_name]="0";
-		
-		
-		$this->db->select($select);
-		$this->db->from($table);
-		
-		if($join!='')					$this->generate_joining_clause($join);		
-		if($where!='') 					$this->generate_where_clause($where);
-
-		if($this->db->field_exists('deleted',$table))
-		{
-			$deleted_str=$table.".deleted";
-			$this->db->where($deleted_str,"0");
-		}
-		$this->db->where('added_by', $this->session->userdata('user_id'));
-		
-		if($order_by!='') 				$this->db->order_by($order_by);
-		if($group_by!='') 				$this->db->group_by($group_by);
-
-		
-		
-
-		if(is_numeric($start) || is_numeric($limit))
-			$this->db->limit($limit, $start);
-					
-		$query=$this->db->get();
-		
-		if($csv==1)
-		return $query; //csv generation requires resourse ID
-		
-		$result_array=$query->result_array(); //fetches the rows from database and forms an array[]
-		
-		if($num_rows==1)
-		{
-			$num_rows=$query->num_rows(); //counts the affected number of rows
-			$result_array['extra_index']=array('num_rows'=>$num_rows);	//addes the affected number of rows data in the array[]
-		}
-		
-		// print_r($this->db->last_query());
-		return $result_array; //returns both fetched result as well as affected number of rows 
-		
-	}
-
 	public function count_row($table,$where='',$count='id',$join='',$group_by='') //counts data from a table
 	{
 		/*$count_str="COUNT(".$count.") as total_rows";		*/
@@ -355,6 +305,12 @@ class Basic extends CI_Model
 	{
 		$this->db->insert($table,$data);
 		return true;			
+	}
+
+	function insert_data_and_return_insert_id($table,$data)  //inserts data into a table 
+	{
+		$this->db->insert($table,$data);
+		return $this->db->insert_id();			
 	}
 
 
@@ -508,6 +464,54 @@ class Basic extends CI_Model
         return true;
     }
 		
-	
+	public function get_manager_users($table,$where='',$select='',$join='',$limit='',$start=NULL,$order_by='',$group_by='',$num_rows=0,$csv='') //selects data from a table as well as counts number of affected rows
+  {
+        
+    
+    // only get data except deleted values
+    // $col_name=$table.".deleted";
+    // if($this->db->field_exists('deleted',$table) && $show_deleted==0)
+    // $where['where'][$col_name]="0";
+    
+    
+    $this->db->select($select);
+    $this->db->from($table);
+    
+    if($join!='')          $this->generate_joining_clause($join);    
+    if($where!='')           $this->generate_where_clause($where);
+
+    if($this->db->field_exists('deleted',$table))
+    {
+      $deleted_str=$table.".deleted";
+      $this->db->where($deleted_str,"0");
+    }
+    $this->db->where('added_by', $this->session->userdata('user_id'));
+    
+    if($order_by!='')         $this->db->order_by($order_by);
+    if($group_by!='')         $this->db->group_by($group_by);
+
+    
+    
+
+    if(is_numeric($start) || is_numeric($limit))
+      $this->db->limit($limit, $start);
+          
+    $query=$this->db->get();
+    
+    if($csv==1)
+    return $query; //csv generation requires resourse ID
+    
+    $result_array=$query->result_array(); //fetches the rows from database and forms an array[]
+    
+    if($num_rows==1)
+    {
+      $num_rows=$query->num_rows(); //counts the affected number of rows
+      $result_array['extra_index']=array('num_rows'=>$num_rows);  //addes the affected number of rows data in the array[]
+    }
+    
+    // print_r($this->db->last_query());
+    return $result_array; //returns both fetched result as well as affected number of rows 
+    
+  }
 }
 	

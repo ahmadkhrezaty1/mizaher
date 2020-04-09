@@ -745,6 +745,11 @@ class Cron_job extends Home
 
             $post_url= isset($temp_data["permalink_url"]) ? $temp_data["permalink_url"] : "";
 
+
+            if($object_id=="" && $error_msg==""){
+                $error_msg=json_encode($response); // added later by Konok to catch up the error in unknown situation 
+            }
+
             $update_data = array("posting_status"=>'2',"full_complete"=>'1',"post_id"=>$object_id,"post_url"=>$post_url,"error_mesage"=>$error_msg,"last_updated_at"=>date("Y-m-d H:i:s"));
 
             $this->basic->update_data("facebook_rx_auto_post",array("id"=>$campaign_id),$update_data);
@@ -1235,6 +1240,7 @@ class Cron_job extends Home
             $last_pub_date=isset($value['last_pub_date'])?$value['last_pub_date']:'';
             $error_log=isset($value['error_message'])?json_decode($value['error_message'],true):array();
 
+            $posting_message=isset($value['posting_message'])?$value['posting_message']:"";
             $posting_start_time=isset($value['posting_start_time'])?$value['posting_start_time']:"00:00";
             $posting_end_time=isset($value['posting_end_time'])?$value['posting_end_time']:"23:59";
             $posting_timezone=isset($value['posting_timezone'])?$value['posting_timezone']:"";
@@ -1394,7 +1400,9 @@ class Cron_job extends Home
                         $broadcast_gap_minute+=15;
                     }
 
-                    $post_feed_url=isset($value2['link'])?$value2['link']:"";             
+                    $post_feed_url=isset($value2['link'])?$value2['link']:"";   
+                    $post_feed_title = isset($value2['title'])?$value2['title']:"";  
+                    $temp_posting_message = str_replace('#TITLE#', $post_feed_title, $posting_message); 
 
                     // processing facebook post
                     $page_ids = isset($value['page_ids'])?explode(',', $value['page_ids']):array();
@@ -1435,13 +1443,16 @@ class Cron_job extends Home
                                        $post_schedule_time_gapped = date('Y-m-d H:i:s', $post_schedule_time_gapped);
                                    }
                                 }
+
                                
+                            
                                $create_campaign_data=array
                                (
                                   "user_id"=>$user_id,
                                   "facebook_rx_fb_user_info_id"=>$facebook_rx_fb_user_info_id,
                                   "post_type"=>"link_submit",
                                   "campaign_name"=>$feed_name." [RSS Autopost]",
+                                  "message"=>$temp_posting_message,
                                   "page_group_user_id"=>$value3,
                                   "page_or_group_or_user"=>"page",
                                   "page_or_group_or_user_name"=>$page_or_group_or_user_name,
@@ -1460,6 +1471,39 @@ class Cron_job extends Home
                         }
                     }
                     // processing facebook post
+
+
+
+                    /* processing other social media's post */
+                    $twitter_accounts = json_decode($value['twitter_accounts'], true);
+                    $linkedin_accounts = json_decode($value['linkedin_accounts'], true);
+                    $reddit_accounts = json_decode($value['reddit_accounts'], true);
+                    $subreddits = $value['subreddits'];
+
+                    $final_accounts_list = array_merge($twitter_accounts, $linkedin_accounts, $reddit_accounts);
+
+                    if (count($final_accounts_list) > 0) {
+                    	
+                    	$create_campaign_data_1 = array (
+
+                    	   "user_id"=>$user_id,
+                    	   "campaign_type"=>'link',
+                    	   "campaign_name"=>$feed_name." [RSS Autopost]",
+                    	   "title"=>$post_feed_title,
+                           "message"=>$temp_posting_message,
+                           "link"=>$post_feed_url,
+                    	   "subreddits"=> $subreddits,
+                    	   "posting_medium"=> json_encode($final_accounts_list),
+                    	   "schedule_type"=> 'later',
+                    	   "schedule_time"=>$post_schedule_time_gapped,
+                    	   "schedule_timezone"=>$posting_timezone,
+                    	   "posting_status"=>"pending"
+                    	);
+
+                    	$this->basic->insert_data('comboposter_campaigns', $create_campaign_data_1);
+                    }
+                    /* processing other social media's post */
+
 
 
                     //processing broadcasting
@@ -2330,6 +2374,7 @@ class Cron_job extends Home
         $this->db->update("messenger_bot_drip_campaign_assign", array('messenger_bot_drip_processing_status_hourly' => "0"));
         $this->db->update("messenger_bot_drip_campaign", array('last_sent_at' => date("Y-m-d H:i:s")));
     }
+
     public function sequence_message_broadcast_daily($api_key="")
     { 
         $this->api_key_check($api_key);
@@ -2588,12 +2633,13 @@ class Cron_job extends Home
 
 
 
-
-
     // =====================OTHER FUNCTIONS===================
     public function membership_alert($api_key="") //membership_alert_delete_junk_data
     {
         $this->api_key_check($api_key);    
+
+        $free_package_info = $this->basic->get_data('package',['where'=>['price'=>'0','validity'=>'0','is_default'=>'1']]);
+        $free_package_id = isset($free_package_info[0]['id']) ? $free_package_info[0]['id'] : 0;
 
         $current_date = date("Y-m-d");
         $tenth_day_before_expire = date("Y-m-d", strtotime("$current_date + 10 days"));
@@ -2606,7 +2652,8 @@ class Cron_job extends Home
         $where = array();
         $where['where'] = array(
             'user_type !=' => 'Admin',
-            'expired_date' => $tenth_day_before_expire
+            'expired_date' => $tenth_day_before_expire,
+            'package_id !=' => $free_package_id
             );
         $info = array();
         $value = array();
@@ -2649,7 +2696,8 @@ class Cron_job extends Home
         $where = array();
         $where['where'] = array(
             'user_type !=' => 'Admin',
-            'expired_date' => $one_day_before_expire
+            'expired_date' => $one_day_before_expire,
+            'package_id !=' => $free_package_id
             );
         $info = array();
         $value = array();
@@ -2690,7 +2738,8 @@ class Cron_job extends Home
         $where = array();
         $where['where'] = array(
             'user_type !=' => 'Admin',
-            'expired_date' => $one_day_after_expire
+            'expired_date' => $one_day_after_expire,
+            'package_id !=' => $free_package_id
             );
         $info = array();
         $value = array();
@@ -2815,8 +2864,8 @@ class Cron_job extends Home
     // 1  min
     public function braodcast_message($api_key='')
     {
-    	$link=base_url().'cron_job/conversation_broadcast/'.$api_key;
-    	$this->call_curl_internal_cronjob($link);
+    	// $link=base_url().'cron_job/conversation_broadcast/'.$api_key;
+    	// $this->call_curl_internal_cronjob($link);
 
     	if($this->basic->is_exist("add_ons",array("project_id"=>30)))
     	{
@@ -3544,7 +3593,7 @@ class Cron_job extends Home
             $valid_campaign_count++;      
         }
 
-        if(count($campaign_id_array) == 0) exit();        
+        if(count($campaign_id_array) == 0) exit();
 
         $this->db->where_in("id",$campaign_id_array);
         $this->db->update("sms_sending_campaign",array("posting_status"=>"1","is_try_again"=>"0"));
@@ -3561,9 +3610,6 @@ class Cron_job extends Home
             $manual_phones     = explode(",",$final_campaign_info['manual_phone']);
             $pageTableId       = $final_campaign_info['page_id'];
 
-            $report = json_decode($final_campaign_info["report"],true); // get json contact list from database and decode it
-            $send_report = $report;
-
             $campaign_contacts = $this->basic->get_data("sms_sending_campaign_send",array("where"=>array("campaign_id"=>$campaign_id,"processed"=>"0")),'','',$number_of_sms_to_be_sent_in_try);
 
             foreach ($campaign_contacts as $contacts_details) 
@@ -3575,73 +3621,55 @@ class Cron_job extends Home
                 $contact_mobile     = isset($contacts_details['contact_phone_number']) ? $contacts_details['contact_phone_number']:"";
                 $contact_phone      = $contacts_details['contact_phone_number'];
 
+
+
                 $campaign_message_send = $campaign_message;
                 $campaign_message_send = str_replace(array("#FIRST_NAME#","#first_name#","#firstname#"),$contact_first_name,$campaign_message_send);
                 $campaign_message_send = str_replace(array("#LAST_NAME#","#last_name#","#lastname#"),$contact_last_name,$campaign_message_send);
-
                 $message_sent_id = "";
 
                 $this->sms_manager->set_credentioal($sms_api,$user_id);
 
-                try
-                {
+                try {
+
                     $campaign_message_send = str_replace(array("'",'"'),array('`','`'),$campaign_message_send);
                     $response = $this->sms_manager->send_sms($campaign_message_send, $contact_phone);
 
-                    if(isset($response['id']) && !empty($response['id']))
-                    {   
+                    if(isset($response['id']) && !empty($response['id'])) {   
                         $message_sent_id = $response['id']; 
                         $successfully_sent++; 
-                    }
-                    else 
-                    {   if(isset($response['status']) && !empty($response['status'])){
+                    } else {   
+                        if(isset($response['status']) && !empty($response['status'])) {
                             $message_sent_id = $response["status"];
                         }
                     }           
                     
-                }
-                catch(Exception $e) 
-                {
+                } catch(Exception $e) {
                    $message_sent_id = $e->getMessage();
                 }
 
                 // generating new report with send message info
                 $now_sent_time = date("Y-m-d H:i:s");
-                $send_report[$contact_phone] = array( 
-                    'sms_api_id'          => $contacts_details['sms_api_id'],
-                    'contact_id'          => $contacts_details['contact_id'],
-                    'subscriber_id'       => $contacts_details['subscriber_id'],
-                    'contact_first_name'  => $contacts_details['contact_first_name'],
-                    'contact_last_name'   => $contacts_details['contact_last_name'],
-                    'contact_email'       => $contacts_details['contact_email'],
-                    'contact_phone_number'=> $contact_phone,
-                    'sent_time'           => $now_sent_time,
-                    'delivery_id'         => $message_sent_id,
-                );
 
                 $i++;  
                 // after 10 send update report in database
                 if($i%$update_sms_sending_report_after_time==0)
                 {
-                    $send_report_json= json_encode($send_report);
-                    $this->basic->update_data("sms_sending_campaign",array("id"=>$campaign_id),array("report"=>$send_report_json,'successfully_sent'=>$successfully_sent));
+                    $this->basic->update_data("sms_sending_campaign",array("id"=>$campaign_id),array('successfully_sent'=>$successfully_sent));
                 }
                 
                 // updating a contact, marked as processed
                 $this->basic->update_data("sms_sending_campaign_send",array("id"=>$send_table_id),array('processed'=>'1',"sent_time"=>$now_sent_time,"delivery_id"=>$message_sent_id));
             }
 
-            // one campaign completed, now update database finally
-            $send_report_json = json_encode($send_report);
-
             if((count($campaign_contacts) < $number_of_sms_to_be_sent_in_try) || $number_of_sms_to_be_sent_in_try == "")
             {
-                $complete_update = array("report"=>$send_report_json,"posting_status"=>'2','successfully_sent'=>$successfully_sent,'completed_at'=>date("Y-m-d H:i:s"),"is_try_again"=>"0");                
+                $complete_update = array("posting_status"=>'2','successfully_sent'=>$successfully_sent,'completed_at'=>date("Y-m-d H:i:s"),"is_try_again"=>"0");                
                 $this->basic->update_data("sms_sending_campaign",array("id"=>$campaign_id),$complete_update);
             }
             else // suppose update_sms_sending_report_after_time=20 but there are 19 message to sent, need to update report in that case
             { 
-                $this->basic->update_data("sms_sending_campaign",array("id"=>$campaign_id),array("report"=>$send_report_json,'successfully_sent'=>$successfully_sent,"is_try_again"=>"1"));
+                $this->basic->update_data("sms_sending_campaign",array("id"=>$campaign_id),array('successfully_sent'=>$successfully_sent,"is_try_again"=>"1"));
             }
         }          
     }
@@ -3707,8 +3735,6 @@ class Cron_job extends Home
 
         $this->db->where_in("id",$campaign_id_array);
         $this->db->update("email_sending_campaign",array("posting_status"=>"1","is_try_again"=>"0"));
-
-        $send_report = array();
 
         foreach($campaign_info_fildered as $info2)
         {
@@ -3841,7 +3867,7 @@ class Cron_job extends Home
                     $campaign_message_send = $campaign_message_send;
                     $response = $this->_email_send_function($from_email, $campaign_message_send, $contact_email, $subject, $attachement, $filename,$user_id);
 
-                    if(isset($response) && !empty($response) && $response == "Submited")
+                    if((isset($response) && !empty($response)) && $response == "Submited")
                     {   
                         $message_sent_id = $response; 
                         $successfully_sent++;
@@ -3853,28 +3879,12 @@ class Cron_job extends Home
                 }
                 catch(Exception $e) 
                 {
-                   $message_sent_id = $e->get_message();
+                   $message_sent_id = $e->getMessage();
                 }
 
                 // generating new report with send message info
                 $now_sent_time = date("Y-m-d H:i:s");
-                $send_report[$contact_email] = array( 
-                    'email_table_name'    => $contacts_details['email_table_name'],
-                    'email_api_id'        => $contacts_details['email_api_id'],
-                    'contact_id'          => isset($contacts_details['contact_id']) ? $contacts_details['contact_id']:"0",
-                    'subscriber_id'       => isset($contacts_details['subscriber_id']) ? $contacts_details['subscriber_id']:"0",
-                    'contact_first_name'  => isset($contacts_details['contact_first_name']) ? $contacts_details['contact_first_name']:"",
-                    'contact_last_name'   => isset($contacts_details['contact_last_name']) ? $contacts_details['contact_last_name']:"",
-                    'contact_email'       => isset($contacts_details['contact_email']) ? $contacts_details['contact_email']:"",
-                    'contact_phone_number'=> isset($contacts_details['contact_phone']) ? $contacts_details['contact_phone']:"",
-                    'is_open'             => "0",
-                    'number_of_time_open' => "0",
-                    'number_of_clicked'   => "0",
-                    'sent_time'           => $now_sent_time,
-                    'delivery_id'         => $message_sent_id,
-                );
-
-                $i++;  
+                $i++;
                 // after 10 send update report in database
                 if($i%$update_email_sending_report_after_time==0)
                 {
@@ -4293,7 +4303,9 @@ class Cron_job extends Home
     {
         $this->api_key_check($api_key);
         $current_date = date("Y-m-d H:i:s",strtotime("-2 day"));
-        $user_info = $this->basic->get_data('users',array('where'=>array('user_type !='=>'Admin','deleted'=>'0','expired_date <='=>$current_date,'bot_status'=>'1')),array('id'));
+        $free_package_info = $this->basic->get_data('package',['where'=>['price'=>'0','validity'=>'0','is_default'=>'1']]);
+        $free_package_id = isset($free_package_info[0]['id']) ? $free_package_info[0]['id'] : 0;
+        $user_info = $this->basic->get_data('users',array('where'=>array('user_type !='=>'Admin','deleted'=>'0','expired_date <='=>$current_date,'bot_status'=>'1','package_id !='=>$free_package_id)),array('id'));
 
         foreach($user_info as $value)
         {

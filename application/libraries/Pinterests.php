@@ -1,6 +1,4 @@
 <?php
-include_once('pinterest_vendor/autoload.php');
-use DirkGroenen\Pinterest\Pinterest;
 
 class Pinterests {
 
@@ -30,15 +28,13 @@ class Pinterests {
 			$this->pinterest_config_table_id=$pinterest_config[0]["id"];
 		}
 
-		// $this->app_id="4899848561142808486";
-		// $this->app_secret="af1e6a35a22c3dac8bcab10b63cafbbc8f0ac9e71b46e22768c40fe145b68262";
 
 		if (session_status() == PHP_SESSION_NONE) {
 		    session_start();
 		}
 
 
-		$this->pinterest = new Pinterest($this->app_id, $this->app_secret);
+		
 	}
 
 	
@@ -54,22 +50,20 @@ class Pinterests {
 		{
 		    session_start();
 		}
-		$this->pinterest = new Pinterest($this->app_id, $this->app_secret);
 	}
 
 
 
 	public function login_button($redirect_uris)
-	{
-		$loginurl = $this->pinterest->auth->getLoginUrl($redirect_uris, array('read_public','write_public','read_relationships','write_relationships'));
+	{	
+		$state=rand();
+		$loginurl = "https://api.pinterest.com/oauth/?response_type=code&redirect_uri={$redirect_uris}&client_id={$this->app_id}&scope=read_public,write_public&state={$state}";
 
 		if ($this->app_id == '' || $this->app_secret == '') {
 			$loginurl = base_url('social_apps/pinterest_settings'); 
 		}
 
 		return $loginurl;
-
-        // return "<a href='{$loginurl}' class='btn btn-outline-primary login_button' social_account='pinterest'><i class='fas fa-plus-circle'></i> ".$this->CI->lang->line("Import Account")."</a>";
 	}
 
 	public function get_userinfo($code)
@@ -80,115 +74,104 @@ class Pinterests {
 			redirect(base_url('comboposter/social_accounts'),'refresh');
 		}
 
-		$token = $this->pinterest->auth->getOAuthToken($code);
-    	$this->pinterest->auth->setOAuthToken($token->access_token);
+		$user_info=array();
 
-    	$userInfo = $this->pinterest->users->me(array('fields' => 'username,first_name,last_name,counts,image[small,large]'));
-    	$userInfoArray = $this->accessProtected($userInfo,"attributes");
+		/**Get Access Token **/
 
-    	/**
-    	 * set user infos
-    	 */
-    	$userName = '';
-    	$name = '';
-    	$image = base_url('assets/images/pinterest.jpg');
-    	$pins = 0;
-    	$boards = 0;
+		$url="https://api.pinterest.com/v1/oauth/token";
+		$postdata="grant_type=authorization_code&client_id={$this->app_id}&client_secret={$this->app_secret}&code={$code}";
 
-    	if (isset($userInfoArray['username'])) {
-			$userName = $userInfoArray['username'];
-    	}
+		$access_token_info=$this->curl_post_request($url,$postdata);
 
-    	if (isset($userInfoArray['first_name']) && isset($userInfoArray['last_name'])) {
-			$name = $userInfoArray['first_name']. ' '. $userInfoArray['last_name'];
-    	}
-
-		if (isset($userInfoArray['image']['large']['url'])) {
-			$image = $userInfoArray['image']['large']['url'];
+		if(isset($access_token_info['body_response']['access_token']))
+			$user_info['access_token']=$access_token_info['body_response']['access_token'];
+		else{
+			$user_info['error']=1;
+			$user_info['error_message']="Error HTTP Code: ".$access_token_info['http_curl_info']['http_code']." : ".json_encode($access_token_info['body_response']);
+			return $user_info;
 		}
 
-		if (isset($userInfoArray['counts']['pins'])) {
-			$pins = $userInfoArray['counts']['pins'];
+		/** Find User Information **/
+
+		$url="https://api.pinterest.com/v1/me/?access_token={$user_info['access_token']}&fields=username,first_name,last_name,counts,image[small,large]";
+		$user_details_info=$this->curl_get_request($url);
+
+		if(isset($user_details_info['body_response']['data']['id'])){
+
+			$user_info['id'] = $user_details_info['body_response']['data']['id'];
+			$user_info['username'] = $user_details_info['body_response']['data']['username'];
+			$user_info['first_name'] = $user_details_info['body_response']['data']['first_name'];
+			$user_info['last_name'] = $user_details_info['body_response']['data']['last_name'];
+			$user_info['boards_count'] = $user_details_info['body_response']['data']['counts']['boards'];
+			$user_info['pins_count'] = $user_details_info['body_response']['data']['counts']['pins'];
+			$user_info['image'] = $user_details_info['body_response']['data']['image']['large']['url'];
+		}
+		else{
+
+			$user_info['error']=1;
+			$user_info['error_message']="Error HTTP Code: ".$user_details_info['http_curl_info']['http_code']." : ".json_encode($user_details_info['body_response']);
+			return $user_info;
 		}
 
-		if (isset($userInfoArray['counts']['boards'])) {
-			$boards = $userInfoArray['counts']['boards'];
+
+		/**Get Board List **/
+
+		$url="https://api.pinterest.com/v1/me/boards/?access_token={$user_info['access_token']}";
+		$user_boards_info=$this->curl_get_request($url);
+
+
+		if(isset($user_boards_info['body_response']['data'])){
+			$user_info['board_list'] = $user_boards_info['body_response']['data'];
 		}
 
-		$this->CI->session->set_userdata('pinterest_username',$userName);
-		$this->CI->session->set_userdata('pinterest_name',$name);
-		$this->CI->session->set_userdata('pinterest_image',$image);
-		$this->CI->session->set_userdata('pinterest_pins',$pins);
-		$this->CI->session->set_userdata('pinterest_boards',$boards);
-		$this->CI->session->set_userdata('pinterest_access_token',$token->access_token);
+		else{
 
-		/* ----- Start Board Name Url----- */
-
-		$getMyBoards = $this->pinterest->users->getMeBoards();
-
-
-		$reflector = new ReflectionObject($getMyBoards);
-		$nodes = $reflector->getProperty('response');
-		$nodes->setAccessible(true);
-		$sortResponse = $nodes->getValue($getMyBoards);
-
-		$reflector1 = new ReflectionObject($sortResponse);
-		$bordResponse = $reflector1->getProperty('response');
-		$bordResponse->setAccessible(true);
-		$detailsRespose = $bordResponse->getValue($sortResponse);
-		$bordInfo = $detailsRespose['data'];
-
-		$arrayLen = count($bordInfo);
-		$finalBoardName = array();
-
-		for ($i=0; $i < $arrayLen; $i++) {
-			$bordUrlWithSlash = $bordInfo[$i]['url'];
-			$bordUrl = rtrim($bordUrlWithSlash, "/");
-			$bordNameArray = explode("/", $bordUrl);
-			$bordName = end($bordNameArray);
-			$finalBoardName[] = $bordName;
-			unset($bordUrlWithSlash, $bordUrl, $bordNameArray, $bordName);
+			$user_info['error']=1;
+			$user_info['error_message']="Error HTTP Code: ".$user_boards_info['http_curl_info']['http_code']." : ".json_encode($user_boards_info['body_response']);
+			return $user_info;
 		}
 
-		return $finalBoardName;
+		return $user_info;
 	}
 
-	public function accessProtected($userName, $attributes){
-  		$reflection = new ReflectionClass($userName);
-  		$property = $reflection->getProperty($attributes);
-  		$property->setAccessible(true);
-  		return $property->getValue($userName);
-	}
+	
 
 	public function youtube_video_post_to_pinterest($username,$bordname,$video_url,$access_token,$description)
 	{
-    	$this->pinterest->auth->setOAuthToken($access_token);
-			$video_id = $this->getVideoId($video_url);
-
-		$post = $this->pinterest->pins->create(array(
-	     	"note"          => $description,
-			//"image_url"		=> "https://img.youtube.com/vi/t5jQRzVvSuM/0.jpg",
-	     	"image_url"		=> "https://img.youtube.com/vi/".$video_id."/0.jpg",
-	     	//"board"         => $userName."/".$finalBoardName[0]
-	     	"board"         => $username."/".$bordname
-		 ));
-		$url = $this->accessProtected($post,'attributes');
-		return $url;
+    	
 	}
 
-	public function image_post_to_pinterest($username,$bordname,$image_url,$access_token,$description)
+	public function image_post_to_pinterest($username,$board_id,$image_url,$access_token,$description,$link="")
 	{
-    $this->pinterest->auth->setOAuthToken($access_token);
 
-		$post = $this->pinterest->pins->create(array(
-	     	"note"          => $description,
-			//"image_url"		=> "https://img.youtube.com/vi/t5jQRzVvSuM/0.jpg",
-	     	"image_url"		=> $image_url,
-	     	//"board"         => $userName."/".$finalBoardName[0]
-	     	"board"         => $username."/".$bordname
-		 ));
-		$url = $this->accessProtected($post,'attributes');
-		return $url;
+		$url="https://api.pinterest.com/v1/pins/";
+		$postdata=array(
+			"board"   =>$board_id,
+			"note" =>$description,
+			"image_url" => $image_url,
+			'access_token' => $access_token
+		);
+
+		if($link!="")
+			$postdata['link']=$link;
+
+		$post_info=$this->curl_post_request($url,$postdata);
+
+
+		
+		if(isset($post_info['body_response']['data']['url'])){
+			$response['url']= $post_info['body_response']['data']['url'];
+			return $response;
+		}
+		else if($post_info['http_curl_info']['http_code']=='201'){
+			$response['url']= "Success";
+			return $response;
+		}
+		else{
+			$response['error']=1;
+			$response['error_message']="Error HTTP Code: ".$post_info['http_curl_info']['http_code']." : ".json_encode($post_info['body_response']);
+			return $response;
+		}
 	}
 
 
@@ -212,5 +195,38 @@ class Pinterests {
 			return "This is not valid youtube url.";
 	}
 
+
+
+	public function curl_get_request($url){
+
+		$ch=curl_init($url);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
+		$response = curl_exec( $ch );
+		$response = json_decode($response,true);
+
+		$response_final['body_response'] = $response;
+		$response_final['http_curl_info']=curl_getinfo($ch);
+
+		return $response_final;
+	}
+
+
+	function curl_post_request($url,$postdata){
+
+			$ch=curl_init($url);
+			curl_setopt($ch, CURLOPT_POST, true);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata); 
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
+			$response = curl_exec( $ch );
+			$response = json_decode($response,true);
+
+			$response_final['body_response'] = $response;
+			$response_final['http_curl_info']=curl_getinfo($ch);
+
+			return $response_final;
+
+	}
 
 }

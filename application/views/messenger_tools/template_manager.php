@@ -99,7 +99,7 @@
                 className: 'text-center'
             },
             {
-                targets: [0,1,2,5,6],
+                targets: [0,1,2,6],
                 sortable: false
             }
           ],

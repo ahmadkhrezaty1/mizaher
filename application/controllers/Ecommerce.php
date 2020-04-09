@@ -53,17 +53,23 @@ class Ecommerce extends Home
 
       $from_date = $this->input->post('from_date');
       $to_date = $this->input->post('to_date');
+      $currency = $this->input->post('currency');
 
       if($to_date=='') $to_date = date("Y-m-d");
       if($from_date=='') $from_date = date("Y-m-d",strtotime("$to_date - ".$data_days." days"));
 
+      $ecommerce_config = $this->get_ecommerce_config();
       if($this->input->post('from_date')=="") $from_date=$from_date." 00:00:00";
       if($this->input->post('to_date')=="") $to_date=$to_date." 23:59:59";
+      if($this->input->post('currency')=="") $currency= isset($ecommerce_config['currency']) ? $ecommerce_config['currency'] : "USD";
 
       $this->session->set_userdata("ecommerce_from_date",$from_date);
       $this->session->set_userdata("ecommerce_to_date",$to_date);
+      $this->session->set_userdata("ecommerce_currency",$currency);
+
 
       $where_simple2=array();
+      $where_simple2['ecommerce_cart.currency'] = $currency;
       $where_simple2['ecommerce_cart.store_id'] = $store_id;
       $where_simple2['ecommerce_cart.user_id'] = $this->user_id;
       $where_simple2['ecommerce_cart.updated_at >='] = $from_date;
@@ -89,6 +95,9 @@ class Ecommerce extends Home
       $data['currency_icons'] = $this->currency_icon();
       $data['product_list'] = $this->get_product_list_array($store_id);
       $data['top_products'] = $this->basic->get_data("ecommerce_cart_item",array("where"=>array("store_id"=>$store_id,"updated_at >="=>$from_date,"updated_at <="=>$to_date)),"sum(quantity) as sales_count,product_id",$join='',$limit='10',$start=NULL,$order_by='sales_count desc',$group_by='product_id');
+      $data['ecommerce_config'] = $this->get_ecommerce_config();
+      $data['currecny_list_all'] = $this->currecny_list_all();
+      $data['ecommerce_config'] = $ecommerce_config;
       $this->_viewcontroller($data);
   }
 
@@ -134,6 +143,7 @@ class Ecommerce extends Home
       exit();
     }
     $store_id = $store_data[0]['id'];
+    $user_id = $store_data[0]['user_id'];
 
     $fb_app_id = $this->get_app_id();
     $data = array('body'=>"ecommerce/store_single","page_title"=>$store_data[0]['store_name']." | ".$this->lang->line("Products"),"fb_app_id"=>$fb_app_id,"favicon"=>base_url('upload/ecommerce/'.$store_data[0]['store_favicon']));
@@ -152,7 +162,7 @@ class Ecommerce extends Home
     $data["attribute_list"] = $this->get_attribute_list($store_id);
     // $data['country_names'] = $this->get_country_names();
     $data['currency_icons'] = $this->currency_icon();
-    $data['ecommerce_config'] = $this->get_ecommerce_config();
+    $data['ecommerce_config'] = $this->get_ecommerce_config($user_id);
     $data["sort_dropdown"] = 
     array
     (
@@ -205,7 +215,7 @@ class Ecommerce extends Home
     $data["category_list"] = $this->get_category_list($product_data[0]["store_id"]);
     $data["attribute_list"] = $this->get_attribute_list($product_data[0]["store_id"],true);
     $data['currency_icons'] = $this->currency_icon();
-    $data['ecommerce_config'] = $this->get_ecommerce_config();  
+    $data['ecommerce_config'] = $this->get_ecommerce_config($user_id);  
     $data['current_cart'] = $this->get_current_cart($subscriber_id,$product_data[0]['store_id']);  
     $this->load->view('ecommerce/bare-theme', $data);
   }
@@ -376,8 +386,8 @@ class Ecommerce extends Home
       $price = isset($value['unit_price']) ? $value['unit_price'] : 0;
       $item_total = $price*$quantity;
       $subtotal_count+=$item_total;
-      $item_total = number_format((float)$item_total, 2, '.', '');
-      $price = number_format((float)$price, 2, '.', '');
+      $item_total = $this->two_decimal_place($item_total); 
+      $price =  $this->two_decimal_place($price); 
       $image_url = (isset($value['thumbnail']) && !empty($value['thumbnail'])) ? base_url('upload/ecommerce/'.$value['thumbnail']) : base_url('assets/img/example-image.jpg');        
       $permalink = base_url("ecommerce/product/".$value['product_id']);
       $attribute_info = (is_array(json_decode($value["attribute_info"],true))) ? json_decode($value["attribute_info"],true) : array();
@@ -418,7 +428,7 @@ class Ecommerce extends Home
     $coupon_info2 = 
     '<div class="invoice-detail-item">
       <div class="invoice-detail-name">'.$this->lang->line("Discount").'</div>
-      <div class="invoice-detail-value">-'.$currency_icon.number_format((float)$coupon_amount, 2, '.', '').'</div>
+      <div class="invoice-detail-value">-'.$currency_icon.$this->two_decimal_place($coupon_amount).'</div>
     </div>';
 
     $tax_info = "";
@@ -426,7 +436,7 @@ class Ecommerce extends Home
     $tax_info = 
     '<div class="invoice-detail-item">
         <div class="invoice-detail-name">'.$this->lang->line("Tax").'</div>
-        <div class="invoice-detail-value">'.$currency_icon.number_format((float)$total_tax, 2, '.', '').'</div>
+        <div class="invoice-detail-value">'.$currency_icon.$this->two_decimal_place($total_tax).'</div>
     </div>';
 
     $shipping_info = "";
@@ -434,16 +444,16 @@ class Ecommerce extends Home
     $shipping_info = 
     '<div class="invoice-detail-item">
         <div class="invoice-detail-name">'.$this->lang->line("Delivery Fee").'</div>
-        <div class="invoice-detail-value">'.$currency_icon.number_format((float)$shipping_cost, 2, '.', '').'</div>
+        <div class="invoice-detail-value">'.$currency_icon.$this->two_decimal_place($shipping_cost).'</div>
     </div>';
 
 
     // $coupon_code." (".$currency_icon.$coupon_amount.")";      
 
     if($webhook_data_final['action_type']!='checkout') $subtotal = $subtotal_count;
-    $subtotal = number_format((float)$subtotal, 2, '.', '');
-    $checkout_amount = number_format((float)$checkout_amount, 2, '.', '');
-    $coupon_amount = number_format((float)$coupon_amount, 2, '.', '');
+    $subtotal = $this->two_decimal_place($subtotal);
+    $checkout_amount = $this->two_decimal_place($checkout_amount);
+    $coupon_amount = $this->two_decimal_place($coupon_amount);
 
     if($subscriber_id=='')
     {
@@ -722,7 +732,7 @@ class Ecommerce extends Home
     $action = isset($mydata['action']) ? $mydata['action'] : 'add';  // add,remove
     $subscriber_id = isset($mydata['subscriber_id']) ? $mydata['subscriber_id'] : '';
     $attribute_info = isset($mydata['attribute_info']) ? $mydata['attribute_info'] : array();
-    $attribute_info_json = json_encode($attribute_info);
+    $attribute_info_json = json_encode($attribute_info,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 
     $message = $cart_url = "";
     if($subscriber_id=='')
@@ -878,12 +888,13 @@ class Ecommerce extends Home
             $product_id = $value['product_id'];
             if(array_key_exists($product_id, $product_list_assoc))
             {
-              // $new_price = mec_display_price($product_list_assoc[$product_id]["original_price"],$product_list_assoc[$product_id]["sell_price"],'','2');
-              $new_price = $product_list_assoc[$product_id]["original_price"];
+              $new_price = mec_display_price($product_list_assoc[$product_id]["original_price"],$product_list_assoc[$product_id]["sell_price"],'','2');
+             
               $coupon_info = "";
 
-              if(!empty($coupon_data) && $coupon_amount>0 && ($coupon_product_ids=="0" || in_array($product_id, $coupon_product_ids)))
+              if(!empty($coupon_data) && $coupon_amount>0 && ($coupon_product_ids=="0" || in_array($product_id, $coupon_product_ids_array)))
               {
+                $new_price = $product_list_assoc[$product_id]["original_price"];
                 if($coupon_type=="percent")
                 {
                   $disc = ($new_price*$coupon_amount)/100;
@@ -1151,7 +1162,7 @@ class Ecommerce extends Home
 
 		if($manual_enabled=='1')
 		{
-			$manual_button = '<div class="col-12 col-md-3 text-center"><br><button id="manual-payment-button" class="btn btn-info btn-lg">Pay Manually</button><br><a href="#" id="show_manual_payment_instructions" class="pointer text-warning" data-toggle="modal" data-target="#manual-payment-ins-modal">'.$this->lang->line("Manual Payment Instructions").'</a></div>';
+			$manual_button = '<div class="col-12 col-md-3 text-center"><br><button id="manual-payment-button" class="btn btn-info btn-lg">Pay Manually</button><br><a href="#" id="show_manual_payment_instructions" class="pointer text-danger font-weight-bold" data-toggle="modal" data-target="#manual-payment-ins-modal"><i class="fas fa-exclamation-circle"></i> '.$this->lang->line("Manual Payment Instructions").'</a></div>';
 		} 
 
 		if($cod_enabled=='1')
@@ -1171,39 +1182,56 @@ class Ecommerce extends Home
       if ('get' == strtolower($_SERVER['REQUEST_METHOD'])) exit();
 
       // Sets validation rules
-      $this->form_validation->set_rules('paid_amount', $this->lang->line('Amount'), 'required|is_natural_no_zero');
-      $this->form_validation->set_rules('paid_currency', $this->lang->line('Currency'), 'required');
-      $this->form_validation->set_rules('additional_info', $this->lang->line('Additional info'), 'trim');
+      $this->form_validation->set_rules('paid-amount', $this->lang->line('Amount'), 'required|numeric');
+      $this->form_validation->set_rules('paid-currency', $this->lang->line('Currency'), 'required');
+      $this->form_validation->set_rules('additional-info', $this->lang->line('Additional info'), 'trim');
       $this->form_validation->set_rules('cart_id', $this->lang->line('Cart'), 'required|numeric');
       $this->form_validation->set_rules('subscriber_id', $this->lang->line('Subscriber ID'), 'required|numeric');
 
       // Shows errors if user data is invalid
       if (false === $this->form_validation->run())
       {
-          if ($this->form_validation->error('paid_amount')) $message = $this->form_validation->error('paid_amount');
-          else if ($this->form_validation->error('paid_currency')) $message = $this->form_validation->error('paid_currency');
-          else if ($this->form_validation->error('additional_info')) $message = $this->form_validation->error('additional_info');
-          else if ($this->form_validation->error('cart_id')) $message = $this->form_validation->error('cart_id');
-          else if ($this->form_validation->error('subscriber_id')) $message = $this->form_validation->error('subscriber_id');
-          else $message = $this->lang->line('Something went wrong, please try again.');
+        if ($this->form_validation->error('paid-amount')) $message = $this->form_validation->error('paid-amount');
+        else if ($this->form_validation->error('paid-currency')) $message = $this->form_validation->error('paid-currency');
+        else if ($this->form_validation->error('additional-info')) $message = $this->form_validation->error('additional-info');
+        else if ($this->form_validation->error('cart_id')) $message = $this->form_validation->error('cart_id');
+        else if ($this->form_validation->error('subscriber_id')) $message = $this->form_validation->error('subscriber_id');
+        else $message = $this->lang->line('Something went wrong, please try again.');
           
-          echo json_encode(['error' => strip_tags($message)]);
-          exit;
+        echo json_encode(['error' => strip_tags($message)]);
+        exit;
       }
 
-      $paid_amount = $this->input->post('paid_amount',true);
-      $paid_currency = $this->input->post('paid_currency',true);
-      $additional_info = strip_tags($this->input->post('additional_info',true));
+      $paid_amount = $this->input->post('paid-amount',true);
+      $paid_currency = $this->input->post('paid-currency',true);
+      $additional_info = strip_tags($this->input->post('additional-info',true));
       $cart_id = $this->input->post('cart_id',true);
       $subscriber_id = $this->input->post('subscriber_id',true);
-      $filename = $this->session->userdata('ecommerce_manual_payment_uploaded_file',true);
 
-      if (empty($filename))
-      {
-          $message = $this->lang->line('The attachment must be provided.');
-          echo json_encode(['error' => $message]);
-          exit;
+      $this->load->library('upload');
+
+      if ($_FILES['manual-payment-file']['size'] != 0) {
+
+          $base_path = FCPATH.'upload/ecommerce';
+          $filename = "payment_" . time() . substr(uniqid(mt_rand(), true), 0, 6).$_FILES['manual-payment-file']['name'];
+          $config = array(
+            "allowed_types" => 'pdf|doc|txt|png|jpg|jpeg|zip',
+            "upload_path" => $base_path,
+            "overwrite" => true,
+            "file_name" => $filename,
+            'max_size' => '5120',
+          );
+
+          $this->upload->initialize($config);
+          $this->load->library('upload', $config);
+
+          if (!$this->upload->do_upload('manual-payment-file')) {
+            
+            $message = $this->upload->display_errors();
+            echo json_encode(['error' => $message]); exit;
+          }
       }
+
       $curtime  = date('Y-m-d H:i:s');
       $transaction_id = strtoupper('MP'.$cart_id.hash_pbkdf2('sha512', $paid_amount, mt_rand(19999999, 99999999), 1000, 6));
       $data = [
@@ -1226,11 +1254,11 @@ class Ecommerce extends Home
           $message .= "<a href='".$invoice_link."'>".$invoice_link."</a>";
           $this->session->set_userdata('payment_status','1');
           $this->session->set_userdata('payment_status_message',$message);
-          $this->session->unset_userdata('ecommerce_manual_payment_uploaded_file');
           echo json_encode(['success' => $message,'redirect'=>$invoice_link]);
           $this->confirmation_message_sender($cart_id,$subscriber_id);
           exit;
       }
+
       $message = $this->lang->line('Something went wrong, please try again.');
       echo json_encode(['error' => $message]);
   }
@@ -1412,8 +1440,8 @@ class Ecommerce extends Home
     $paypal_status_verification = $this->config->item("paypal_status_verification");
     if($paypal_status_verification=='') $paypal_status_verification='1';
    
-    if($paypal_status_verification=='1') if($verify_status!="VERIFIED" || $payment_amount<$price) exit();
-    else if($payment_amount<$price)  exit();
+   /* if($paypal_status_verification=='1') if($verify_status!="VERIFIED" || $payment_amount<$price) exit();
+    else if($payment_amount<$price)  exit(); */
 
     $curtime = date("Y-m-d H:i:s");
 		$insert_data=array
@@ -2949,9 +2977,10 @@ class Ecommerce extends Home
     $data['page_title'] = $this->lang->line('E-commerce Payment Accounts');
     $data['xvalue'] = $this->get_ecommerce_config();
     if($this->is_demo == '1')$data["xvalue"]["stripe_secret_key"]=$data["xvalue"]["stripe_publishable_key"]=$data["xvalue"]["paypal_email"]="XXXXXXXXXX";
-    $currency_list = $this->basic->get_enum_values_assoc("ecommerce_config","currency");
+    $currency_list = $this->basic->get_enum_values_assoc("payment_config","currency");
     asort($currency_list);
     $data['currency_list'] = $currency_list;
+    $data['currecny_list_all'] = $this->currecny_list_all();
     $this->_viewcontroller($data);
   }
 
@@ -3046,7 +3075,7 @@ class Ecommerce extends Home
     $order_by=$sort." ".$order;
 
     $where_custom = '';
-    $where_custom="ecommerce_attribute.user_id = ".$this->user_id;
+    $where_custom="ecommerce_attribute.user_id = ".$this->user_id." AND ecommerce_attribute.store_id = ".$this->session->userdata("ecommerce_selected_store");
     if($search_value != '') 
     {
         foreach ($search_columns as $key => $value) 
@@ -3265,7 +3294,7 @@ class Ecommerce extends Home
     $order_by=$sort." ".$order;
 
     $where_custom = '';
-    $where_custom="ecommerce_category.user_id = ".$this->user_id;
+    $where_custom="ecommerce_category.user_id = ".$this->user_id." AND ecommerce_category.store_id = ".$this->session->userdata("ecommerce_selected_store");
     if($search_value != '') 
     {
         foreach ($search_columns as $key => $value) 

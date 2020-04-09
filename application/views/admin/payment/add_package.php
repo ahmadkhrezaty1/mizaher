@@ -14,7 +14,7 @@
     <div class="col-12">
 <div class="card">
           <div class="card-body">
-      <form class="form-horizontal" action="<?php echo site_url().'payment/add_package_action';?>" method="POST">
+       <?php echo form_open_multipart(site_url('payment/add_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
         <div class="card">
           <div class="card-body">
              
@@ -57,6 +57,29 @@
                   </div>
                 </div>              
              </div>
+
+             <div class="form-group">
+                <div class="row">
+                  <div class="col-6">
+                    <label for="package_photo"><?php echo $this->lang->line("Package Photo");?> *</label>
+                    <input type="file" name="package_photo" class="form-control">
+                  </div>
+                  <div class="col-6">
+                    <label for="package_premium_photo"><?php echo $this->lang->line("Package Premium Photo");?> *</label>
+                    <input type="file" name="package_premium_photo" class="form-control">
+                  </div>
+                </div>              
+             </div>
+             <div class="row">
+              <div class="col-12">
+                <div class="form-group">
+                  <label for="description"> <?php echo $this->lang->line("Description")?> *</label>
+                  <textarea name="description" value="<?php echo set_value('description');?>"  class="form-control" type="text"></textarea>
+                  <span class="red"><?php echo form_error('description'); ?></span>
+                </div>
+              </div>
+             </div>
+
              <div class="row">
               <div class="col-6">
                 <div class="form-group">

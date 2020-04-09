@@ -36,6 +36,7 @@
                     <th><?php echo $this->lang->line("Type"); ?></th>   
                     <th><?php echo $this->lang->line("Package"); ?></th>
                     <th><?php echo $this->lang->line("Status"); ?></th>
+																	 
                     <th><?php echo $this->lang->line("Expiry"); ?></th>
                     <th style="min-width: 150px"><?php echo $this->lang->line("Actions"); ?></th>
                     <th><?php echo $this->lang->line("Registered"); ?></th>

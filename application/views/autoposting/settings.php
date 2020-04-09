@@ -20,6 +20,7 @@
   </div>
 
   <div class="section-body">
+    <div class='text-center text-primary' style='padding:12px;border:.5px solid #dee2e6;background: #fff;'><?php echo $this->lang->line("RSS auto posting will be publised as Link post.It will post once any new feed comes to RSS feed after setting it in the system. It will not post any existing feeds during setup the campaign.") ?></div>
     <div class="row">
       <div class="col-12">
         <div class="card">
@@ -155,6 +156,45 @@
           }
         ]
     });
+
+    (function ($, undefined) {
+        $.fn.getCursorPosition = function() {
+            var el = $(this).get(0);
+            var pos = 0;
+            if('selectionStart' in el) {
+                pos = el.selectionStart;
+            } else if('selection' in document) {
+                el.focus();
+                var Sel = document.selection.createRange();
+                var SelLength = document.selection.createRange().text.length;
+                Sel.moveStart('character', -el.value.length);
+                pos = Sel.text.length - SelLength;
+            }
+            return pos;
+        }
+    })(jQuery);
+
+    $(document).on('click', '#title_variable', function(event) {
+      // event.preventDefault();
+        
+        let textAreaTxt = $(".emojionearea-editor").html();
+        var lastIndex = textAreaTxt.lastIndexOf("<br>");   
+        var lastTag = textAreaTxt.substr(textAreaTxt.length - 4); 
+        lastTag=lastTag.trim(lastTag);
+
+        if(lastTag=="<br>") {
+          textAreaTxt = textAreaTxt.substring(0, lastIndex); 
+        }
+
+        var txtToAdd = " #TITLE# ";
+        var new_text = textAreaTxt + txtToAdd;
+        $(".emojionearea-editor").html(new_text);
+        $(".emojionearea-editor").click();
+
+
+    });
+
+
 
     $(document).on('click','.campaign_settings',function(e){ 
       e.preventDefault();

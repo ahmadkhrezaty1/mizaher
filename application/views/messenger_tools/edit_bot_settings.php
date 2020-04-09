@@ -405,7 +405,7 @@
 
                       <div class="form-group">
                         <label><?php echo $this->lang->line("Please provide your media URL"); ?>
-                          <a href="#" class="media_template_modal" title="<?php echo $this->lang->line("How to get meida URL?"); ?>"><i class='fa fa-info-circle'></i> </a>
+                          <a href="#" class="media_template_modal" title="<?php echo $this->lang->line("How to get media URL?"); ?>"><i class='fa fa-info-circle'></i> </a>
                         </label>
 
                         <div class="clearfix"></div>
@@ -1167,7 +1167,7 @@ $doyoureallywanttodeletethisbot = $this->lang->line("do you really want to delet
 <script type="text/javascript">
 
 $(document).ready(function(){
-	$("#text_reply_1, #text_reply_2, #text_reply_3, #quick_reply_text_1, #quick_reply_text_2, #quick_reply_text_3, #text_with_buttons_input_1, #text_with_buttons_input_2, #text_with_buttons_input_3").emojioneArea({
+	$("#text_reply_1, #text_reply_2, #text_reply_3,#text_reply_4,#text_reply_5,#text_reply_6, #quick_reply_text_1, #quick_reply_text_2, #quick_reply_text_3, #quick_reply_text_4, #quick_reply_text_5, #quick_reply_text_6,#text_with_buttons_input_1, #text_with_buttons_input_2, #text_with_buttons_input_3,#text_with_buttons_input_4, #text_with_buttons_input_5, #text_with_buttons_input_6").emojioneArea({
 			autocomplete: false,
 			pickerPosition: "bottom"
 	  });
@@ -3137,7 +3137,7 @@ $(document).ready(function(){
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("How to get meida URL?"); ?></h5>
+        <h5 class="modal-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("How to get media URL?"); ?></h5>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body">

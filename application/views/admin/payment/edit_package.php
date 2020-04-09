@@ -13,7 +13,7 @@
   <div class="row">
     <div class="col-12">
 
-      <form class="form-horizontal" action="<?php echo site_url().'payment/edit_package_action';?>" method="POST">
+      <?php echo form_open_multipart(site_url('payment/edit_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
         
         <input name="id" value="<?php echo $value[0]["id"];?>"  class="form-control" type="hidden">              
         <input name="is_default" value="<?php echo $value[0]["is_default"];?>"  class="form-control" type="hidden">   
@@ -74,6 +74,42 @@
                     <input type="text" name="fastspring" value="<?php echo $value[0]["fastspring"];?>" class="form-control">
                   </div>
                 </div>              
+             </div>
+
+             <div class="form-group">
+                <div class="row">
+                  <div class="col-5">
+                    <label for="package_photo"><?php echo $this->lang->line("Package Photo");?> *</label>
+                    <input type="file" name="package_photo" value="<?php echo $value[0]["package_photo"];?>" class="form-control">
+                  </div>
+                  <div class="col-5">
+                    <label for="package_premium_photo"><?php echo $this->lang->line("Package Premium Photo");?> *</label>
+                    <input type="file" name="package_premium_photo" class="form-control">
+                  </div>
+                  <div class="col-2">
+                   <div class="form-group">
+                     <label for="delete_files" ><?php echo $this->lang->line('Delete Photos');?></label>
+                       
+                       <div class="form-group">
+                         <label class="custom-switch mt-2">
+                           <input type="checkbox" name="delete_files" value="1" class="custom-switch-input">
+                           <span class="custom-switch-indicator"></span>
+                           <span class="custom-switch-description"><?php echo $this->lang->line('Yes');?></span>
+                         </label>
+                       </div>
+                   </div> 
+                 </div>
+                </div>              
+             </div>
+
+             <div class="row">
+              <div class="col-12">
+                <div class="form-group">
+                  <label for="description"> <?php echo $this->lang->line("Description")?></label>
+                  <textarea name="description" value="<?php echo $value[0]["description"];?>"  class="form-control"><?php echo $value[0]["description"];?></textarea>
+                  <span class="red"><?php echo form_error('description'); ?></span>
+                </div>
+              </div>
              </div>
 
              <div class="row">

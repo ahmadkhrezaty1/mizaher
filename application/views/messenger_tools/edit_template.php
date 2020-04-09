@@ -131,7 +131,11 @@
 <?php if($iframe!='1') : ?>
 <section class="section section_custom">
   <div class="section-header">
-    <h1><i class="fas fa-edit"></i> <?php echo $this->lang->line("Edit PostBack Template");?></h1>
+    <?php if (isset($action_type) && $action_type == 'clone'): ?>
+      <h1><i class="far fa-copy"></i> <?php echo $this->lang->line("Clone PostBack Template");?></h1>
+    <?php else: ?>
+      <h1><i class="fas fa-edit"></i> <?php echo $this->lang->line("Edit PostBack Template");?></h1>
+    <?php endif ?>
     <div class="section-header-breadcrumb">
        <div class="breadcrumb-item"><a href="<?php echo base_url('messenger_bot'); ?>"><?php echo $this->lang->line("Messenger Bot"); ?></a></div>
       <div class="breadcrumb-item"><a href="<?php echo base_url('messenger_bot/template_manager'); ?>"><?php echo $this->lang->line('Post-back Manager'); ?></a></div>
@@ -159,37 +163,121 @@
 
                <br/>
                 <div class="row" <?php if($is_default=='default') echo "style='display: none;'"; ?> > 
-                  <div class="col-12"> 
+                  <div class="col-12 <?php echo (isset($action_type) && $action_type == 'clone') ? "col-sm-6" : ""; ?>"> 
                     <div class="form-group">
                       <label><?php echo $this->lang->line("Template Name"); ?></label>
                       <input type="<?php if($is_default=='default') echo 'hidden'; else echo 'text'; ?>" name="bot_name" value="<?php if(set_value('bot_name')) echo set_value('bot_name');else {if(isset($bot_info['template_name'])) echo $bot_info['template_name'];}?>" id="bot_name" class="form-control">
                     </div>       
                   </div>  
+
+                  <!-- if clone, page select section will be here -->
+                  <?php if (isset($action_type) && $action_type == 'clone'): ?>
+                    <div class="col-12 col-sm-6"> 
+                      <div class="form-group">
+                        <label><?php echo $this->lang->line("Selected page"); ?></label>
+                        <?php 
+                          $page_list[''] = "Please select a page";
+
+                          $page_select_extra_class = ' hidden';
+                          $page_select_default_value = $bot_info['page_id'];
+
+                          if (isset($action_type) && $action_type == 'clone') {
+                              $page_select_extra_class = ' select2';
+                          }
+                          echo form_dropdown('page_table_id',$page_list,$page_select_default_value,'id="page_table_id" class="form-control'. $page_select_extra_class .'"'); 
+                          $pagename="";;
+                          foreach ($page_list as $key => $value) 
+                          {
+                            if($key==$bot_info['page_id'])   $pagename=$value;                    
+                          }
+                          if (!(isset($action_type) && $action_type == 'clone')) {
+                              echo " : <b>".$pagename."</b>";
+                          }
+                        ?>
+                      </div>       
+                    </div>
+                  <?php endif ?>
                 </div>
 
 
                 <div class="row" <?php if($is_default=='default') echo "style='display: none;'"; ?> > 
-                  <div class="col-12 col-sm-6"> 
-                    <div class="form-group">
-                      <label><?php echo $this->lang->line("Selected page"); ?></label>
-                      <?php 
-                        $page_list[''] = "Please select a page";
-                        echo form_dropdown('page_table_id',$page_list,$bot_info['page_id'],'id="page_table_id" class="form-control hidden"'); 
-                        $pagename="";;
-                        foreach ($page_list as $key => $value) 
-                        {
-                          if($key==$bot_info['page_id'])   $pagename=$value;                    
-                        }
-                        echo " : <b>".$pagename."</b>";
-                      ?>
-                    </div>       
-                  </div>
+
+                  <!-- if edit, page select section will be here -->
+                  <?php if (!(isset($action_type) && $action_type == 'clone')): ?>
+                    <div class="col-12 col-sm-6"> 
+                      <div class="form-group">
+                        <label><?php echo $this->lang->line("Selected page"); ?></label>
+                        <?php 
+                          $page_list[''] = "Please select a page";
+
+                          $page_select_extra_class = ' hidden';
+                          $page_select_default_value = $bot_info['page_id'];
+
+                          if (isset($action_type) && $action_type == 'clone') {
+                              $page_select_extra_class = ' select2';
+                          }
+                          echo form_dropdown('page_table_id',$page_list,$page_select_default_value,'id="page_table_id" class="form-control'. $page_select_extra_class .'"'); 
+                          $pagename="";;
+                          foreach ($page_list as $key => $value) 
+                          {
+                            if($key==$bot_info['page_id'])   $pagename=$value;                    
+                          }
+                          if (!(isset($action_type) && $action_type == 'clone')) {
+                              echo " : <b>".$pagename."</b>";
+                          }
+                        ?>
+                      </div>       
+                    </div>
+                  <?php endif ?>
+
+                  <!-- if clone, post type section will be added here, additionally -->
+                  <?php if (isset($action_type) && $action_type == 'clone'): ?>
+                    <div class="col-12 col-sm-6">
+                      <div class="form-group" >
+                        <label><?php echo $this->lang->line("PostBack Type"); ?></label>
+                        <div class="row" style="margin-top: 10px;">
+                          <div class="col-6">
+                            <label class="custom-switch">
+                              <input type="radio" name="postback_type" value="parent" id="parent_postback" class="custom-switch-input" checked>
+                              <span class="custom-switch-indicator"></span>
+                              <span class="custom-switch-description">Parent</span>
+                            </label>
+                          </div>
+                          <div class="col-6">
+                            <label class="custom-switch">
+                              <input type="radio" name="postback_type" value="child" id="child_postback" class="custom-switch-input">
+                              <span class="custom-switch-indicator"></span>
+                              <span class="custom-switch-description">Child</span></label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>  
+                  <?php endif ?>
 
                   <div class="col-12 col-sm-6"> 
-                    <div class="form-group">
-                      <label><?php echo $this->lang->line("Postback ID"); ?></label>
-                      <input type="hidden" name="template_postback_id" id="template_postback_id" value="<?php if(set_value('postback_id')) echo set_value('postback_id');else {if(isset($bot_info['postback_id'])) echo $bot_info['postback_id'];}?>" class="form-control push_postback">
-                      <?php echo " : <b>"; if(set_value('postback_id')) echo set_value('postback_id');else {if(isset($bot_info['postback_id'])) echo $bot_info['postback_id'];} echo "</b>";?>
+                    <div class="form-group" id="postback_section">
+                      <label><?php echo $this->lang->line("Postback ID"); ?>
+                        <?php if (isset($action_type) && $action_type == 'clone'): ?>
+                          <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
+                        <?php endif ?>
+                      </label>
+
+                      <input 
+                        type="<?php echo (!(isset($action_type) && $action_type == 'clone')) ? "hidden" : ""; ?>" 
+                        name="template_postback_id" 
+                        id="template_postback_id" 
+                        value="<?php 
+                          if(set_value('postback_id')) echo set_value('postback_id');
+                          elseif ((isset($action_type) && $action_type == 'clone')) echo "";
+                          else {if(isset($bot_info['postback_id'])) echo $bot_info['postback_id'];}
+                        ?>" 
+                        class="form-control push_postback"
+                        >
+                      <?php 
+                          if ((!(isset($action_type) && $action_type == 'clone'))) {
+                              echo " : <b>"; if(set_value('postback_id')) echo set_value('postback_id');else {if(isset($bot_info['postback_id'])) echo $bot_info['postback_id'];} echo "</b>";
+                          }
+                      ?>
                     </div>       
                   </div>
                 </div>
@@ -214,7 +302,7 @@
                         $broadcaster_labels=$bot_info['broadcaster_labels'];
                         $broadcaster_labels=explode(',', $broadcaster_labels);
 
-                        $str ='<select multiple="" class="form-control select2" id="label_ids" name="label_ids[]">';
+                        $str ='<span id="first_dropdown"><select multiple="" class="form-control select2" id="label_ids" name="label_ids[]">';
                         $str .= '<option value="">'.$this->lang->line('Select Labels').'</option>';
                         foreach ($info_type as  $value)
                         {
@@ -225,7 +313,7 @@
 
                             $str.=  "<option value='{$search_key}' {$selected}>".$search_type."</option>";  
                         }
-                        $str.= '</select>';
+                        $str.= '</select></span>';
                         echo $str;
                                                      
                   echo '</div>       
@@ -244,7 +332,7 @@
                         $dripcampaign_id=$bot_info['drip_campaign_id'];
                         $dripcampaign_id=explode(',', $dripcampaign_id);
 
-                        $str ='<select class="form-control select2" id="drip_campaign_id" name="drip_campaign_id[]">';
+                        $str ='<span id="dripcampaign_dropdown"><select class="form-control select2" id="drip_campaign_id" name="drip_campaign_id[]">';
                         $str .= '<option value="">'.$this->lang->line('Select').'</option>';
                         foreach ($dripcampaign_list as  $value)
                         {
@@ -255,7 +343,7 @@
 
                             $str.=  "<option value='{$search_key}' {$selected}>".$search_type."</option>";  
                         }
-                        $str.= '</select>';
+                        $str.= '</select></span>';
                         echo $str;
                                                      
                   echo '</div>       
@@ -527,7 +615,7 @@
                             <div class="form-group" id="quick_reply_postid_div_<?php echo $i; ?>_<?php echo $k; ?>" <?php if(!isset($full_message[$k]['quick_replies'][$i-1]['content_type']) || $full_message[$k]['quick_replies'][$i-1]['content_type'] != 'text') echo 'style="display: none;"'; ?>>
                               <label>
                                 <?php echo $this->lang->line("PostBack id"); ?>
-                                <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a> 
+                                <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a> 
                               </label>
                               
                               <div>                              
@@ -575,7 +663,7 @@
 
                         <div class="form-group">
                           <label><?php echo $this->lang->line("Please provide your media URL"); ?>
-                            <a href="#" class="media_template_modal" title="<?php echo $this->lang->line("How to get meida URL?"); ?>"><i class='fa fa-info-circle'></i> </a>
+                            <a href="#" class="media_template_modal" title="<?php echo $this->lang->line("How to get media URL?"); ?>"><i class='fa fa-info-circle'></i> </a>
                           </label>
 
                           <div class="clearfix"></div>
@@ -632,7 +720,7 @@
 
                               <label <?php echo $label_style; ?> >
                                 <?php echo $this->lang->line("PostBack id"); ?>
-                                <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                               </label>
 
                               <?php 
@@ -771,7 +859,7 @@
                               ?>
                               <label <?php echo $label_style; ?> >
                                 <?php echo $this->lang->line("PostBack id"); ?>
-                                <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                               </label>
 
                               <?php 
@@ -930,7 +1018,7 @@
                                   ?>
                                   <label <?php echo $label_style; ?> >
                                     <?php echo $this->lang->line("PostBack id"); ?>
-                                    <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                    <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                                   </label>
 
                                   <?php 
@@ -1090,7 +1178,7 @@
                                     ?>
                                     <label <?php echo $label_style; ?> >
                                       <?php echo $this->lang->line("PostBack id"); ?>
-                                      <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                      <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                                     </label>
 
                                     <?php 
@@ -1210,7 +1298,7 @@
                                   ?>
                                   <label <?php echo $label_style; ?> >
                                     <?php echo $this->lang->line("PostBack id"); ?>
-                                    <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                    <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                                   </label>
 
                                   <?php 
@@ -1322,7 +1410,7 @@
                 <br/><br/>
                 <div class="row">
                   <div class="col-6">
-                    <button id="submit" class="btn btn-lg btn-primary"><i class="fa fa-send"></i> <?php echo $this->lang->line('Update'); ?></button>
+                    <button id="submit" class="btn btn-lg btn-primary"><i class="fa fa-send"></i> <?php echo (!(isset($action_type) && $action_type == 'clone')) ? $this->lang->line('Update') : $this->lang->line("Clone");; ?></button>
                   </div>
                   <?php if($iframe != '1') : ?>
                   <div class="col-6">
@@ -1404,7 +1492,7 @@ $doyoureallywanttodeletethisbot = $this->lang->line("do you really want to delet
 
 $(document).ready(function(){
 
-  $(".section_custom .dropdown-item").select2({
+  $(".dropdown-item").select2({
     tags: true,
     width: '100%'
   });
@@ -1417,7 +1505,7 @@ $(document).ready(function(){
         width: '100%'
       });
 
-	$("#text_reply_1, #text_reply_2, #text_reply_3, #quick_reply_text_1, #quick_reply_text_2, #quick_reply_text_3, #text_with_buttons_input_1, #text_with_buttons_input_2, #text_with_buttons_input_3").emojioneArea({
+	$("#text_reply_1, #text_reply_2, #text_reply_3,#text_reply_4,#text_reply_5,#text_reply_6, #quick_reply_text_1, #quick_reply_text_2, #quick_reply_text_3, #quick_reply_text_4, #quick_reply_text_5, #quick_reply_text_6,#text_with_buttons_input_1, #text_with_buttons_input_2, #text_with_buttons_input_3,#text_with_buttons_input_4, #text_with_buttons_input_5, #text_with_buttons_input_6").emojioneArea({
 			autocomplete: false,
 			pickerPosition: "bottom"
 	  });
@@ -2478,6 +2566,82 @@ $(document).ready(function(){
 
     });
 
+
+    $(document).on('change','#page_table_id',function(){  
+      page_change_action();
+    });
+
+
+    function page_change_action()
+    {
+      var page_id=$('#page_table_id').val();
+      if(page_id=='') return;
+
+      $.ajax({
+        type:'POST' ,
+        url: base_url+'messenger_bot/get_postback_dropdown_child',
+        data: {page_auto_id:page_id},
+        dataType : 'JSON',
+        success:function(response){  
+          $(".push_postback").html(response.dropdown);  
+        }
+      });
+
+      if($("input[name=postback_type]:checked").val()=="child")
+      {          
+        $.ajax({
+          type:'POST' ,
+          url: base_url+'messenger_bot/get_postback_dropdown',
+          data: {page_auto_id:page_id},
+          dataType : 'JSON',
+          success:function(response){  
+            if(response.first_dropdown == ''){
+              swal('<?php echo $this->lang->line("Warning"); ?>', '<?php echo $this->lang->line("You have no child PostBack for this page."); ?>', 'warning');
+              $("#parent_postback").prop("checked", true);
+              var content = '<label><?php echo $this->lang->line("PostBack ID"); ?><a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class="fa fa-info-circle"></i> </a></label>'+
+                        '<input type="text" name="template_postback_id" id="template_postback_id" class="form-control">';
+              $("#postback_section").html(content);
+              return false;
+            }
+            else
+              $("#postback_section").html(response.first_dropdown);   
+          }
+        });
+      }
+
+
+      
+      $('.show_label').addClass('hidden');
+      $.ajax({
+        type:'POST' ,
+        url: base_url+'messenger_bot/get_label_dropdown',
+        data: {page_id:page_id},
+        dataType : 'JSON',
+        success:function(response){
+          $('.show_label').removeClass('hidden');
+          $('#first_dropdown').html(response.first_dropdown);      
+        }
+      });
+
+      $('.dropdown_con').addClass('hidden');
+      var is_drip_campaigner_exist='<?php echo $this->is_drip_campaigner_exist;?>';
+      if(is_drip_campaigner_exist==false) return;
+
+      $.ajax({
+        type:'POST' ,
+        url: base_url+'messenger_bot/get_drip_campaign_dropdown',
+        data: {page_id:page_id},
+        dataType : 'JSON',
+        success:function(response){
+          $('.dropdown_con').removeClass('hidden');
+          $('#dripcampaign_dropdown').html(response.dropdown_value);      
+        }
+      });
+      // $('.dropdown_con').removeClass('hidden');
+    }
+
+
+
     $(document).on('click','.delete_bot',function(){
       var id = $(this).attr('id');
       var somethingwentwrong = "<?php echo $somethingwentwrong; ?>";
@@ -2903,10 +3067,20 @@ $(document).ready(function(){
       var page_table_id = $("#page_table_id").val();
       var new_variable_name = "js_array_"+page_table_id;
 
-      if(jQuery.inArray(template_postback_id.toUpperCase(), eval(new_variable_name)) !== -1){
-        swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('The PostBack ID you have given is allready exist. Please provide different PostBack Id')?>", 'warning');
-        return ;
-      }
+      <?php if (!(isset($action_type) && $action_type == 'clone')) : ?>
+        if(jQuery.inArray(template_postback_id.toUpperCase(), eval(new_variable_name)) !== -1){
+          swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('The PostBack ID you have given is allready exist. Please provide different PostBack Id')?>", 'warning');
+          return ;
+        }
+      <?php else : ?>
+        if($("input[name=postback_type]:checked").val()!="child")
+        {        
+          if(jQuery.inArray(template_postback_id.toUpperCase(), eval(new_variable_name)) !== -1){
+            swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('The PostBack ID you have given is allready exist. Please provide different PostBack Id')?>", 'warning');
+            return ;
+          }
+        }
+      <?php endif; ?>
 
       var keyword_type = $("input[name=keyword_type]:checked").val();
 
@@ -3313,12 +3487,18 @@ $(document).ready(function(){
 
       
       var iframe="<?php echo $iframe;?>";
+      var temp_url = base_url+"messenger_bot/edit_template_action"
+      <?php
+        if (isset($action_type) && $action_type == 'clone') {
+          echo "temp_url = base_url+'messenger_bot/create_template_action'";
+        }
+      ?>
 
       var queryString = new FormData($("#messenger_bot_form")[0]);
         $.ajax({
           context: this,
           type:'POST' ,
-          url: base_url+"messenger_bot/edit_template_action",
+          url: temp_url,
           data: queryString,
           dataType : 'JSON',
           // async: false,
@@ -3356,6 +3536,71 @@ $(document).ready(function(){
 
     $('[data-toggle="popover"]').popover(); 
     $('[data-toggle="popover"]').on('click', function(e) {e.preventDefault(); return true;});
+
+    if($("input[name=postback_type]:checked").val()=="child")
+    {          
+      $.ajax({
+        type:'POST' ,
+        url: base_url+'messenger_bot/get_postback_dropdown',
+        data: {page_auto_id:page_id},
+        dataType : 'JSON',
+        success:function(response){  
+          if(response.first_dropdown == ''){
+            swal('<?php echo $this->lang->line("Warning"); ?>', '<?php echo $this->lang->line("You have no child PostBack for this page."); ?>', 'warning');
+            $("#parent_postback").prop("checked", true);
+            var content = '<label><?php echo $this->lang->line("PostBack ID"); ?><a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class="fa fa-info-circle"></i> </a></label>'+
+                      '<input type="text" name="template_postback_id" id="template_postback_id" class="form-control">';
+            $("#postback_section").html(content);
+            return false;
+          }
+          else
+            $("#postback_section").html(response.first_dropdown);   
+        }
+      });
+    }
+
+
+    var default_child_postback_id = '0';
+
+    $(document).on('change','input[name=postback_type]',function(){
+      if($("input[name=postback_type]:checked").val()=="child")
+      {     
+        var page_auto_id = $("#page_table_id").val();
+        if(page_auto_id == '')
+        {
+          swal('<?php echo $this->lang->line("Warning"); ?>', '<?php echo $this->lang->line("You have to select a page first."); ?>', 'warning');
+          $("#parent_postback").prop("checked", true);
+          return false;
+        }
+        else
+        {
+          $.ajax({
+            type:'POST' ,
+            url: base_url+'messenger_bot/get_postback_dropdown',
+            data: {page_auto_id:page_auto_id,default_child_postback_id:default_child_postback_id},
+            dataType : 'JSON',
+            success:function(response){  
+              if(response.first_dropdown == ''){
+                swal('<?php echo $this->lang->line("Warning"); ?>', '<?php echo $this->lang->line("You have no child PostBack for this page."); ?>', 'warning');
+                $("#parent_postback").prop("checked", true);
+                return false;
+              }
+              else
+                $("#postback_section").html(response.first_dropdown);   
+            }
+          });
+        }
+      }
+      else 
+      {
+        var content = '<label><?php echo $this->lang->line("PostBack ID"); ?><a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class="fa fa-info-circle"></i> </a></label>'+
+                  '<input type="text" name="template_postback_id" id="template_postback_id" class="form-control">';
+        $("#postback_section").html(content);
+      }
+    });
+
+
+
   }); 
 </script>
 
@@ -3412,7 +3657,7 @@ $(document).ready(function(){
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("How to get meida URL?"); ?></h5>
+        <h5 class="modal-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("How to get media URL?"); ?></h5>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body">

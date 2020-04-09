@@ -160,7 +160,7 @@
                 <div class="form-group">
                   <label><?php echo $this->lang->line("Choose a Page"); ?></label>
                   <?php 
-                    $page_list[''] = "Please select a page";
+                    $page_list[''] = $this->lang->line("Please select a page");
                     echo form_dropdown('page_table_id',$page_list,$default_page,'id="page_table_id" class="form-control select2"'); 
                   ?>
                 </div>       
@@ -195,7 +195,7 @@
                 <div class="form-group" id="postback_section">
                   <label>
                     <?php echo $this->lang->line("PostBack id"); ?>
-                    <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                    <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="<?php echo $this->lang->line("It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _") ?>"><i class='fa fa-info-circle'></i> </a>
                   </label>
                   <input type="text" name="template_postback_id" id="template_postback_id" class="form-control">
                 </div>       
@@ -410,7 +410,7 @@
 
                           <div class="form-group">
                             <label><?php echo $this->lang->line("Please provide your media URL"); ?>
-                              <a href="#" class="media_template_modal" title="<?php echo $this->lang->line("How to get meida URL?"); ?>"><i class='fa fa-info-circle'></i> </a>
+                              <a href="#" class="media_template_modal" title="<?php echo $this->lang->line("How to get media URL?"); ?>"><i class='fa fa-info-circle'></i> </a>
                             </label>
                 
                             <div class="clearfix"></div>
@@ -456,7 +456,7 @@
                               <div class="form-group" id="media_postid_div_<?php echo $i; ?>_<?php echo $k; ?>" style="display: none;">
                                 <label>
                                 	<?php echo $this->lang->line("PostBack id"); ?>
-                                	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                                 </label>
                                 <select class="form-control push_postback select2"  name="media_post_id_<?php echo $i; ?>_<?php echo $k; ?>" id="media_post_id_<?php echo $i; ?>_<?php echo $k; ?>">
                                   <option value=""></option>
@@ -535,7 +535,7 @@
                               <div class="form-group" id="quick_reply_postid_div_<?php echo $i; ?>_<?php echo $k; ?>" style="display: none;">
                                 <label>
                                 	<?php echo $this->lang->line("PostBack id"); ?>
-                                	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>	
+                                	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>	
                                 </label>
 
                                 <select class="form-control push_postback select2"  name="quick_reply_post_id_<?php echo $i; ?>_<?php echo $k; ?>" id="quick_reply_post_id_<?php echo $i; ?>_<?php echo $k; ?>">
@@ -620,7 +620,7 @@
                               <div class="form-group" id="text_with_button_postid_div_<?php echo $i; ?>_<?php echo $k; ?>" style="display: none;">
                                 <label>
                                 	<?php echo $this->lang->line("PostBack id"); ?>
-                                	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                                 </label>
 
                                 <select class="form-control push_postback select2"  name="text_with_button_post_id_<?php echo $i; ?>_<?php echo $k; ?>" id="text_with_button_post_id_<?php echo $i; ?>_<?php echo $k; ?>">
@@ -734,7 +734,7 @@
                                     <div class="form-group" id="generic_template_button_postid_div_<?php echo $i; ?>_<?php echo $k; ?>" style="display: none;">
                                       <label>
                                       	<?php echo $this->lang->line("PostBack id"); ?>
-                                      	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                      	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                                       </label>
 
                                       <select class="form-control push_postback select2"  name="generic_template_button_post_id_<?php echo $i; ?>_<?php echo $k; ?>" id="generic_template_button_post_id_<?php echo $i; ?>_<?php echo $k; ?>">
@@ -851,7 +851,7 @@
                                       <div class="form-group" id="carousel_button_postid_div_<?php echo $j."_".$i; ?>_<?php echo $k; ?>" style="display: none;">
                                         <label>
                                         	<?php echo $this->lang->line("PostBack id"); ?>
-                                        	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                        	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                                         </label>
 
                                         <select class="form-control push_postback select2"  name="carousel_button_post_id_<?php echo $j."_".$i; ?>_<?php echo $k; ?>" id="carousel_button_post_id_<?php echo $j."_".$i; ?>_<?php echo $k; ?>">
@@ -934,7 +934,7 @@
                               <div class="form-group" id="list_with_button_postid_div_<?php echo $k; ?>" style="display: none;">
                                 <label>
                                 	<?php echo $this->lang->line("PostBack id"); ?>
-                                	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class='fa fa-info-circle'></i> </a>
+                                	<a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                                 </label>
 
                                 <select class="form-control push_postback select2"  name="list_with_button_post_id_<?php echo $k; ?>" id="list_with_button_post_id_<?php echo $k; ?>">
@@ -1168,7 +1168,7 @@
           if(response.first_dropdown == ''){
             swal('<?php echo $this->lang->line("Warning"); ?>', '<?php echo $this->lang->line("You have no child PostBack for this page."); ?>', 'warning');
             $("#parent_postback").prop("checked", true);
-            var content = '<label><?php echo $this->lang->line("PostBack ID"); ?><a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class="fa fa-info-circle"></i> </a></label>'+
+            var content = '<label><?php echo $this->lang->line("PostBack ID"); ?><a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class="fa fa-info-circle"></i> </a></label>'+
                       '<input type="text" name="template_postback_id" id="template_postback_id" class="form-control">';
             $("#postback_section").html(content);
             return false;
@@ -1298,7 +1298,7 @@
       }
       else 
       {
-        var content = '<label><?php echo $this->lang->line("PostBack ID"); ?><a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, _"><i class="fa fa-info-circle"></i> </a></label>'+
+        var content = '<label><?php echo $this->lang->line("PostBack ID"); ?><a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class="fa fa-info-circle"></i> </a></label>'+
                   '<input type="text" name="template_postback_id" id="template_postback_id" class="form-control">';
         $("#postback_section").html(content);
       }
@@ -1740,7 +1740,7 @@
           return;
         }
 
-        var reg = /^[0-9a-z_-]+$/i;
+        var reg = /^[0-9a-z_ -]+$/i;
         var output = reg.test(quick_reply_post_id_check);
         if(output === false)
         {
@@ -1809,7 +1809,7 @@
           return;
         }
 
-        var reg = /^[0-9a-z_-]+$/i;
+        var reg = /^[0-9a-z_ -]+$/i;
       	var output = reg.test(text_with_button_post_id_check);
       	if(output === false)
     		{
@@ -1876,7 +1876,7 @@
           return;
         }
 
-        var reg = /^[0-9a-z_-]+$/i;
+        var reg = /^[0-9a-z_ -]+$/i;
       	var output = reg.test(generic_template_button_post_id_check);
       	if(output === false)
     		{
@@ -1948,7 +1948,7 @@
             return;
           }
 
-          var reg = /^[0-9a-z_-]+$/i;
+          var reg = /^[0-9a-z_ -]+$/i;
         	var output = reg.test(carousel_button_post_id_check);
         	if(output === false)
       		{
@@ -2052,7 +2052,7 @@
           return;
         }
 
-        var reg = /^[0-9a-z_-]+$/i;
+        var reg = /^[0-9a-z_ -]+$/i;
       	var output = reg.test(list_button_post_id_check);
       	if(output === false)
     		{
@@ -2544,7 +2544,7 @@
       var bot_name = $("#bot_name").val();
       var template_postback_id = $("#template_postback_id").val();
 
-      var reg = /^[0-9a-z_-]+$/i;
+      var reg = /^[0-9a-z_ -]+$/i;
       var output = reg.test(template_postback_id);
       if(output === false)
       {
@@ -3078,7 +3078,7 @@
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("How to get meida URL?"); ?></h5>
+        <h5 class="modal-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("How to get media URL?"); ?></h5>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body">

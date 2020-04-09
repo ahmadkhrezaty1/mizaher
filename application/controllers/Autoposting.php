@@ -120,6 +120,8 @@ class Autoposting extends Home
         }
     }
 
+
+
     public function campaign_settings()
     {
         $this->ajax_check();
@@ -143,6 +145,14 @@ class Autoposting extends Home
 
         $fb_page_info=array();
         if($this->is_ultrapost_exist) $fb_page_info=$this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("facebook_rx_fb_page_info.user_id"=>$this->user_id,"bot_enabled"=>'1')),array("facebook_rx_fb_page_info.*","facebook_rx_fb_user_info.name as account_name"),array('facebook_rx_fb_user_info'=>"facebook_rx_fb_page_info.facebook_rx_fb_user_info_id=facebook_rx_fb_user_info.id,left"));
+
+        /* other social media accounts info */
+        $twitter_accounts = $this->basic->get_data('twitter_users_info', array('where' => array('user_id' => $this->user_id)), array('id', 'name'));
+        $linkedin_accounts = $this->basic->get_data('linkedin_users_info', array('where' => array('user_id' => $this->user_id)), array('id', 'name'));
+        $reddit_accounts = $this->basic->get_data('reddit_users_info', array('where' => array('user_id' => $this->user_id)), array('id', 'username'));
+        $subreddits = $this->subRedditList();
+
+
 
         if($this->is_broadcaster_exist_deprecated)
         {
@@ -193,6 +203,26 @@ class Autoposting extends Home
         if($this->is_ultrapost_exist)
         {
             $xpost_to_pages=isset($get_data[0]['page_ids'])?explode(',', $get_data[0]['page_ids']):array();
+
+            $xtwitter_accounts = array();
+            $xlinkedin_accounts = array();
+            $xreddit_accounts = array();
+            $xsubreddits = '';
+
+            if ($get_data[0]['twitter_accounts'] != "" &&  $get_data[0]['twitter_accounts'] != "null") {
+                $xtwitter_accounts = json_decode($get_data[0]['twitter_accounts']);
+            }
+            if ($get_data[0]['linkedin_accounts'] != "" &&  $get_data[0]['linkedin_accounts'] != "null") {
+                $xlinkedin_accounts = json_decode($get_data[0]['linkedin_accounts']);
+            }
+            if ($get_data[0]['reddit_accounts'] != "" &&  $get_data[0]['reddit_accounts'] != "null") {
+                $xreddit_accounts = json_decode($get_data[0]['reddit_accounts']);
+            }
+            if ($get_data[0]['subreddits'] != "") {
+                $xsubreddits = $get_data[0]['subreddits'];
+            }
+
+            $posting_message = ($get_data[0]['posting_message'] != '') ? $get_data[0]['posting_message'] : '';
             $xposting_timezone=isset($get_data[0]['posting_timezone'])?$get_data[0]['posting_timezone']:"";
             $xposting_start_time=isset($get_data[0]['posting_start_time'])?$get_data[0]['posting_start_time']:"";
             $xposting_end_time=isset($get_data[0]['posting_end_time'])?$get_data[0]['posting_end_time']:"";
@@ -225,11 +255,12 @@ class Autoposting extends Home
         $html.='<div class="text-center waiting" id="submit_status"><i class="fas fa-spinner fa-spin blue text-center" style="font-size:40px"></i></div>';
         if($this->is_ultrapost_exist)
         {
+            $others_media_count = 0;
             $html .= '<div class="row">';
             $html.='<div class="col-12 col-md-6">
                         <div class="form-group">
                             <input type="hidden" name="campaign_id" id="campaign_id" value="'.$id.'">
-                            <label>'.$this->lang->line("Post to Pages").'</label>
+                            <label>'.$this->lang->line("Post to Facebook Pages").'</label>
                             <select multiple="multiple"  class="form-control" id="post_to_pages" name="post_to_pages[]">';
                             
                                 foreach($fb_page_info as $key=>$val)
@@ -245,12 +276,105 @@ class Autoposting extends Home
                             '</select>
                         </div>
                     </div>';
+
+            if (!empty($twitter_accounts)) {
+
+                $others_media_count++;
+                
+                $html.='<div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>'.$this->lang->line("Post to Twitter Accounts").'</label>
+                                <select multiple="multiple"  class="form-control" id="select_twitter_accounts" name="twitter_accounts[]">';
+                                
+                                    foreach($twitter_accounts as $key=>$val)
+                                    {
+                                        $id=$val['id'];
+                                        $name=$val['name'];
+                                        $selected='';
+                                        if(in_array('twitter_users_info-'.$id, $xtwitter_accounts)) $selected="selected";
+                                        $html.="<option value='twitter_users_info-{$id}' {$selected}>{$name}</option>";
+                                    }
+                                $html.=
+                                '</select>
+                            </div>
+                        </div>';
+            }
+
+            if (!empty($linkedin_accounts)) {
+                
+                $others_media_count++;
+                
+                $html.='<div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>'.$this->lang->line("Post to Linkedin Accounts").'</label>
+                                <select multiple="multiple"  class="form-control" id="select_linkedin_accounts" name="linkedin_accounts[]">';
+                                
+                                    foreach($linkedin_accounts as $key=>$val)
+                                    {
+                                        $id=$val['id'];
+                                        $name=$val['name'];
+                                        $selected='';
+                                        if(in_array('linkedin_users_info-'.$id, $xlinkedin_accounts)) $selected="selected";
+                                        $html.="<option value='linkedin_users_info-{$id}' {$selected}>{$name}</option>";
+                                    }
+                                $html.=
+                                '</select>
+                            </div>
+                        </div>';
+            }
+
+            if (!empty($reddit_accounts)) {
+                
+                $others_media_count += 2;
+                
+                $html.='<div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>'.$this->lang->line("Post to Reddit Accounts").'</label>
+                                <select multiple="multiple"  class="form-control" id="select_reddit_accounts" name="reddit_accounts[]">';
+                                
+                                    foreach($reddit_accounts as $key=>$val)
+                                    {
+                                        $id=$val['id'];
+                                        $username=$val['username'];
+                                        $selected='';
+                                        if(in_array('reddit_users_info-'.$id, $xreddit_accounts)) $selected="selected";
+                                        $html.="<option value='reddit_users_info-{$id}' {$selected}>{$username}</option>";
+                                    }
+                                $html.=
+                                '</select>
+                            </div>
+                        </div>';
+                
+                $html.='<div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>'.$this->lang->line("Subreddit List").'</label>
+                                <select class="form-control" id="select_subreddits" name="subreddits">';
+                                    
+                                    foreach($subreddits as $key=>$val)
+                                    {
+                                        
+                                        $selected='';
+                                        if($key == $xsubreddits) $selected="selected";
+                                        // if(in_array($key, $xsubreddits)) $selected="selected";
+                                        $html.="<option value='{$key}' {$selected}>{$val}</option>";
+                                    }
+                                $html.=
+                                '</select>
+                            </div>
+                        </div>';
+            }
+
             $html.='<div class="col-12 col-md-6">
                             <div class="form-group">
                             <label>'.$this->lang->line("Posting Timezone").'</label>
                             '.form_dropdown('posting_timezone', $timezones, $xposting_timezone,"class='form-control' id='posting_timezone'").'
                             </div>
                         </div>';
+
+            if ($others_media_count == 1) {
+                $html .= '<div class="col-12 col-md-6"></div>';
+            }
+
             $html.='<div class="col-12 col-md-6">
                         <div class="form-group">
                         <label>'.$this->lang->line("Post Between Time")." ".$tooplip1.'</label>
@@ -263,7 +387,24 @@ class Autoposting extends Home
                             <input type="text" class="form-control timepicker" value="'.$xposting_end_time.'" id="posting_end_time" name="posting_end_time">
                         </div>
                     </div>';
-            $html .= '</div>';
+            $html.='<div class="col-12">
+                        <div class="form-group">
+                            <label>'.$this->lang->line("Message").'</label>
+                            <span class="float-right" id="title_variable"><a title="" data-toggle="tooltip" data-placement="top" class="btn btn-sm" title="'.$this->lang->line("You can use the original title from the feed.").'" style="cursor: pointer;border: .5px dashed #ccc;margin-bottom: 3px;"><i class="far fa-lightbulb"></i>  '.$this->lang->line("Title").'</a></span>
+                            <textarea class="form-control" id="message_textarea" name="message">'.$posting_message.'</textarea>
+                        </div>
+                    </div>';
+            $html .= '</div>
+                        <script>$("#select_twitter_accounts").select2();</script>
+                        <script>$("#select_linkedin_accounts").select2();</script>
+                        <script>$("#select_reddit_accounts").select2();</script>
+                        <script>$(function () { $("[data-toggle=\'tooltip\']").tooltip()})</script>
+                        <script>$("#message_textarea").emojioneArea({
+                                    autocomplete: false,
+                                    pickerPosition: "bottom",
+                                    //hideSource: false,
+                                 });</script>
+                        ';
         }
 
         if($this->is_broadcaster_exist_deprecated)
@@ -366,6 +507,7 @@ class Autoposting extends Home
 
         $post_to_pages=array();
         $page_names=array();
+        $posting_title="";
         $posting_start_time="";
         $posting_end_time="";
         $posting_end_time="";
@@ -384,12 +526,18 @@ class Autoposting extends Home
 
         if($this->is_ultrapost_exist)
         {
+            $posting_message = $this->input->post('message', true);
             $post_to_pages=$this->input->post("post_to_pages",true);
             if(!isset($post_to_pages) || !is_array($post_to_pages)) $post_to_pages=array();
             $posting_start_time=$this->input->post("posting_start_time",true);
             $posting_end_time=$this->input->post("posting_end_time",true);
             $posting_end_time=$this->input->post("posting_end_time",true);
             $posting_timezone=$this->input->post("posting_timezone",true);
+
+            $twitter_accounts = $this->input->post('twitter_accounts', true);
+            $linkedin_accounts = $this->input->post('linkedin_accounts', true);
+            $reddit_accounts = $this->input->post('reddit_accounts', true);
+            $subreddits = $this->input->post('subreddits', true);
         }  
 
         if($this->is_broadcaster_exist_deprecated)
@@ -428,6 +576,12 @@ class Autoposting extends Home
             $update_data["posting_start_time"]=$posting_start_time;
             $update_data["posting_end_time"]=$posting_end_time;
             $update_data["posting_timezone"]=$posting_timezone;
+            $update_data["posting_message"]=$posting_message;
+
+            $update_data["twitter_accounts"] = ($twitter_accounts != '') ? json_encode($twitter_accounts) : '';
+            $update_data["linkedin_accounts"] = ($linkedin_accounts != '') ? json_encode($linkedin_accounts) : '';
+            $update_data["reddit_accounts"] = ($reddit_accounts != '') ? json_encode($reddit_accounts) : '';
+            $update_data["subreddits"] = $subreddits;
         }
         else
         {
@@ -437,6 +591,12 @@ class Autoposting extends Home
             $update_data["posting_start_time"]="";
             $update_data["posting_end_time"]="";
             $update_data["posting_timezone"]="";
+            $update_data["posting_message"]= $posting_message;
+
+            $update_data["twitter_accounts"] = ($twitter_accounts != '') ? json_encode($twitter_accounts) : '';
+            $update_data["linkedin_accounts"] = ($linkedin_accounts != '') ? json_encode($linkedin_accounts) : '';
+            $update_data["reddit_accounts"] = ($reddit_accounts != '') ? json_encode($reddit_accounts) : '';
+            $update_data["subreddits"] = $subreddits;
         }
 
         if($this->is_broadcaster_exist_deprecated && $broadcast_page_id!="")
@@ -676,7 +836,245 @@ class Autoposting extends Home
     }
 
 
+    public function subRedditList()
+    {
+         
+        $subRedditListArr = array(
+            "1200isplenty" => "1200isplenty",
+            "AdventureTime" => "AdventureTime",
+            "Android" => "Android",
+            "Android" => "Android",
+            "Animated" => "Animated",
+            "Anxiety" => "Anxiety",
+            "ArcherFX" => "ArcherFX",
+            "ArtPorn" => "ArtPorn",
+            "AskReddit" => "AskReddit",
+            "AskScience" => "AskScience",
+            "AskScience" => "AskScience",
+            "AskSocialScience" => "AskSocialScience",
+            "Baseball" => "Baseball",
+            "BetterCallSaul" => "BetterCallSaul",
+            "Bitcoin" => "Bitcoin",
+            "Bitcoin" => "Bitcoin",
+            "BobsBurgers" => "BobsBurgers",
+            "Books" => "Books",
+            "BreakingBad" => "BreakingBad",
+            "Cheap_Meals" => "Cheap_Meals",
+            "Classic4chan" => "Classic4chan",
+            "DeepIntoYouTube" => "DeepIntoYouTube",
+            "Discussion" => "Discussion",
+            "DnD" => "DnD",
+            "Doctor Who" => "Doctor Who",
+            "DoesAnybodyElse" => "DoesAnybodyElse",
+            "DunderMifflin" => "DunderMifflin",
+            "EDC" => "EDC",
+            "Economics" => "Economics",
+            "Entrepreneur" => "Entrepreneur",
+            "FlashTV" => "FlashTV",
+            "FoodPorn" => "FoodPorn",
+            "General" => "General",
+            "General" => "General",
+            "General" => "General",
+            "General" => "General",
+            "General" => "General",
+            "HistoryPorn" => "HistoryPorn",
+            "Hockey" => "Hockey",
+            "HybridAnimals" => "HybridAnimals",
+            "IASIP" => "IASIP",
+            "Jokes" => "Jokes",
+            "LetsNotMeet" => "LetsNotMeet",
+            "LifeProTips" => "LifeProTips",
+            "Lifestyle" => "Lifestyle",
+            "Linux" => "Linux",
+            "LiverpoolFC" => "LiverpoolFC",
+            "Netflix" => "Netflix",
+            "Occupation" => "Occupation",
+            "Offensive_Wallpapers" => "Offensive_Wallpapers",
+            "OutOfTheLoop" => "OutOfTheLoop",
+            "PandR" => "PandR",
+            "Pokemon" => "Pokemon",
+            "Seinfeld" => "Seinfeld",
+            "Sherlock" => "Sherlock",
+            "Soccer" => "Soccer",
+            "Sound" => "Sound",
+            "SpacePorn" => "SpacePorn",
+            "Television" => "Television",
+            "TheSimpsons" => "TheSimpsons",
+            "Tinder" => "Tinder",
+            "TrueDetective" => "TrueDetective",
+            "UniversityofReddit" => "UniversityofReddit",
+            "YouShouldKnow" => "YouShouldKnow",
+            "advice" => "advice",
+            "amiugly" => "amiugly",
+            "anime" => "anime",
+            "apple" => "apple",
+            "aquariums" => "aquariums",
+            "askculinary" => "askculinary",
+            "askengineers" => "askengineers",
+            "askengineers" => "askengineers",
+            "askhistorians" => "askhistorians",
+            "askmen" => "askmen",
+            "askphilosophy" => "askphilosophy",
+            "askwomen" => "askwomen",
+            "bannedfromclubpenguin" => "bannedfromclubpenguin",
+            "batman" => "batman",
+            "battlestations" => "battlestations",
+            "bicycling" => "bicycling",
+            "bigbrother" => "bigbrother",
+            "biology" => "biology",
+            "blackmirror" => "blackmirror",
+            "blackpeoplegifs" => "blackpeoplegifs",
+            "budgetfood" => "budgetfood",
+            "business" => "business",
+            "casualiama" => "casualiama",
+            "celebs" => "celebs",
+            "changemyview" => "changemyview",
+            "changemyview" => "changemyview",
+            "chelseafc" => "chelseafc",
+            "chemicalreactiongifs" => "chemicalreactiongifs",
+            "chemicalreactiongifs" => "chemicalreactiongifs",
+            "chemistry" => "chemistry",
+            "coding" => "coding",
+            "college" => "college",
+            "comics" => "comics",
+            "community" => "community",
+            "confession" => "confession",
+            "cooking" => "cooking",
+            "cosplay" => "cosplay",
+            "cosplay" => "cosplay",
+            "crazyideas" => "crazyideas",
+            "cyberpunk" => "cyberpunk",
+            "dbz" => "dbz",
+            "depression" => "depression",
+            "doctorwho" => "doctorwho",
+            "education" => "education",
+            "educationalgifs" => "educationalgifs",
+            "engineering" => "engineering",
+            "entertainment" => "entertainment",
+            "environment" => "environment",
+            "everymanshouldknow" => "everymanshouldknow",
+            "facebookwins" => "facebookwins",
+            "facepalm" => "facepalm",
+            "facepalm" => "facepalm",
+            "fantasy" => "fantasy",
+            "fantasyfootball" => "fantasyfootball",
+            "firefly" => "firefly",
+            "fitmeals" => "fitmeals",
+            "flexibility" => "flexibility",
+            "food" => "food",
+            "funny" => "funny",
+            "futurama" => "futurama",
+            "gadgets" => "gadgets",
+            "gallifrey" => "gallifrey",
+            "gamedev" => "gamedev",
+            "gameofthrones" => "gameofthrones",
+            "geek" => "geek",
+            "gentlemanboners" => "gentlemanboners",
+            "gifs" => "gifs",
+            "girlsmirin" => "girlsmirin",
+            "google" => "google",
+            "gravityfalls" => "gravityfalls",
+            "gunners" => "gunners",
+            "hardbodies" => "hardbodies",
+            "hardware" => "hardware",
+            "harrypotter" => "harrypotter",
+            "history" => "history",
+            "hockey" => "hockey",
+            "houseofcards" => "houseofcards",
+            "howto" => "howto",
+            "humor" => "humor",
+            "investing" => "investing",
+            "japanesegameshows" => "japanesegameshows",
+            "keto" => "keto",
+            "ketorecipes" => "ketorecipes",
+            "languagelearning" => "languagelearning",
+            "law" => "law",
+            "learnprogramming" => "learnprogramming",
+            "lectures" => "lectures",
+            "lego" => "lego",
+            "lifehacks" => "lifehacks",
+            "linguistics" => "linguistics",
+            "literature" => "literature",
+            "loseit" => "loseit",
+            "magicTCG" => "magicTCG",
+            "marvelstudios" => "marvelstudios",
+            "math" => "math",
+            "mrrobot" => "mrrobot",
+            "mylittlepony" => "mylittlepony",
+            "naruto" => "naruto",
+            "nasa" => "nasa",
+            "nbastreams" => "nbastreams",
+            "nosleep" => "nosleep",
+            "nutrition" => "nutrition",
+            "olympics" => "olympics",
+            "onepunchman" => "onepunchman",
+            "paleo" => "paleo",
+            "patriots" => "patriots",
+            "pettyrevenge" => "pettyrevenge",
+            "photoshop" => "photoshop",
+            "physics" => "physics",
+            "pics" => "pics",
+            "pizza" => "pizza",
+            "podcasts" => "podcasts",
+            "poetry" => "poetry",
+            "pokemon" => "pokemon",
+            "preppers" => "preppers",
+            "prettygirls" => "prettygirls",
+            "psychology" => "psychology",
+            "python" => "python",
+            "quotes" => "quotes",
+            "rainmeter" => "rainmeter",
+            "rateme" => "rateme",
+            "reactiongifs" => "reactiongifs",
+            "recipes" => "recipes",
+            "reddevils" => "reddevils",
+            "relationship_advice" => "relationship_advice",
+            "rickandmorty" => "rickandmorty",
+            "running" => "running",
+            "samplesize" => "samplesize",
+            "scifi" => "scifi",
+            "screenwriting" => "screenwriting",
+            "seinfeld" => "seinfeld",
+            "self" => "self",
+            "sex" => "sex",
+            "shield" => "shield",
+            "simpleliving" => "simpleliving",
+            "soccer" => "soccer",
+            "southpark" => "southpark",
+            "stockmarket" => "stockmarket",
+            "stocks" => "stocks",
+            "talesfromtechsupport" => "talesfromtechsupport",
+            "tattoos" => "tattoos",
+            "teachers" => "teachers",
+            "thewalkingdead" => "thewalkingdead",
+            "thinspo" => "thinspo",
+            "tinyhouses" => "tinyhouses",
+            "todayilearned" => "todayilearned",
+            "topgear" => "topgear",
+            "tumblr" => "tumblr",
+            "twinpeaks" => "twinpeaks",
+            "twitch" => "twitch",
+            "vandwellers" => "vandwellers",
+            "vegan" => "vegan",
+            "videos" => "videos",
+            "wallpaper" => "wallpaper",
+            "weathergifs" => "weathergifs",
+            "westworld" => "westworld",
+            "whitepeoplegifs" => "whitepeoplegifs",
+            "wikileaks" => "wikileaks",
+            "wikipedia" => "wikipedia",
+            "woodworking" => "woodworking",
+            "writing" => "writing",
+            "wwe" => "wwe",
+            "youtube" => "youtube",
+            "youtubehaiku" => "youtubehaiku",
+            "zombies" => "zombies"
+        );
 
+        $subRedditListArr = array_unique($subRedditListArr);
+
+        return $subRedditListArr;
+    }
   
 
 

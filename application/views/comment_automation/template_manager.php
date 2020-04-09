@@ -191,7 +191,7 @@
         $("#comment_reply_enabled").prop("checked", true);
         $("#delete_offensive_comment_hide").prop("checked", true);
         $("#multiple_reply").prop("checked", false);
-        $("#auto_like_comment").prop("checked", false);
+        $("#auto_like_comment").prop("checked", true);
         $("#hide_comment_after_comment_reply").prop("checked", false);
 
         $("#generic").prop("checked", false);
@@ -933,7 +933,7 @@
                   <div class="col-12 col-md-6">
                     <div class="form-group">
                       <label class="custom-switch">
-                        <input type="checkbox" name="auto_like_comment" value="yes" id="auto_like_comment" class="custom-switch-input">
+                        <input type="checkbox" name="auto_like_comment" value="yes" id="auto_like_comment" class="custom-switch-input" checked>
                         <span class="custom-switch-indicator"></span>
                         <span class="custom-switch-description"><?php echo $this->lang->line('Yes');?></span>
                       </label>

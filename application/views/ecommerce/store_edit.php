@@ -340,35 +340,35 @@
 						                         	<span class="block5">
 
 						                         		<ul class="list-group list-group-flush">
-														  <li class="list-group-item"><span class="text-muted">Order confirmation</span></li>
+														  <li class="list-group-item"><span class="text-muted"><?php echo $this->lang->line('Order confirmation'); ?></span></li>
 
 														  <li class="list-group-item">
 														  	<div class="media">
 														  	  <img class="align-self-start mr-3" src="<?php echo base_url('assets/img/products/product-6.jpg') ?>">
 														  	  <div class="media-body">
-														  	    <h6 class="mt-0">Cart item title</h6>
-														  	    <p class="text-muted">Price : XX</p>
-														  	    <p class="text-muted">Qty : XX</p>
+														  	    <h6 class="mt-0"><?php echo $this->lang->line('Cart item title'); ?></h6>
+														  	    <p class="text-muted"><?php echo $this->lang->line('Price'); ?> : XX</p>
+														  	    <p class="text-muted"><?php echo $this->lang->line('Qty'); ?> : XX</p>
 														  	  </div>
 														  	</div>
 														  </li>
 
 														  <li class="list-group-item payment_info">
-														  	<p class="text-muted">Paid with</p>
-														  	<h6>Payment method</h6>
+														  	<p class="text-muted"><?php echo $this->lang->line('Paid with'); ?></p>
+														  	<h6><?php echo $this->lang->line('Payment method'); ?></h6>
 														  	<br>
-														  	<p class="text-muted">Deliver to</p>
-														  	<h6>Delivery address...</h6>
+														  	<p class="text-muted"><?php echo $this->lang->line('Deliver to'); ?></p>
+														  	<h6><?php echo $this->lang->line('Delivery address...'); ?></h6>
 														  </li>
 
 														  <li class="list-group-item">
-														  	<span class="text-muted float-left">Total</span>
+														  	<span class="text-muted float-left"><?php echo $this->lang->line('Total'); ?></span>
 														  	<b class="float-right">$xx.xx</b>
 														  </li>
 														</ul>
 						                         	</span>
 						                         	<span class="block4">
-						                         		<textarea data-toggle="tooltip" title="<?php echo $this->lang->line('Additonal information about next purchase like coupon can be displayed here, click to edit text.'); ?>" name="msg_reminder_text_checkout_next" id="msg_reminder_text_checkout_next"><?php echo isset($messenger_content['checkout']['checkout_text_next']) ? $messenger_content['checkout']['checkout_text_next'] : "You can see your order history and status here.";?></textarea>		                         	
+						                         		<textarea data-toggle="tooltip" title="<?php echo $this->lang->line('Additonal information about next purchase like coupon can be displayed here, click to edit text.'); ?>" name="msg_reminder_text_checkout_next" id="msg_reminder_text_checkout_next"><?php echo isset($messenger_content['checkout']['checkout_text_next']) ? $messenger_content['checkout']['checkout_text_next'] : $this->lang->line("You can see your order history and status here");?></textarea>		                         	
 						                         		<p>
 						                         		<input data-toggle="tooltip" title="<?php echo $this->lang->line('Buyer order page link will be embedded here, click to edit button name. Clean text if you do not want this.'); ?>" value="<?php echo isset($messenger_content['checkout']['checkout_btn_next']) ? $messenger_content['checkout']['checkout_btn_next'] : 'Visit Shop';?>" class="btn btn-block bg-white" name="msg_checkout_btn_website" id="msg_checkout_btn_website"/>
 						                         		</p>

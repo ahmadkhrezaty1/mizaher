@@ -56,8 +56,18 @@
                       <span class="red"><?php echo form_error('stripe_publishable_key'); ?></span>
                       <br>
                       <label for=""><i class="fas fa-coins"></i>  <?php echo $this->lang->line("Currency");?></label>
-                      <?php $default_currency = isset($xvalue['currency']) ? $xvalue['currency'] : "USD"; ?>
-                      <?php echo form_dropdown('currency', $currency_list, $default_currency,"class='form-control select2' style='width:100% !important;'"); ?> 
+                      <?php $default_currency = isset($xvalue['currency']) ? $xvalue['currency'] : "USD"; ?>                   
+                      <select name='currency' class='form-control select2' style='width:100% !important;'>
+                      <?php
+                      foreach ($currecny_list_all as $key => $value)
+                      {
+                        $paypal_supported = in_array($key, $currency_list) ? "[PayPal & Stripe]" : "";
+                        if($default_currency==$key) $selected_curr = "selected='selected'";
+                        else $selected_curr = '';
+                        echo '<option value="'.$key.'" '.$selected_curr.' >'.str_replace('And', '&', ucwords($value))." : ".$key." ".$paypal_supported.'</option>';
+                      }
+                      ?>
+                      </select>
                       <span class="red"><?php echo form_error('currency'); ?></span>
                     </div>
                   </div>                  

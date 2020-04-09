@@ -103,7 +103,11 @@
           var search = $("#search").val();
           var seen_type = $("#seen_type").val();
           $("#waiting").show();
-          if(reset) $("#search_submit").addClass("btn-progress");
+          if(reset) 
+          {
+            $("#search_submit").addClass("btn-progress");
+            counter = 0;
+          }
           $.ajax({
             url: base_url+'announcement/list_data',
             type: 'POST',
@@ -115,18 +119,10 @@
                 $("#nodata").hide();
                 $("#search_submit").removeClass("btn-progress");
 
-                counter += response.found;
-                if(!reset) 
-                {
-                  $("#load_more").attr("data-start",counter); 
-                  $("#load_data").append(response.html);
-                }      
-                else
-                {
-                  $("#load_more").attr("data-start","0");
-                  $("#load_data").html(response.html);
-                  counter = 0;
-                }
+                counter += response.found; 
+                $("#load_more").attr("data-start",counter); 
+                if(!reset)  $("#load_data").append(response.html);
+                else $("#load_data").html(response.html);
 
                 if(response.found!='0') $("#load_more").show();                
                 else 

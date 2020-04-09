@@ -1,6 +1,6 @@
 <?php 
   /*****Curl******/
-  $curl=$mbstring=$safe_mode=$allow_url_fopen=$set_time_limit="<li class='list-group-item list-group-item list-group-item-danger'><i class='fa fa-times-circle'></i> <b>Failed : </b>Could not check.</li>";
+  $curl=$mbstring=$safe_mode=$open_basedir=$allow_url_fopen=$set_time_limit="<li class='list-group-item list-group-item list-group-item-danger'><i class='fa fa-times-circle'></i> <b>Failed : </b>Could not check.</li>";
   
   $mysql_support="";
   $install_allow = 1;
@@ -32,13 +32,13 @@
     else
     $safe_mode="<li class='list-group-item'><i class='fa fa-check-circle'></i> <b>safe mode : </b>OFF</li>";
       
-    // if(ini_get('open_basedir')=="")
-    // $open_basedir="<li class='list-group-item'><i class='fa fa-check-circle'></i> <b>open basedir : </b>No Value</li>";
-    // else
-    // {
-    //   $install_allow = 0;
-    //   $open_basedir="<li class='list-group-item list-group-item list-group-item-warning'><i class='fa fa-times-circle'></i> <b>open basedir : </b>open_basedir has value, please clear the value</li>";
-    // }
+    if(ini_get('open_basedir')=="")
+    $open_basedir="<li class='list-group-item'><i class='fa fa-check-circle'></i> <b>open basedir : </b>No Value</li>";
+    else
+    {
+      $install_allow = 0;
+      $open_basedir="<li class='list-group-item list-group-item list-group-item-warning'><i class='fa fa-times-circle'></i> <b>open basedir : </b>open_basedir has value, please clear the value</li>";
+    }
     
     if(ini_get('allow_url_fopen'))
     $allow_url_fopen="<li class='list-group-item'><i class='fa fa-check-circle'></i> <b>allow url open : </b>TRUE</li>";
@@ -73,27 +73,6 @@
         <div class="login-brand">
           <a href="<?php echo base_url();?>"><img src="<?php echo base_url(); ?>assets/img/logo.png" alt="<?php echo $this->config->item('product_name');?>" width="200"></a>
         </div>
-        </div>
-
-        <div class="col-12">
-          <?php 
-          if($this->session->userdata('mysql_error')!="")
-            {
-              echo "<pre style='margin:0 auto;color:red;text-align:center;'><h6 style='color:red;'>";
-              echo $this->session->userdata('mysql_error');
-              $this->session->unset_userdata('mysql_error');
-              echo "</h6></pre><br/>"; 
-            }
-          ?>
-
-          <?php 
-            if(validation_errors())
-            {
-              echo "<pre style='margin:0 auto;color:red;text-align:center;'><h6 style='color:red;'>";
-              print_r(validation_errors()); 
-              echo "</h6></pre><br/>"; 
-            }
-          ?>
         </div>
 
         <div class="col-12 col-sm-6 col-md-6 col-xl-6">
@@ -180,7 +159,7 @@
                   echo $curl;
                   echo $mbstring;
                   echo $safe_mode;
-                  // echo $open_basedir;
+                  echo $open_basedir;
                   echo $allow_url_fopen;
                   echo $mysql_support;
                   echo $set_time_limit;

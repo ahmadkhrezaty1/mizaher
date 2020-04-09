@@ -332,7 +332,7 @@ else
                                     <div class="form-group">
                                       <label style="width: 100%;">
                                         <?php echo $this->lang->line("Select MailChimp List"); ?>
-                                        <a href="" class="text-danger float-right error_log_report2" data-type="Email Autoresponder"><i class="fas fa-history"></i> <?php echo $this->lang->line('API Log'); ?></a>                                        
+                                        <a href="" class="text-danger float-right error_log_report2" data-type="Email Autoresponder" data-service="Mailchimp"><i class="fas fa-history"></i> <?php echo $this->lang->line('API Log'); ?></a>                                        
                                       </label>
                                       <select class="form-control select2" id="mailchimp_list_id" name="mailchimp_list_id[]" multiple="">
                                         <?php 
@@ -343,6 +343,68 @@ else
                                           foreach ($value['data'] as $key2 => $value2) 
                                           {
                                             if(in_array($value2['table_id'], $selected_mailchimp_list_ids)) $selected = 'selected';
+                                            else $selected = '';
+                                            echo "<option value='".$value2['table_id']."' ".$selected.">".$value2['list_name']."</option>";
+                                          }
+                                          echo '</optgroup>';
+                                        } ?>
+                                      </select>
+                                    </div> 
+                                    <?php endif; ?>
+
+                                    <!-- sendinblue -->
+                                    <?php if($this->session->userdata('user_type') == 'Admin' || in_array(265,$this->module_access)) : ?>
+                                    <div>
+                                      <div class="section">                
+                                        <h2 class="section-title"><?php echo $this->lang->line('Sendinblue Integration'); ?> <span style="font-size: 12px !important;"><a href="<?php echo base_url('email_auto_responder_integration/sendinblue_list'); ?>" target="_BLANK"><?php echo $this->lang->line('Add Sendinblue API'); ?></a></span></h2>
+                                        <p><?php echo $this->lang->line('Select Sendinblue list where email will be sent when user signup.'); ?></p>
+                                      </div>
+                                    </div>
+                                    <div class="form-group">
+                                      <label style="width: 100%;">
+                                        <?php echo $this->lang->line("Select Sendinblue List"); ?>
+                                        <a href="" class="text-danger float-right error_log_report2" data-type="Email Autoresponder" data-service="Sendinblue"><i class="fas fa-history"></i> <?php echo $this->lang->line('API Log'); ?></a>                                        
+                                      </label>
+                                      <select class="form-control select2" id="sendinblue_list_id" name="sendinblue_list_id[]" multiple="" style="width: 100%;">
+                                        <?php 
+                                        // echo "<option value='0'>".$this->lang->line('Choose a List')."</option>";
+                                        foreach ($sendinblue_list as $key => $value) 
+                                        {
+                                          echo '<optgroup label="'.addslashes($value['tracking_name']).'">';
+                                          foreach ($value['data'] as $key2 => $value2) 
+                                          {
+                                            if(in_array($value2['table_id'], $selected_sendinblue_list_ids)) $selected = 'selected';
+                                            else $selected = '';
+                                            echo "<option value='".$value2['table_id']."' ".$selected.">".$value2['list_name']."</option>";
+                                          }
+                                          echo '</optgroup>';
+                                        } ?>
+                                      </select>
+                                    </div> 
+                                    <?php endif; ?>
+
+                                    <!-- Activecampaign -->
+                                    <?php if($this->session->userdata('user_type') == 'Admin' || in_array(265,$this->module_access)) : ?>
+                                    <div>
+                                      <div class="section">                
+                                        <h2 class="section-title"><?php echo $this->lang->line('Activecampaign Integration'); ?> <span style="font-size: 12px !important;"><a href="<?php echo base_url('email_auto_responder_integration/activecampaign_list'); ?>" target="_BLANK"><?php echo $this->lang->line('Add Activecampaign API'); ?></a></span></h2>
+                                        <p><?php echo $this->lang->line('Select Activecampaign list where email will be sent when user signup.'); ?></p>
+                                      </div>
+                                    </div>
+                                    <div class="form-group">
+                                      <label style="width: 100%;">
+                                        <?php echo $this->lang->line("Select Activecampaign List"); ?>
+                                        <a href="" class="text-danger float-right error_log_report2" data-type="Email Autoresponder" data-service="Activecampaign"><i class="fas fa-history"></i> <?php echo $this->lang->line('API Log'); ?></a>                                        
+                                      </label>
+                                      <select class="form-control select2" id="activecampaign_list_id" name="activecampaign_list_id[]" multiple="" style="width: 100%;">
+                                        <?php 
+                                        // echo "<option value='0'>".$this->lang->line('Choose a List')."</option>";
+                                        foreach ($activecampaign_list as $key => $value) 
+                                        {
+                                          echo '<optgroup label="'.addslashes($value['tracking_name']).'">';
+                                          foreach ($value['data'] as $key2 => $value2) 
+                                          {
+                                            if(in_array($value2['table_id'], $selected_activecampaign_list_ids)) $selected = 'selected';
                                             else $selected = '';
                                             echo "<option value='".$value2['table_id']."' ".$selected.">".$value2['list_name']."</option>";
                                           }
@@ -969,6 +1031,8 @@ else
       var chat_human_email = $("#chat_human_email").val();
       var no_match_found_reply = $("#no_match_found_reply").val();
       var mailchimp_list_id = $("#mailchimp_list_id").val();
+      var sendinblue_list_id = $("#sendinblue_list_id").val();
+      var activecampaign_list_id = $("#activecampaign_list_id").val();
 
       var sms_api_id = $("#sms_api_id").val();
       var sms_reply_message = $("#sms_reply_message").val();
@@ -982,7 +1046,7 @@ else
         ({
            type:'POST',
            url:base_url+'messenger_bot/mark_seen_chat_human_settings',
-           data:{table_id:table_id,mark_seen_status:mark_seen_status,chat_human_email:chat_human_email,no_match_found_reply:no_match_found_reply,mailchimp_list_id:mailchimp_list_id,sms_api_id:sms_api_id,sms_reply_message:sms_reply_message,email_api_id:email_api_id,email_reply_message:email_reply_message,email_reply_subject:email_reply_subject},
+           data:{table_id:table_id,mark_seen_status:mark_seen_status,chat_human_email:chat_human_email,no_match_found_reply:no_match_found_reply,mailchimp_list_id:mailchimp_list_id,sendinblue_list_id:sendinblue_list_id,activecampaign_list_id:activecampaign_list_id,sms_api_id:sms_api_id,sms_reply_message:sms_reply_message,email_api_id:email_api_id,email_reply_message:email_reply_message,email_reply_subject:email_reply_subject},
            dataType:'JSON',
            context: this,
            success:function(response)
@@ -1368,6 +1432,17 @@ else
       e.preventDefault();
       var auto_responder_type = $(this).attr('data-type');
       $("#auto_responder_type").val(auto_responder_type);
+
+      /**Distinguish email auto responder like MailChimp,Sendinblue etc**/
+
+      var autoresponder_service_name="";
+      if(auto_responder_type=='Email Autoresponder'){
+
+        autoresponder_service_name= $(this).attr('data-service');
+        $("#autoresponder_service_name").val(autoresponder_service_name);
+
+      }
+
       $("#err-log2").modal();
 
       setTimeout(function(){
@@ -1387,6 +1462,8 @@ else
                   {
                       d.error_search = $("#error_searching2").val();
                       d.auto_responder_type = $("#auto_responder_type").val();
+                      d.autoresponder_service_name =  $("#autoresponder_service_name").val();
+
                   }
               },
               language: 
@@ -1526,7 +1603,9 @@ else
                 <div class="row">
                   <div class="col-12 margin-top">
                     <input type="text" id="error_searching2" name="error_searching2" class="form-control" placeholder="<?php echo $this->lang->line("Search..."); ?>" style='width:200px;'>                                          
-                    <input type="hidden" id="auto_responder_type" name="auto_responder_type">                                          
+                    <input type="hidden" id="auto_responder_type" name="auto_responder_type">   
+                    <input type="hidden" id="autoresponder_service_name" name="autoresponder_service_name" value="">     
+
                   </div>
                   <div class="col-12">
                     <div class="data-card">                   

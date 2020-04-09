@@ -706,7 +706,7 @@
 							<h4><i class="fas fa-envelope-open"></i> <?php echo $this->lang->line("Email Auto Responder"); ?></h4>
 						</div>
 						<div class="card-body">
-					      	<div class="row">
+					      	<div class="row mb-3">
 					      		<div class="col-12 col-md-4">
 					      			<ul class="nav nav-pills flex-column" id="myTab4" role="tablist">
 					      				<li class="nav-item">
@@ -742,8 +742,80 @@
 					              	</div>
 					      		</div>
 					      	</div>	
+					      	<div class="row mb-3">
+					      		<div class="col-12 col-md-4">
+					      			<ul class="nav nav-pills flex-column" id="myTab4" role="tablist">
+					      				<li class="nav-item">
+					      					<a class="nav-link active" id="sendinblue_content" data-toggle="tab" href="#sendinblue" role="tab" aria-controls="home" aria-selected="true"><?php echo $this->lang->line("Sendinblue Integration"); ?></a>
+					      					<span style="font-size: 12px !important;"><a href="<?php echo base_url('email_auto_responder_integration/sendinblue_list'); ?>" target="_BLANK"><?php echo $this->lang->line('Add Sendinblue API'); ?></a></span>
+					      				</li>
+					      			</ul>
+					      		</div>
+					      		<div class="col-12 col-md-8">
+					              	<div class="tab-content no-padding" id="">
 
-					     
+						              	<div class="tab-pane fade show active" id="sendinblue" role="tabpanel" aria-labelledby="sendinblue_content">
+								        	<div class="form-group">
+								        	  <label><i class="fas fa-atom"></i> <?php echo $this->lang->line("Select Sendinblue list where email will be sent when user signup."); ?></label>
+								        	  <select class="form-control select2" id="sendinblue_list_id" name="sendinblue_list_id[]" multiple="">
+								        	    <?php 
+								        	    echo "<option value='0'>".$this->lang->line('Choose a List')."</option>";
+								        	    foreach ($sendinblue_list as $key => $value) 
+								        	    {
+								        	      echo '<optgroup label="'.addslashes($value['tracking_name']).'">';
+								        	      foreach ($value['data'] as $key2 => $value2) 
+								        	      {
+								        	        if(in_array($value2['table_id'], $selected_sendinblue_list_ids)) $selected = 'selected';
+								        	        else $selected = '';
+								        	        echo "<option value='".$value2['table_id']."' ".$selected.">".$value2['list_name']."</option>";
+								        	      }
+								        	      echo '</optgroup>';
+								        	    } ?>
+								        	  </select>
+								        	</div> 
+						              	</div>
+					              	 
+					              	</div>
+					      		</div>
+					      	</div>
+
+					      	<!-- activecampaign integration -->
+			      	      	<div class="row">
+			      	      		<div class="col-12 col-md-4">
+			      	      			<ul class="nav nav-pills flex-column" id="myTab4" role="tablist">
+			      	      				<li class="nav-item">
+			      	      					<a class="nav-link active" id="activecampaign_content" data-toggle="tab" href="#activecampaign" role="tab" aria-controls="home" aria-selected="true"><?php echo $this->lang->line("Activecampaign Integration"); ?></a>
+			      	      					<span style="font-size: 12px !important;"><a href="<?php echo base_url('email_auto_responder_integration/activecampaign_list'); ?>" target="_BLANK"><?php echo $this->lang->line('Add Activecampaign API'); ?></a></span>
+			      	      				</li>
+			      	      			</ul>
+			      	      		</div>
+			      	      		<div class="col-12 col-md-8">
+			      	              	<div class="tab-content no-padding" id="">
+
+			      		              	<div class="tab-pane fade show active" id="activecampaign" role="tabpanel" aria-labelledby="activecampaign_content">
+			      				        	<div class="form-group">
+			      				        	  <label><i class="fab fa-buffer"></i> <?php echo $this->lang->line("Select Activecampaign list where email will be sent when user signup."); ?></label>
+			      				        	  <select class="form-control select2" id="activecampaign_list_id" name="activecampaign_list_id[]" multiple="">
+			      				        	    <?php 
+			      				        	    echo "<option value='0'>".$this->lang->line('Choose a List')."</option>";
+			      				        	    foreach ($activecampaign_list as $key => $value) 
+			      				        	    {
+			      				        	      echo '<optgroup label="'.addslashes($value['tracking_name']).'">';
+			      				        	      foreach ($value['data'] as $key2 => $value2) 
+			      				        	      {
+			      				        	        if(in_array($value2['table_id'], $selected_activecampaign_list_ids)) $selected = 'selected';
+			      				        	        else $selected = '';
+			      				        	        echo "<option value='".$value2['table_id']."' ".$selected.">".$value2['list_name']."</option>";
+			      				        	      }
+			      				        	      echo '</optgroup>';
+			      				        	    } ?>
+			      				        	  </select>
+			      				        	</div> 
+			      		              	</div>
+			      	              	 
+			      	              	</div>
+			      	      		</div>
+			      	      	</div>
 						</div>
 						<?php echo $save_button; ?>
 					</div>

@@ -140,9 +140,11 @@
             <div class="dropdown">
               <a href="#" data-toggle="dropdown" class="no_hover" style="font-weight: 500;"><?php echo $this->lang->line("Actions"); ?> <i class="fas fa-chevron-right"></i></a>
 
-              <div class="dropdown-menu">
+              <div class="dropdown-menu" style="width:220px;">
                 <div class="dropdown-title"><?php echo $this->lang->line("Tools"); ?></div>                        
                 <a class="dropdown-item has-icon" href="<?php echo base_url('email_auto_responder_integration/mailchimp_list'); ?>"><i class="fas fa-check-square"></i> <?php echo $this->lang->line("MailChimp Integration"); ?></a>
+                <a class="dropdown-item has-icon" href="<?php echo base_url('email_auto_responder_integration/sendinblue_list'); ?>"><i class="fas fa-check-square"></i> <?php echo $this->lang->line("Sendinblue Integration"); ?></a>
+                <a class="dropdown-item has-icon" href="<?php echo base_url('email_auto_responder_integration/activecampaign_list'); ?>"><i class="fas fa-check-square"></i> <?php echo $this->lang->line("Activecampaign Integration"); ?></a>
               </div>
             </div>
 

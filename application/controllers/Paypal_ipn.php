@@ -146,14 +146,15 @@ class Paypal_ipn extends CI_Controller
         $paypal_status_verification = $this->config->item("paypal_status_verification");
         if($paypal_status_verification=='') $paypal_status_verification='1';
        
-        if($paypal_status_verification=='1')
+       /* if($paypal_status_verification=='1')
         {
             if($verify_status!="VERIFIED" || $payment_amount<$price) exit();
         }
         else
         {
             if($payment_amount<$price)  exit();
-        }
+        } */
+        
         
          $insert_data=array(
                 "verify_status"     =>$verify_status,

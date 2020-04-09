@@ -24,8 +24,6 @@ class Email_manager{
 	public $mailgun_reply_to;
 	
 	
-	
-	
 	function __construct(){
 		$this->CI =& get_instance();
 		$this->CI->load->database();
@@ -72,18 +70,17 @@ class Email_manager{
 			        );
 				}
 				
-			   $results = $mandrill->messages->send($message);
+			    $results = $mandrill->messages->send($message);
 			   
-			   foreach($results as $result){
+			    foreach($results as $result){
 			   		$email=$result['email'];
 					$email_status_info[$email]['status']=$result['status'];
 					$email_status_info[$email]['id']=$result['_id'];
 					$email_status_info[$email]['reject_reason']=$result['reject_reason'];
-			   }   
+			    }
 
-			   return $email_status_info;
+			    return $email_status_info;
 		}
-		
 		catch(Mandrill_Error $e) 
 		{
 			$err['error'] = $e->getMessage();
@@ -137,14 +134,36 @@ class Email_manager{
 			$response = curl_exec($session);
 
 			curl_close($session);
+
+			/* Success Response: 
+			 	{
+			   		"message": "success"
+			  	} 
+
+			  	Error Response: 
+			  	{
+			  	  "message": "error",
+			  	  "errors": [
+			  	    "...error messages..."
+			  	  ]
+			  	}
+			*/
+
 			$response=json_decode($response,TRUE);
 
-			$email_status_info['status']=$response['message'];
+
+			if($response['message'] == 'error') {
+				$email_status_info['status'] = 'Error: '.$response['errors'][0];
+			} else {
+				$email_status_info['status']= $response['message'];
+			}
+
 			return $email_status_info;
 		}
-		catch(Exception $e) 
-        {
-          return "error";
+		catch(Exception $e) {
+			
+			$email_status_info['status'] = $e->getMessage();
+			return $email_status_info;
         }
 
 	}
@@ -199,21 +218,30 @@ class Email_manager{
 			curl_setopt($ch, CURLOPT_POSTFIELDS,$message); 
 			$result = curl_exec($ch);
 			curl_close($ch); 
-			$result=json_decode($result,TRUE);	
-			if(!$result)
-			$email_status_info['status']="error";			
-			else
-			{
-				$email_status_info['id']=isset($result['id']) ? $result['id']: "";
+			$result=json_decode($result,TRUE);
 
-				$email_status_info['status']=$result['message'];
+			/*
+			Sample Response
+			{
+			  "id": "<20111114174239.25659.5817@samples.mailgun.org>"
+			  "message": "Queued. Thank you.",
+			}
+			*/
+
+			if(!$result) {
+				$email_status_info['status'] = "error";			
+			}
+			else {
+
+				$email_status_info['id'] = isset($result['id']) ? $result['id']: "";
+				$email_status_info['status'] = $result['message'];
 			}
 			
 			return $email_status_info;
 		}
 		catch(Exception $e) 
         {
-           $email_status_info['status']="error";
+           $email_status_info['status'] = $e->getMessage();
            return $email_status_info;
         }
 	

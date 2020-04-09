@@ -1,11 +1,12 @@
- <section class="section">
+  <?php if( (($this->session->userdata("user_type")=="Admin" || in_array(79,$this->module_access)) && strtotime(date("Y-m-d")) <= strtotime("2020-3-15")) || $this->is_broadcaster_exist) { ?>
+  <section class="section">
   <div class="section-header">
     <h1>
       <i class="fab fa-facebook-messenger"></i> 
       <?php echo $this->lang->line("Messenger Broadcasting"); ?>
-      <?php if($this->is_broadcaster_exist) { ?>
+     <!--  <?php if($this->is_broadcaster_exist) { ?>
         <a data-toggle="collapse" href="#collapseExample" title='<?php echo $this->lang->line("Conversation Vs Subscriber Broadcasting"); ?>' role="button" aria-expanded="false" aria-controls="collapseExample"><i class="fas fa-info-circle"></i></a>
-      <?php } ?>
+      <?php } ?> -->
      </h1>
     <div class="section-header-breadcrumb">
       <div class="breadcrumb-item"><?php echo $page_title; ?></div>
@@ -14,7 +15,7 @@
 
   <div class="section-body">
     <div class="row">
-      <?php if($this->session->userdata("user_type")=="Admin"  || in_array(79,$this->module_access)) { ?>
+      <?php if(($this->session->userdata("user_type")=="Admin" || in_array(79,$this->module_access)) && strtotime(date("Y-m-d")) <= strtotime("2020-3-15")) { ?>
       <div class="col-12 col-lg-6">
         <div class="card card-large-icons">
           <div class="card-icon text-primary">
@@ -179,6 +180,7 @@
 
   </div>
 </section>
+<?php } ?>
 
 
 <?php 

@@ -56,7 +56,7 @@
                       <div class="row">   
                         <div class="col-6 col-md-4">
                           <label class="custom-switch">
-                            <input type="radio" name="user_type" id="member" value="Member" checked class="user_type custom-switch-input">
+                            <input type="radio" name="user_type" id="member" value="Member"  <?php if($xdata['user_type']=='Member' and $xdata['manager_type']=='') echo 'checked'; ?> class="user_type custom-switch-input">
                             <span class="custom-switch-indicator"></span>
                             <span class="custom-switch-description"><?php echo $this->lang->line('Member'); ?></span>
                           </label>
