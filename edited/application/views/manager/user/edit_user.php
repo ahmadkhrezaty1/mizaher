@@ -162,37 +162,8 @@
 
 <script type="text/javascript">
   $(document).ready(function() {
-    var user_type = '<?php echo $xdata["user_type"];?>';
-    var manager_type = '<?php echo $xdata["manager_type"];?>';
-    if(user_type=="Admin" || manager_type!='') $("#hidden").hide();
-    else $("#validity").show();
-
+    $("#hidden").hide();
     $("#hidden_manager").hide();
-    if(manager_type == ''){
-     $('[name="manager_type"]').val('');
-     $("#hidden_manager").hide();
-    }
-    else $("#hidden_manager").show();
-    $(".user_type").click(function(){
-      if($(this).val()=="Admin" || $(this).attr("id")=="manager") $("#hidden").hide();
-      else $("#hidden").show();
-    });
-
-    $(".user_type").click(function(){
-      if($(this).val()=="Admin" || $(this).attr("id")=="member") {
-        $('[name="manager_type"]').val('');
-        $("#hidden_manager").hide();
-      }
-      else {
-        $('#Manager_1').val('Manager 1');
-        $('#Manager_2').val('Manager 2');
-        $('#Manager_3').val('Manager 3');
-        $("#hidden_manager").show();
-        console.log($(this).val());
-      }
-    });
-    $(".manager_type").click(function(){
-      console.log($(this).val());
-    });  
+    
   });
 </script>

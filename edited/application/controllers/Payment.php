@@ -50,7 +50,9 @@ class Payment extends Home
             $user_data = [
                         'expired_date' => $cycle_expired_date, 
                         'package_id' => $package_id, 
-                        'bot_status' => '1'
+                        'bot_status' => '1',
+                        'users' => '0',
+                        'manager_type' => ''
                     ];
             $this->basic->update_data('users', $user_where, $user_data);
             $this->session->unset_userdata('expiry_date');
@@ -69,8 +71,7 @@ class Payment extends Home
 
         curl_close($ch);
     }
-
-    public function premium_fastspring_pay($order, $package_id){
+ public function premium_fastspring_pay($order, $package_id){
         $username = "I81LGQ7XT_6RVMNCGE6D7Q";
         $password = "1Yd2YMoESJO1avBsAVkQsA";
         $remote_url = 'https://api.fastspring.com/orders/'.$order;
@@ -102,13 +103,17 @@ class Payment extends Home
             $result['error'] = 'error';
         }else{
             $user_id = $this->session->userdata('user_id');
+            $old_users = 0;
+            if(has_limit()){
+                $old_users = get_number_of_users();
+            }
             $user_where = ['id' => $user_id];
             $package = get_package($package_id);
             $days = $package->premium_days;
             $cycle_expired_date = date('Y-m-d H:i:s', strtotime(date("Y-m-d H:i:s"). ' + '.$days.' days'));
             $user_data = [
                 'manager_type' => 'Manager 3', 
-                'users' => $package->premium_users, 
+                'users' => $old_users + $package->premium_users, 
                 'expired_date' => $cycle_expired_date, 
                 'package_id' => $package_id, 
                 'bot_status' => '1'
@@ -417,7 +422,7 @@ class Payment extends Home
        if($this->session->userdata('license_type') == 'double' && $this->session->userdata('user_type') == 'Member')
        {
            $data['body'] = "member/buy_package";
-           $data['page_title'] = $this->lang->line('Payment');
+           $data['page_title'] = $this->lang->line('Buy Package');
 
            $config_data=$this->basic->get_data("payment_config");
            $currency=isset($config_data[0]["currency"])?$config_data[0]["currency"]:"USD";
@@ -443,9 +448,15 @@ class Payment extends Home
         }
         else redirect('home/access_forbidden', 'location');
     }
-
+    
     public function buy_premium_package()
     {
+        if(is_manager_3()){
+            if(!is_limited()){
+                $this->session->set_flashdata('not_limited', 1);
+                redirect(base_url('payment/buy_package'));
+            }
+        }
        if($this->session->userdata('license_type') == 'double' && $this->session->userdata('user_type') == 'Member')
        {
            $data['body'] = "member/buy_premium_package";
@@ -588,7 +599,7 @@ class Payment extends Home
         }
 
         // Sets validation rules
-        $this->form_validation->set_rules('paid_amount', $this->lang->line('Paid amount'), 'required|is_natural_no_zero');
+        $this->form_validation->set_rules('paid_amount', $this->lang->line('Paid amount'), 'required|numeric');
         $this->form_validation->set_rules('paid_currency', $this->lang->line('Currency type'), 'required');
         $this->form_validation->set_rules('additional_info', $this->lang->line('Additional info'), 'trim');
         $this->form_validation->set_rules('package_id', $this->lang->line('Package ID'), 'required|numeric');
@@ -1686,6 +1697,11 @@ class Payment extends Home
                 $price=$this->input->post('price');
                 $visible=$this->input->post('visible');
                 $highlight=$this->input->post('highlight');
+                 $name = explode(' ', $manual_transaction['name']);
+        $first_name = isset($name[0]) ? $name[0] : '';
+        $last_name = isset($name[1]) ? $name[1] : '';
+        $name = $first_name . ' ' . $last_name;
+        $email = $manual_transaction['email'];
                 $premium_name=$this->input->post('premium_name');
                 $premium_price=$this->input->post('premium_price');
                 $premium_days=$this->input->post('premium_days');
@@ -1881,7 +1897,6 @@ class Payment extends Home
             }
             else
             {
-
                 $package_name=$this->input->post('name');
                 $fastspring=$this->input->post('fastspring');
                 $price=$this->input->post('price');
@@ -1984,8 +1999,7 @@ class Payment extends Home
 
     public function usage_history()
     {        
-        //    echo "<pre>";var_dump($this->session->userdata());exit;
-
+         //    echo "<pre>";var_dump($this->session->userdata());exit;
         if($this->session->userdata('user_type') != 'Member') 
         redirect('home/login_page', 'location');
 

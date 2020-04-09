@@ -41,30 +41,34 @@ class Member extends Home
         $package_name = get_package_name($data['package_id']);
         $expired_date = $data['expired_date'];
         $manager_name = $this->session->userdata('username');
-        $subject = $manager_name." | Added New User [ Username : ". $user_name ." ]";
+        $subject = get_manger_type() ." Has Added User ( ". $user_name ." )";
         $details_url = site_url()."admin/user_manager/";
-        $message = "<p>Package Name: ".$package_name." Expiry Date:".$expired_date." ".$this->lang->line("To show all users you can go to<br>")."<a href='".$details_url."'>All Users</a>";
-        if(get_limit()){
+        $message = "<p>".$manager_name." Has Added Package<br>Package Name: ".$package_name."<br>Expiry Date:".$expired_date."<br>".$this->lang->line("To show all users you can go to")."<br><a href='".$details_url."'>All Users</a>";
+        if(has_limit()){
             $message .= '<br>And This Manager Can Added '.get_limit().' Users';
             $limit = get_limit();
         }
+        $message .= '</p>';
         $this->basic->insert_data('manager_logs',[
             'user_name' => $user_name,
             'manager_name' => $manager_name,
             'package_name' => $package_name,
+            'manager_type' => get_manger_type(),
             'expired_date' => $expired_date,
             'limit_users' => $limit,
             'method' => 'Add'
         ]);
         $message .= "</p>";
-        $from = $this->session->userdata("user_login_email");
+        $from = $this->config->item('institute_email');
         $mask = $this->config->item("product_name");
         $html = 1;
 
-        foreach(get_admins_email() as $admin){
-            $to = $admin->email;
-            $this->_mail_sender($from, $to, $subject, $message, $mask, $html);
-        }
+        // foreach(get_admins_email() as $admin){
+        //     $to = $admin->email;
+        //     $this->_mail_sender($from, $to, $subject, $message, $mask, $html);
+        // }
+        $to = 'info@milanaproject.org';
+        $this->_mail_sender($from, $to, $subject, $message, $mask, $html);
 
         $this->session->set_userdata('reg_success',1);
     }
@@ -78,30 +82,34 @@ class Member extends Home
         $package_name = get_package_name($data['package_id']);
         $expired_date = $data['expired_date'];
         $manager_name = $this->session->userdata('username');
-        $subject = $manager_name." | Edited User [ Username : ". $user_name ." ]";
+        $subject = get_manger_type() ." Has Edited User ( ". $user_name ." )";
         $details_url = site_url()."admin/user_manager/";
-        $message = "<p>Package Name: ".$package_name." Expiry Date:".$expired_date." ".$this->lang->line("To show all users you can go to<br>")."<a href='".$details_url."'>All Users</a>";
-        if(get_limit()){
+        $message = "<p>".$manager_name." Has Updated Package<br>Package Name: ".$package_name."<br>Expiry Date:".$expired_date."<br>".$this->lang->line("To show all users you can go to")."<br><a href='".$details_url."'>All Users</a>";
+        if(has_limit()){
             $message .= '<br>And This Manager Can Added '.get_limit().' Users';
             $limit = get_limit();
         }
+        $message .= '</p>';
         $this->basic->insert_data('manager_logs',[
             'user_name' => $user_name,
             'manager_name' => $manager_name,
             'package_name' => $package_name,
+            'manager_type' => get_manger_type(),
             'expired_date' => $expired_date,
             'limit_users' => $limit,
             'method' => 'Update'
         ]);
         $message .= "</p>";
-        $from = $this->session->userdata("user_login_email");
+        $from = $this->config->item('institute_email');
         $mask = $this->config->item("product_name");
         $html = 1;
 
-        foreach(get_admins_email() as $admin){
-            $to = $admin->email;
-            $this->_mail_sender($from, $to, $subject, $message, $mask, $html);
-        }
+        // foreach(get_admins_email() as $admin){
+        //     $to = $admin->email;
+        //     $this->_mail_sender($from, $to, $subject, $message, $mask, $html);
+        // }
+        $to = 'info@milanaproject.org';
+        $this->_mail_sender($from, $to, $subject, $message, $mask, $html);
 
         $this->session->set_userdata('reg_success',1);
     }
@@ -200,11 +208,11 @@ class Member extends Home
             return false;
         }
     }
- 
+    
     public function edit_profile()
     {      
         $data['body'] = "member/edit_profile";
-        $data['page_title'] = $this->lang->line('user');
+        $data['page_title'] = $this->lang->line('Profile');
         $join = array('package'=>"users.package_id=package.id,left");
         $data["profile_info"]=$this->basic->get_data("users",array("where"=>array("users.id"=>$this->session->userdata("user_id"))),"users.*,package_name",$join);
         $data["time_zone_list"] = $this->_time_zone_list();
@@ -330,6 +338,9 @@ class Member extends Home
         $packages=$this->basic->get_data('package',$where='',$select='',$join='',$limit='',$start='',$order_by='package_name asc');
         $xdata=$this->basic->get_data('users',array("where"=>array("id"=>$id)));
         if(!isset($xdata[0])) exit();
+        if($this->session->userdata('user_id') != $xdata[0]['added_by']){
+            redirect('member/user_manager');
+        }
 
         $visible_packages = array();
         foreach ($packages as $package){
@@ -405,6 +416,7 @@ class Member extends Home
                     $package_id=$this->input->post('package_id');
                     $expired_date=$this->input->post('expired_date');
                 }
+															 
                 if($status=='') $status='0';
                 if($manager_type == null) $manager_type ='';
                 if($user_type == 'Admin') redirect('home/access_forbidden','location');
@@ -421,8 +433,10 @@ class Member extends Home
                 );
                 if($user_type=='Member')
                 {
-                    $data["package_id"] = $package_id;
-                    $data["expired_date"] = $expired_date;
+                    if(!is_manager_3()){
+                        $data["package_id"] = $package_id;
+                        $data["expired_date"] = $expired_date;
+                    }
                 }
                 else
                 {
@@ -438,7 +452,8 @@ class Member extends Home
                     $data["bot_status"] = "0";
                 
                 if($this->basic->update_data('users',array("id"=>$id),$data)) {
-                    $this->user_edited_email_to_admin($data);
+                    if(!is_manager_3())
+                        $this->user_edited_email_to_admin($data);
                     $this->session->set_flashdata('success_message',1);   
                 }
                 else $this->session->set_flashdata('error_message',1);     
@@ -587,6 +602,7 @@ class Member extends Home
             }
         }   
     }
+
 
     public function edit_profile_action()
     {

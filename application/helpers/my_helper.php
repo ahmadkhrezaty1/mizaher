@@ -929,14 +929,14 @@ if ( ! function_exists('get_limit')) {
   function get_limit() {
     $CI = &get_instance();
     $user_id = $CI->session->userdata('user_id');
-    $CI->db->where(['id'=> $user_id]);
-    $where = "manager_type='Manager 2' or manager_type='Manager 3'";
+    //$CI->db->where(['id'=> $user_id]);
+    $where = "manager_type='Manager 2' or manager_type='Manager 3' AND id=".$user_id;
     $CI->db->where($where);
     $user = $CI->db->get('users')->row();
     if(is_object($user)){
       $CI->db->where(['added_by'=> $user_id]);
       $users = $CI->db->count_all_results('users'); 
-      //var_dump($user->users. "  " . $users); exit;
+      //var_dump($user); exit;
       return $user->users-$users;
     }
     return false;

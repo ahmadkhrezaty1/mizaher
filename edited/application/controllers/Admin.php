@@ -36,7 +36,7 @@ class Admin extends Home
         $data['page_title'] = $this->lang->line('General Settings');
 
         $join = array('mailchimp_list'=>"mailchimp_config.id=mailchimp_list.mailchimp_config_id,right");
-        $mailchimp_info = $this->basic->get_data('mailchimp_config',array('where'=>array('user_id'=>$this->user_id)),array("list_name","list_id","tracking_name","mailchimp_list.id","mailchimp_config.id as config_id"),$join);
+        $mailchimp_info = $this->basic->get_data('mailchimp_config',array('where'=>array('user_id'=>$this->user_id,'service_type'=>'mailchimp')),array("list_name","list_id","tracking_name","mailchimp_list.id","mailchimp_config.id as config_id"),$join);
         
         $mailchimp_list=array();
         $i=0;
@@ -50,15 +50,61 @@ class Admin extends Home
         }
         $data['mailchimp_list'] = $mailchimp_list;
 
-        if($this->config->item('mail_service_id') == '')
+
+        /* sendinblue list */
+        $join = array('mailchimp_list'=>"mailchimp_config.id=mailchimp_list.mailchimp_config_id,right");
+        $sendinblue_info = $this->basic->get_data('mailchimp_config',array('where'=>array('user_id'=>$this->user_id,'service_type'=>'sendinblue')),array("list_name","list_id","tracking_name","mailchimp_list.id","mailchimp_config.id as config_id"),$join);
+        
+        $sendinblue_list=array();
+        $i=0;
+        foreach($sendinblue_info as $key => $value) 
+        {
+           $sendinblue_list[$value["config_id"]]["tracking_name"]=$value['tracking_name'];
+           $sendinblue_list[$value["config_id"]]["data"][$i]["list_name"]=$value['list_name'];
+           $sendinblue_list[$value["config_id"]]["data"][$i]["list_id"]=$value['list_id'];
+           $sendinblue_list[$value["config_id"]]["data"][$i]["table_id"]=$value['id'];
+           $i++;
+        }
+        $data['sendinblue_list'] = $sendinblue_list;
+
+
+        /* activecampaign list */
+        $join = array('mailchimp_list'=>"mailchimp_config.id=mailchimp_list.mailchimp_config_id,right");
+        $activecampaign_info = $this->basic->get_data('mailchimp_config',array('where'=>array('user_id'=>$this->user_id,'service_type'=>'activecampaign')),array("list_name","list_id","tracking_name","mailchimp_list.id","mailchimp_config.id as config_id"),$join);
+        
+        $activecampaign_list=array();
+        $i=0;
+        foreach($activecampaign_info as $key => $value) 
+        {
+           $activecampaign_list[$value["config_id"]]["tracking_name"]=$value['tracking_name'];
+           $activecampaign_list[$value["config_id"]]["data"][$i]["list_name"]=$value['list_name'];
+           $activecampaign_list[$value["config_id"]]["data"][$i]["list_id"]=$value['list_id'];
+           $activecampaign_list[$value["config_id"]]["data"][$i]["table_id"]=$value['id'];
+           $i++;
+        }
+        $data['activecampaign_list'] = $activecampaign_list;
+
+
+        if($this->config->item('mail_service_id') == '') {
+            
 	    	$selected_mailchimp_list_ids = [];
+            $selected_sendinblue_list_ids = [];
+            $selected_activecampaign_list_ids = [];
+
+        }
 	    else
 	    {
 	        $mail_service_info = $this->config->item('mail_service_id');
 	        $mail_service_id = json_decode($mail_service_info,true);
-	    	$selected_mailchimp_list_ids = $mail_service_id['mailchimp'];	    	
+
+	    	$selected_mailchimp_list_ids = isset($mail_service_id['mailchimp']) ? $mail_service_id['mailchimp']:"";
+            $selected_sendinblue_list_ids = isset($mail_service_id['sendinblue']) ? $mail_service_id['sendinblue']:"";
+            $selected_activecampaign_list_ids = isset($mail_service_id['activecampaign']) ? $mail_service_id['activecampaign']:"";
 	    }
+
 	    $data['selected_mailchimp_list_ids'] = $selected_mailchimp_list_ids;
+        $data['selected_sendinblue_list_ids'] = $selected_sendinblue_list_ids;
+        $data['selected_activecampaign_list_ids'] = $selected_activecampaign_list_ids;
 
         $this->_viewcontroller($data);
     }
@@ -143,6 +189,8 @@ class Admin extends Home
              $this->form_validation->set_rules('enable_click_rate',  '<b>'.$this->lang->line("Email Click Rate").'</b>','trim');
 
              $this->form_validation->set_rules('mailchimp_list_id','<b>'.$this->lang->line("MailChimp List").'</b>','trim');
+             $this->form_validation->set_rules('sendinblue_list_id','<b>'.$this->lang->line("Sendinblue List").'</b>','trim');
+             $this->form_validation->set_rules('activecampaign_list_id','<b>'.$this->lang->line("Activecampaign List").'</b>','trim');
              $this->form_validation->set_rules('delete_junk_data_after_how_many_days','<b>'.$this->lang->line("Delete Junk Data").'</b>','trim');
 
 
@@ -229,6 +277,22 @@ class Admin extends Home
                 	$mail_service = array('mailchimp'=>array());
                 else
                 	$mail_service = array('mailchimp'=>$mailchimp_list_id);
+
+                /* sendinblue */
+                $sendinblue_list_id=$this->input->post('sendinblue_list_id', true);
+                if($sendinblue_list_id == '') 
+                    $mail_service['sendinblue'] = array();
+                else
+                    $mail_service['sendinblue'] = $sendinblue_list_id;
+
+                /* activecampaign */
+                $activecampaign_list_id=$this->input->post('activecampaign_list_id', true);
+                if($activecampaign_list_id == '') 
+                    $mail_service['activecampaign'] = array();
+                else
+                    $mail_service['activecampaign'] = $activecampaign_list_id;
+
+
                 $mail_service = json_encode($mail_service);
 
                 $base_path=realpath(APPPATH . '../assets/img');
@@ -787,7 +851,7 @@ class Admin extends Home
         echo json_encode($data);
     }
 
-    public function manager_logs()
+     public function manager_logs()
     {
         $data['body']='admin/manager/manager_logs';
         $data['page_title']=$this->lang->line("Manager Logs");
@@ -798,7 +862,8 @@ class Admin extends Home
     {           
         $this->ajax_check();
         $search_value = $_POST['search']['value'];
-        $display_columns = array("#",'method','manager_name','user_name', 'package_name', 'expired_date','limit_users');
+        $display_columns = array("id",'method','manager_type','manager_name','user_name', 'package_name', 'expired_date','limit_users', 'actions');
+        $search_columns = array('method','manager_type','manager_name','user_name', 'package_name', 'expired_date','limit_users');
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
         $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
         $limit = isset($_POST['length']) ? intval($_POST['length']) : 10;
@@ -826,6 +891,10 @@ class Admin extends Home
         $base_url=base_url();
         foreach ($info as $key => $value) 
         {
+            $str="";   
+            
+            $str=$str."&nbsp;<a href='".$base_url.'admin/delete_manager_log/'.$info[$i]["id"]."' class='are_you_sure_datatable btn btn-circle btn-outline-danger' data-toggle='tooltip' title='".$this->lang->line('Delete')."'>".'<i class="fa fa-trash"></i>'."</a>";
+            $info[$i]["actions"] = "<div style='min-width:208px'>".$str."</div>";
             
             $i++;
         }
@@ -836,6 +905,14 @@ class Admin extends Home
         $data['data'] = convertDataTableResult($info, $display_columns ,$start,$primary_key="user_id");
 
         echo json_encode($data);
+    }
+
+    public function delete_manager_log($id){
+        $this->basic->delete_data('manager_logs',array("id"=>$id));
+        $response = array();
+        $response['status'] = 1;
+        $response['message'] = $this->lang->line("Manager Log Deleted.");       
+        echo json_encode($response);
     }
 
 
@@ -1051,7 +1128,7 @@ class Admin extends Home
             }
         }   
     }
-  
+ 
 
     public function login_log()
     {        

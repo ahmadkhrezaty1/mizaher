@@ -95,7 +95,7 @@ $drop_menu .= '</div> </div>';
           dom: '<"top"f>rt<"bottom"lip><"clear">',
           columnDefs: [
             {
-                targets: [2,8],
+                targets: [2],
                 visible: false
             },
             {

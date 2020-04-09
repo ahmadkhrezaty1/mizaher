@@ -1,13 +1,13 @@
 
   <section class="section">
   <div class="section-header">
-    <h1><i class="fas fa-cart-plus"></i> <?php echo $page_title; ?></h1>
+    <h1><i class="fas fa-cart-plus"></i> باقات منصة ميلانا للشركات</h1>
     <div class="section-header-button">
       <a href="<?php echo base_url('payment/transaction_log'); ?>" class="btn btn-primary"><i class="fas fa-history"></i> <?php echo $this->lang->line("Transaction Log"); ?></a>
-      <a href="<?php echo base_url('payment/buy_package'); ?>" class="btn btn-danger"><?php echo $this->lang->line("Buy Default Package"); ?></a>
+      <a href="<?php echo base_url('payment/buy_package'); ?>" class="btn btn-danger"><?php echo $this->lang->line("DEFAULT PACKAGES"); ?></a>
     </div>
     <div class="section-header-breadcrumb">
-      <div class="breadcrumb-item"><?php echo $page_title; ?></a></div>
+      <div class="breadcrumb-item">باقات الشركات بالجملة</a></div>
     </div>
   </div>
 
@@ -17,7 +17,7 @@
       <?php 
       foreach($payment_package as $pack)
       {?>
-        <div class="col-12 col-md-4 col-lg-4">
+        <div class="col-12 col-md-4 col-lg-4" style="-ms-flex: 0 0 25%;flex: 0 0 25%;max-width: 25%;">
           <div class="pricing <?php if($pack['highlight']=='1') echo 'pricing-highlight';?>">
             <div class="pricing-title">
               <?php echo $pack["premium_name"]; ?>
@@ -25,8 +25,8 @@
             <div class="pricing-padding">
               <div class="pricing-price">
                 <div><?php echo $curency_icon; ?></sup><?php echo $pack["premium_price"]?></div>
-                <div><?php echo $pack["premium_days"]?> <?php echo $this->lang->line("Days For Each User"); ?></div>
-                <div><?php echo $pack["premium_users"]?> <?php echo $this->lang->line("Users"); ?></div>
+                <div><?php echo $this->lang->line("الصلاحية لكل مستخدم :    "); ?><?php echo $pack["premium_days"]?> يوم </div>
+                <div><?php echo $this->lang->line("عدد المستخدمين :  "); ?><?php echo $pack["premium_users"]?>  مستخدمين</div>
               </div>
               <div class="pricing-details nicescroll" style="height: 180px;">
                 <?php 
@@ -364,15 +364,17 @@
   });
 </script>
 <!-- //////////////   Test Mode ////////////// -->
+<!--
 <script
     id="fsc-api"
     src="https://d1f8f9xcsvx3ha.cloudfront.net/sbl/0.8.2/fastspring-builder.min.js"
     type="text/javascript"
     data-popup-closed="onFSPopupClosed"
     data-storefront="milana.test.onfastspring.com/popup-milana">
-</script>
+</script>-->
+
 <!-- //////////////   Milana Mode ////////////// -->
-<!--
+
 <script
     id="fsc-api"
     src="https://d1f8f9xcsvx3ha.cloudfront.net/sbl/0.8.2/fastspring-builder.min.js"
@@ -380,7 +382,7 @@
     data-popup-closed="onFSPopupClosed"
     data-storefront="milana.onfastspring.com/popup-milana">
 </script>
--->
+
 <script>
     function onFSPopupClosed(orderReference) {
       if (orderReference)

@@ -1,13 +1,12 @@
-
-  <section class="section">
+<section class="section">
   <div class="section-header">
-    <h1><i class="fas fa-cart-plus"></i> <?php echo $page_title; ?></h1>
+    <h1><i class="fas fa-cart-plus"></i>باقات منصة ميلانا للمستخدمين</h1>
     <div class="section-header-button">
       <a href="<?php echo base_url('payment/transaction_log'); ?>" class="btn btn-primary"><i class="fas fa-history"></i> <?php echo $this->lang->line("Transaction Log"); ?></a>
-      <a href="<?php echo base_url('payment/buy_premium_package'); ?>" class="btn btn-danger"><?php echo $this->lang->line("Buy Premium Package"); ?></a>
+      <a href="<?php echo base_url('payment/buy_premium_package'); ?>" class="btn btn-danger"><?php echo $this->lang->line("PREMIUM PACKAGES"); ?></a>
     </div>
     <div class="section-header-breadcrumb">
-      <div class="breadcrumb-item"><?php echo $page_title; ?></a></div>
+      <div class="breadcrumb-item">باقات منصة ميلانا بروجكيت للمستخدمين</a></div>
     </div>
   </div>
 
@@ -17,7 +16,8 @@
       <?php 
       foreach($payment_package as $pack)
       {?>
-        <div class="col-12 col-md-4 col-lg-4">
+		
+        <div class="col-12 col-md-4 col-lg-4" style="-ms-flex: 0 0 25%;flex: 0 0 25%;max-width: 25%;">
           <div class="pricing <?php if($pack['highlight']=='1') echo 'pricing-highlight';?>">
             <div class="pricing-title">
               <?php echo $pack["package_name"]; ?>
@@ -195,8 +195,23 @@
 
     function get_payment_button(package) 
     {
+						   
+								  
+								  
+			
+		
+					  
+								 
+												 
+									
+			
+									
+												 
+			
+			  
+		   
     }    
-         
+
     $(document).on('click', ".choose_package", function(e) {
        e.preventDefault();           
        var package=$(this).attr('data-id');
@@ -224,6 +239,9 @@
 
 <?php if ('yes' == $manual_payment): ?>
 <script>
+  <?php if(!empty($this->session->flashdata('not_limited'))){ ?>
+    alert('<?php echo $this->lang->line("You Must add all users to your previous package") ?>');
+  <?php } ?>
   $(document).ready(function() {
 
     $(document).on('click', '#manual-payment-button', function() {
@@ -363,6 +381,7 @@
   });
 </script>
 <!-- //////////////   Test Mode ////////////// -->
+<!--
 <script
     id="fsc-api"
     src="https://d1f8f9xcsvx3ha.cloudfront.net/sbl/0.8.2/fastspring-builder.min.js"
@@ -370,8 +389,9 @@
     data-popup-closed="onFSPopupClosed"
     data-storefront="milana.test.onfastspring.com/popup-milana">
 </script>
+-->
 <!-- //////////////   Milana Mode ////////////// -->
-<!--
+
 <script
     id="fsc-api"
     src="https://d1f8f9xcsvx3ha.cloudfront.net/sbl/0.8.2/fastspring-builder.min.js"
@@ -379,7 +399,7 @@
     data-popup-closed="onFSPopupClosed"
     data-storefront="milana.onfastspring.com/popup-milana">
 </script>
--->
+
 <script>
     function onFSPopupClosed(orderReference) {
       if (orderReference)
@@ -393,4 +413,4 @@
     }
     }
 </script>
-<?php endif; ?>
+<?php endif; ?> 

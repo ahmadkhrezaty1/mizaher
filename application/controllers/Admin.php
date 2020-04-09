@@ -798,7 +798,7 @@ class Admin extends Home
     {           
         $this->ajax_check();
         $search_value = $_POST['search']['value'];
-        $display_columns = array("#",'method','manager_type','manager_name','user_name', 'package_name', 'expired_date','limit_users');
+        $display_columns = array("id",'method','manager_type','manager_name','user_name', 'package_name', 'expired_date','limit_users', 'actions');
         $search_columns = array('method','manager_type','manager_name','user_name', 'package_name', 'expired_date','limit_users');
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
         $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
@@ -827,6 +827,10 @@ class Admin extends Home
         $base_url=base_url();
         foreach ($info as $key => $value) 
         {
+            $str="";   
+            
+            $str=$str."&nbsp;<a href='".$base_url.'admin/delete_manager_log/'.$info[$i]["id"]."' class='are_you_sure_datatable btn btn-circle btn-outline-danger' data-toggle='tooltip' title='".$this->lang->line('Delete')."'>".'<i class="fa fa-trash"></i>'."</a>";
+            $info[$i]["actions"] = "<div style='min-width:208px'>".$str."</div>";
             
             $i++;
         }
@@ -837,6 +841,14 @@ class Admin extends Home
         $data['data'] = convertDataTableResult($info, $display_columns ,$start,$primary_key="user_id");
 
         echo json_encode($data);
+    }
+
+    public function delete_manager_log($id){
+        $this->basic->delete_data('manager_logs',array("id"=>$id));
+        $response = array();
+        $response['status'] = 1;
+        $response['message'] = $this->lang->line("Manager Log Deleted.");       
+        echo json_encode($response);
     }
 
 
@@ -1008,12 +1020,12 @@ class Admin extends Home
                 if($status=='') $status='0';
                 if($manager_type == null) $manager_type ='';
                 if($manager_type == 'Manager 2') $users =$this->input->post('users');
-                /*if($manager_type == 'Manager 3'){
+                if($manager_type == 'Manager 3'){
                     $package = get_package($package_id);
                     $users =$package->premium_users;
                     $days = $package->premium_days;
                     $expired_date = date('Y-m-d H:i:s', strtotime(date("Y-m-d H:i:s"). ' + '.$days.' days'));
-                }*/
+                }
                                                        
                 $data=array
                 (
