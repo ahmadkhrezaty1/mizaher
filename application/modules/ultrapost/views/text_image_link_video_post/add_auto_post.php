@@ -106,7 +106,7 @@
 									<div class="row">
 										<div class="col-12 col-md-6">
 											<div class="form-group">
-												<label><?php echo $this->lang->line('Video URL / Youtube Video URL');?></label>
+												<label><?php echo $this->lang->line('Video URL');?></label>
 												<input class="form-control" name="video_url" id="video_url" type="text">
 											</div>
 											<div class="form-group">
@@ -262,6 +262,9 @@
 				<div class="card main_card">
 					<div class="card-header"><h4><i class="fab fa-facebook"></i> <?php echo $this->lang->line('Preview'); ?></h4></div>
 		          	<div class="card-body">
+		          		<div class="section-title text-info" style="margin: -30px 0px 10px 0px; font-weight: normal;">
+		          			<?php echo $this->lang->line('This preview may differ with actual post.'); ?>
+		          		</div>
 			          	<?php $profile_picture="https://graph.facebook.com/me/picture?access_token={$fb_user_info[0]['access_token']}&width=150&height=150"; ?>
 						<ul class="list-unstyled list-unstyled-border">
 							<li class="media">

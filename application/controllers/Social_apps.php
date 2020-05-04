@@ -10,6 +10,8 @@ require_once("Home.php"); // loading home controller
 class Social_apps extends Home
 {
     
+    public $is_wp_social_sharing_exist = false;
+
     public function __construct()
     {
         parent::__construct();
@@ -19,7 +21,7 @@ class Social_apps extends Home
         }
 
         $function_name=$this->uri->segment(2);
-        $pinterest_action_array = array('pinterest_settings', 'pinterest_settings_data', 'add_pinterest_settings','edit_pinterest_settings', 'pinterest_settings_update_action', 'delete_app_pinterest', 'change_app_status_pinterest','pinterest_intermediate_account_import_page','wordpress_settings_self_hosted','add_wordpress_settings_self_hosted','edit_wordpress_settings_self_hosted','wordpress_settings_self_hosted_data','delete_wordpress_settings_self_hosted');
+        $pinterest_action_array = array('pinterest_settings', 'pinterest_settings_data', 'add_pinterest_settings','edit_pinterest_settings', 'pinterest_settings_update_action', 'delete_app_pinterest', 'change_app_status_pinterest','pinterest_intermediate_account_import_page','wordpress_settings_self_hosted','add_wordpress_settings_self_hosted','edit_wordpress_settings_self_hosted','wordpress_settings_self_hosted_data','delete_wordpress_settings_self_hosted','wordpress_settings_self_hosted_load_categories');
 
         if(!in_array($function_name, $pinterest_action_array)) 
         {
@@ -36,6 +38,7 @@ class Social_apps extends Home
         $this->important_feature();
         $this->periodic_check();
 
+        $this->is_wp_social_sharing_exist = $this->wp_social_sharing_exist();
     }
 
 
@@ -104,10 +107,12 @@ class Social_apps extends Home
             $this->google_settings();
         else {
 
-            $insert_data['app_name'] = $this->input->post('app_name');
-            $insert_data['api_key'] = $this->input->post('api_key');
-            $insert_data['google_client_id'] = $this->input->post('google_client_id');
-            $insert_data['google_client_secret'] = $this->input->post('google_client_secret');
+            $this->csrf_token_check();
+
+            $insert_data['app_name'] = strip_tags($this->input->post('app_name',true));
+            $insert_data['api_key'] = strip_tags($this->input->post('api_key',true));
+            $insert_data['google_client_id'] = strip_tags($this->input->post('google_client_id',true));
+            $insert_data['google_client_secret'] = strip_tags($this->input->post('google_client_secret',true));
             
             $status = $this->input->post('status');
             if($status=='') $status='0';
@@ -226,7 +231,7 @@ class Social_apps extends Home
             $info[$i]['action'] .= "<div style='min-width:130px'><a href='".base_url('social_apps/edit_facebook_settings/').$value['id']."' class='btn btn-outline-warning btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Edit APP Settings')."'><i class='fas fa-edit'></i></a> ";
             
             if($this->is_demo != '1')
-            $info[$i]['action'] .= "<a href='".base_url('social_apps/login_button/').$value['id']."' class='btn btn-outline-primary btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Login to validate your accesstoken.')."'><i class='fab fa-facebook-square'></i></a> <a href='#' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
+            $info[$i]['action'] .= "<a href='".base_url('social_apps/login_button/').$value['id']."' class='btn btn-outline-primary btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Login to validate your accesstoken.')."'><i class='fab fa-facebook-square'></i></a> <a href='#' csrf_token='".$this->session->userdata('csrf_token_session')."' csrf_token='".$this->session->userdata('csrf_token_session')."' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
 
             $info[$i]["action"] .="<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
             $i++;
@@ -298,11 +303,12 @@ class Social_apps extends Home
             if($table_id == 0) $this->add_facebook_settings();
             else $this->edit_facebook_settings($table_id);
         }
-        else {
-
-            $insert_data['app_name'] = $this->input->post('app_name');
-            $insert_data['api_id'] = $this->input->post('api_id');
-            $insert_data['api_secret'] = $this->input->post('api_secret');
+        else
+        {
+            $this->csrf_token_check();
+            $insert_data['app_name'] = strip_tags($this->input->post('app_name',true));
+            $insert_data['api_id'] = strip_tags($this->input->post('api_id',true));
+            $insert_data['api_secret'] = strip_tags($this->input->post('api_secret',true));
             $insert_data['user_id'] = $this->user_id;
 
             if($this->session->userdata('user_type') == 'Admin')
@@ -331,6 +337,7 @@ class Social_apps extends Home
 
     public function login_button($id)
     {     
+        $this->is_group_posting_exist=$this->group_posting_exist();
         $fb_config_info = $this->basic->get_data('facebook_rx_config',array('where'=>array('id'=>$id)));
         if(isset($fb_config_info[0]['developer_access']) && $fb_config_info[0]['developer_access'] == '1' && $this->session->userdata('user_type')=="Admin")
         {
@@ -583,7 +590,7 @@ class Social_apps extends Home
             $info[$i]['action'] .= "<div style='min-width:130px'><a href='".base_url('social_apps/edit_twitter_settings/').$value['id']."' class='btn btn-outline-warning btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Edit APP Settings')."'><i class='fas fa-edit'></i></a> ";
             
             if($this->is_demo != '1')
-            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
+            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' csrf_token='".$this->session->userdata('csrf_token_session')."' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
 
             $info[$i]["action"] .="<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
             $i++;
@@ -654,11 +661,12 @@ class Social_apps extends Home
         }
         else {
 
-            $insert_data['app_name'] = $this->input->post('app_name');
-            $insert_data['consumer_id'] = $this->input->post('consumer_id');
-            $insert_data['consumer_secret'] = $this->input->post('consumer_secret');
-            $insert_data['user_id'] = $this->user_id;
+            $this->csrf_token_check();
 
+            $insert_data['app_name'] = strip_tags($this->input->post('app_name',true));
+            $insert_data['consumer_id'] = strip_tags($this->input->post('consumer_id',true));
+            $insert_data['consumer_secret'] = strip_tags($this->input->post('consumer_secret',true));
+            $insert_data['user_id'] = $this->user_id;
             
             $status = $this->input->post('status');
             if($status=='') $status='0';
@@ -688,7 +696,7 @@ class Social_apps extends Home
     public function delete_app_twitter()
     {
         $this->ajax_check();
-
+        $this->csrf_token_check();
         $app_table_id = $this->input->post('app_table_id', true);
         $this->basic->delete_data('twitter_config', array('id' => $app_table_id, 'user_id' => $this->user_id));
         echo json_encode(array('status' => '1', 'message' => $this->lang->line("App has deleted successfully.")));
@@ -793,7 +801,7 @@ class Social_apps extends Home
             $info[$i]['action'] .= "<div style='min-width:130px'><a href='".base_url('social_apps/edit_linkedin_settings/').$value['id']."' class='btn btn-outline-warning btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Edit APP Settings')."'><i class='fas fa-edit'></i></a> ";
             
             if($this->is_demo != '1')
-            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
+            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' csrf_token='".$this->session->userdata('csrf_token_session')."' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
 
             $info[$i]["action"] .="<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
             $i++;
@@ -867,9 +875,11 @@ class Social_apps extends Home
         }
         else {
 
-            $insert_data['app_name'] = $this->input->post('app_name');
-            $insert_data['client_id'] = $this->input->post('client_id');
-            $insert_data['client_secret'] = $this->input->post('client_secret');
+            $this->csrf_token_check();
+
+            $insert_data['app_name'] = strip_tags($this->input->post('app_name',true));
+            $insert_data['client_id'] = strip_tags($this->input->post('client_id',true));
+            $insert_data['client_secret'] = strip_tags($this->input->post('client_secret',true));
             $insert_data['user_id'] = $this->user_id;
 
             
@@ -902,7 +912,7 @@ class Social_apps extends Home
     public function delete_app_linkedin()
     {
         $this->ajax_check();
-
+        $this->csrf_token_check();
         $app_table_id = $this->input->post('app_table_id', true);
         $this->basic->delete_data('linkedin_config', array('id' => $app_table_id, 'user_id' => $this->user_id));
         echo json_encode(array('status' => '1', 'message' => $this->lang->line("App has deleted successfully.")));
@@ -1006,7 +1016,7 @@ class Social_apps extends Home
             $info[$i]['action'] .= "<div style='min-width:130px'><a href='".base_url('social_apps/edit_reddit_settings/').$value['id']."' class='btn btn-outline-warning btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Edit APP Settings')."'><i class='fas fa-edit'></i></a> ";
             
             if($this->is_demo != '1')
-            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
+            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' csrf_token='".$this->session->userdata('csrf_token_session')."' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
 
             $info[$i]["action"] .="<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
             $i++;
@@ -1078,9 +1088,11 @@ class Social_apps extends Home
         }
         else {
 
-            $insert_data['app_name'] = $this->input->post('app_name');
-            $insert_data['client_id'] = $this->input->post('client_id');
-            $insert_data['client_secret'] = $this->input->post('client_secret');
+            $this->csrf_token_check();
+
+            $insert_data['app_name'] = strip_tags($this->input->post('app_name',true));
+            $insert_data['client_id'] = strip_tags($this->input->post('client_id',true));
+            $insert_data['client_secret'] = strip_tags($this->input->post('client_secret',true));
             $insert_data['user_id'] = $this->user_id;
 
             
@@ -1113,7 +1125,7 @@ class Social_apps extends Home
     public function delete_app_reddit()
     {
         $this->ajax_check();
-
+        $this->csrf_token_check();
         $app_table_id = $this->input->post('app_table_id', true);
         $this->basic->delete_data('reddit_config', array('id' => $app_table_id, 'user_id' => $this->user_id));
         echo json_encode(array('status' => '1', 'message' => $this->lang->line("App has deleted successfully.")));
@@ -1220,7 +1232,7 @@ class Social_apps extends Home
             $info[$i]['action'] .= "<div style='min-width:171px'><a href='".base_url('social_apps/edit_pinterest_settings/').$value['id']."' class='btn btn-outline-warning btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Edit APP Settings')."'><i class='fas fa-edit'></i></a> ";
             
             if($this->is_demo != '1')
-            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a> <a href='". $login_button ."' class='btn btn-outline-info btn-circle ' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Import Account')."'><i class='fab fa-pinterest-square'></i></a></div>";
+            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' csrf_token='".$this->session->userdata('csrf_token_session')."' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a> <a href='". $login_button ."' class='btn btn-outline-info btn-circle ' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Import Account')."'><i class='fab fa-pinterest-square'></i></a></div>";
 
             $info[$i]["action"] .="<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
             $i++;
@@ -1307,9 +1319,11 @@ class Social_apps extends Home
         }
         else {
 
-            $insert_data['app_name'] = $this->input->post('app_name');
-            $insert_data['client_id'] = $this->input->post('client_id');
-            $insert_data['client_secret'] = $this->input->post('client_secret');
+            $this->csrf_token_check();
+
+            $insert_data['app_name'] = strip_tags($this->input->post('app_name',true));
+            $insert_data['client_id'] = strip_tags($this->input->post('client_id',true));
+            $insert_data['client_secret'] = strip_tags($this->input->post('client_secret',true));
             $insert_data['user_id'] = $this->user_id;
 
             
@@ -1342,7 +1356,7 @@ class Social_apps extends Home
     public function delete_app_pinterest()
     {
         $this->ajax_check();
-
+        $this->csrf_token_check();
         $app_table_id = $this->input->post('app_table_id', true);
 
         $this->basic->delete_data('pinterest_users_info', array('pinterest_config_table_id' => $app_table_id, 'user_id' => $this->user_id));
@@ -1451,7 +1465,7 @@ class Social_apps extends Home
             $info[$i]['action'] .= "<div style='min-width:130px'><a href='".base_url('social_apps/edit_wordpress_settings/').$value['id']."' class='btn btn-outline-warning btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Edit APP Settings')."'><i class='fas fa-edit'></i></a> ";
             
             if($this->is_demo != '1')
-            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
+            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' csrf_token='".$this->session->userdata('csrf_token_session')."' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
 
             $info[$i]["action"] .="<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
             $i++;
@@ -1523,9 +1537,11 @@ class Social_apps extends Home
         }
         else {
 
-            $insert_data['app_name'] = $this->input->post('app_name');
-            $insert_data['client_id'] = $this->input->post('client_id');
-            $insert_data['client_secret'] = $this->input->post('client_secret');
+            $this->csrf_token_check();
+
+            $insert_data['app_name'] = strip_tags($this->input->post('app_name',true));
+            $insert_data['client_id'] = strip_tags($this->input->post('client_id',true));
+            $insert_data['client_secret'] = strip_tags($this->input->post('client_secret',true));
             $insert_data['user_id'] = $this->user_id;
 
             
@@ -1596,7 +1612,8 @@ class Social_apps extends Home
             'domain_name',
             'user_key',
             'authentication_key',
-            'status'
+            'posting_medium',
+            'status',
         ];
         $this->db->where($where_custom);
         $info=$this->basic->get_data($table, $where='', $select, $join='', $limit, $start, $order_by, $group_by='');
@@ -1626,11 +1643,15 @@ class Social_apps extends Home
 
                 // Prepares buttons
                 $actions = '<div style="min-width: 120px;">';
+
+                $actions .= '<a data-toggle="tooltip" title="' . $this->lang->line('Update your blog categories') . '" href="#" class="btn btn-circle btn-outline-primary update-categories" data-wp-app-id="' . $info[$i]['id'] .'"><i class="fa fa-sync-alt"></i></a>&nbsp;&nbsp;';
+
                 $actions .= '<a data-toggle="tooltip" title="' . $this->lang->line('Edit Wordpress Site Settings') . '" href="' . base_url("social_apps/edit_wordpress_settings_self_hosted/{$info[$i]['id']}") . '" class="btn btn-circle btn-outline-warning"><i class="fa fa-edit"></i></a>';
-                $actions .= '&nbsp;&nbsp;<a data-toggle="tooltip" title="' . $this->lang->line('Delete Wordpress Site Settings') . '" href="" class="btn btn-circle btn-outline-danger" id="delete-wssh-settings" data-site-id="'. $info[$i]['id'] . '"><i class="fas fa-trash-alt"></i></a>';
+                $actions .= '&nbsp;&nbsp;<a data-toggle="tooltip" title="' . $this->lang->line('Delete Wordpress Site Settings') . '" href="" class="btn btn-circle btn-outline-danger" id="delete-wssh-settings"  csrf_token="'.$this->session->userdata('csrf_token_session').'" data-site-id="'. $info[$i]['id'] . '"><i class="fas fa-trash-alt"></i></a>';
                 $actions .= '</div>';
 
-                $info[$i]['actions'] = $actions;               
+                $info[$i]['actions'] = $actions;
+                $info[$i]["actions"] .="<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
             }
 
         }
@@ -1645,6 +1666,22 @@ class Social_apps extends Home
 
     public function add_wordpress_settings_self_hosted()
     {   
+        if ($this->is_wp_social_sharing_exist) {
+            $social_media_data = $this->wordpress_settings_get_social_media_data();
+
+            $data['facebook_account_list'] = $social_media_data['facebook_account_list'];
+            $data['twitter_account_list'] = $social_media_data['twitter_account_list'];
+            $data['linkedin_account_list'] = $social_media_data['linkedin_account_list'];
+            $data['pinterest_account_list'] = $social_media_data['pinterest_account_list'];
+            $data['reddit_account_list'] = $social_media_data['reddit_account_list'];
+            $data['subreddits'] = $this->subRedditList();
+
+            $data['post_type'] = 'nothing';
+            $data['post_action'] = 'add';
+            $data['campaigns_social_media'] = 0;
+        }
+
+
         $auth_key = $this->generate_authentication_key();
         $data['page_title'] = $this->lang->line('Add Wordpress Settings (Self-Hosted)');
         $data['body'] = 'admin/social_apps/wordpress_settings_self_hosted_add';
@@ -1652,6 +1689,8 @@ class Social_apps extends Home
 
         if ($_POST) {
             // Sets validation rules
+            $this->csrf_token_check();
+            $this->form_validation->set_rules('campaign_name', $this->lang->line('Campaign name'), 'trim|required');
             $this->form_validation->set_rules('domain_name', $this->lang->line('Domain name'), 'trim|required');
             $this->form_validation->set_rules('user_key', $this->lang->line('User key'), 'trim|required');
             $this->form_validation->set_rules('authentication_key', $this->lang->line('Authentication key'), 'trim|required');
@@ -1660,28 +1699,54 @@ class Social_apps extends Home
                 return $this->_viewcontroller($data);
             }
 
-            $domain_name = filter_var($this->input->post('domain_name'), FILTER_SANITIZE_URL, FILTER_VALIDATE_URL);
+            $domain_name = filter_var($this->input->post('domain_name',true), FILTER_SANITIZE_URL, FILTER_VALIDATE_URL);
             if (false == $domain_name) {
-              $message = $this->lang->line('Please provide a valid domain name.');
-              $this->session->set_userdata('wp_sh_add_domain_name', $message);
-              return $this->_viewcontroller($data);
+                $message = $this->lang->line('Please provide a valid domain name.');
+                $this->session->set_userdata('add_wssh_error', $message);
+                
+                return $this->_viewcontroller($data);
+            }            
+
+            $campaign_name = filter_var($this->input->post('campaign_name',true), FILTER_SANITIZE_STRING);
+            $user_key = filter_var($this->input->post('user_key',true), FILTER_SANITIZE_STRING);
+            $authentication_key = filter_var($this->input->post('authentication_key'), FILTER_SANITIZE_STRING);
+            $status = filter_var($this->input->post('status',true), FILTER_SANITIZE_STRING);
+            $status = empty($status) ? '0' : '1';
+
+            $posting_medium = null;
+            if ($this->is_wp_social_sharing_exist && $status) {
+                $posting_medium = $this->wordpress_settings_prepare_selected_social_media_data();
+                if (! is_array($posting_medium) && is_string($posting_medium)) {
+                    $this->session->set_userdata('add_wssh_error', $posting_medium);
+
+                    return $this->_viewcontroller($data);
+                }
             }
 
-            $user_key = filter_var($this->input->post('user_key'), FILTER_SANITIZE_STRING);
-            $authentication_key = filter_var($this->input->post('authentication_key'), FILTER_SANITIZE_STRING);
-            $status = filter_var($this->input->post('status'), FILTER_SANITIZE_STRING);
-
             $data = [
+                'campaign_name' => $campaign_name,
                 'domain_name' => $domain_name,
                 'user_key' => $user_key,
                 'authentication_key' => $authentication_key,
+                'posting_medium' => isset($posting_medium['posting_medium']) && is_array($posting_medium['posting_medium']) 
+                    ? json_encode($posting_medium['posting_medium'])
+                    : null,
+                'subreddits' => isset($posting_medium['subreddits']) && null != $posting_medium['subreddits']
+                    ? $posting_medium['subreddits']
+                    : null,
                 'user_id' => $this->user_id,
-                'status' => empty($status) ? '0' : '1',
+                'status' => $status,
                 'created_at' => date('Y-m-d H:i:s'),
             ];
 
-            if ($this->basic->insert_data('wordpress_config_self_hosted', $data)) {
-            	$this->_insert_usage_log($module_id=109,$request=1); 
+            $this->basic->insert_data('wordpress_config_self_hosted', $data);
+
+            if ($this->db->affected_rows() > 0) {
+            	$this->_insert_usage_log($module_id=109, $request=1);
+                if (is_array($posting_medium) && $social_media_count = count($posting_medium) > 0) {
+                    $this->_insert_usage_log($module_id=269, $request=$social_media_count); 
+                } 
+
                 redirect(base_url('social_apps/wordpress_settings_self_hosted'), 'location');
             }
 
@@ -1708,9 +1773,12 @@ class Social_apps extends Home
         $select = [
             'id',
             'user_id',
+            'campaign_name',
             'domain_name',
             'user_key',
             'authentication_key',
+            'posting_medium',
+            'subreddits',
             'status',
         ];
 
@@ -1728,12 +1796,37 @@ class Social_apps extends Home
             }
         }
 
+        if ($this->is_wp_social_sharing_exist) {
+            $posting_medium = isset($result[0]['posting_medium']) 
+                ? json_decode($result[0]['posting_medium'], true) 
+                : [];
+            $subreddits = isset($result[0]['subreddits']) && null != $result[0]['subreddits'] 
+                ? (string) $result[0]['subreddits'] 
+                : '0';
+            $social_media_data = $this->wordpress_settings_get_social_media_data();
+
+            $data['facebook_account_list'] = $social_media_data['facebook_account_list'];
+            $data['twitter_account_list'] = $social_media_data['twitter_account_list'];
+            $data['linkedin_account_list'] = $social_media_data['linkedin_account_list'];
+            $data['pinterest_account_list'] = $social_media_data['pinterest_account_list'];
+            $data['reddit_account_list'] = $social_media_data['reddit_account_list'];
+
+            $data['campaign_form_info'] = ['subreddits' => $subreddits];
+            $data['subreddits'] = $this->subRedditList();
+
+            $data['post_type'] = 'nothing';
+            $data['post_action'] = 'edit';
+            $data['campaigns_social_media'] = $posting_medium;
+        }
+
         $data['page_title'] = $this->lang->line('Edit Wordpress Settings (Self-Hosted)');
         $data['body'] = 'admin/social_apps/wordpress_settings_self_hosted_edit';
         $data['wp_settings'] = isset($result[0]) ? $result[0] : [];
 
         if ($_POST) {
             // Sets validation rules
+            $this->csrf_token_check();
+            $this->form_validation->set_rules('campaign_name', $this->lang->line('Campaign name'), 'trim|required');
             $this->form_validation->set_rules('domain_name', $this->lang->line('Domain name'), 'trim|required');
             $this->form_validation->set_rules('user_key', $this->lang->line('Consumer name'), 'trim|required');
             $this->form_validation->set_rules('authentication_key', $this->lang->line('Client key'), 'trim|required');
@@ -1742,23 +1835,42 @@ class Social_apps extends Home
                 return $this->_viewcontroller($data);
             }
 
-            $domain_name = filter_var($this->input->post('domain_name'), FILTER_SANITIZE_URL, FILTER_VALIDATE_URL);
+            $domain_name = filter_var($this->input->post('domain_name',true), FILTER_SANITIZE_URL, FILTER_VALIDATE_URL);
             if (false == $domain_name) {
               $message = $this->lang->line('Please provide a valid domain name.');
-              $this->session->set_userdata('wp_sh_add_domain_name', $message);
+              $this->session->set_userdata('edit_wssh_error', $message);
               return $this->_viewcontroller($data); 
             }
 
-            $user_key = filter_var($this->input->post('user_key'), FILTER_SANITIZE_STRING);
+            $campaign_name = filter_var($this->input->post('campaign_name',true), FILTER_SANITIZE_STRING);
+            $user_key = filter_var($this->input->post('user_key',true), FILTER_SANITIZE_STRING);
             $authentication_key = filter_var($this->input->post('authentication_key'), FILTER_SANITIZE_STRING);
-            $status = filter_var($this->input->post('status'), FILTER_SANITIZE_STRING);
+            $status = filter_var($this->input->post('status',true), FILTER_SANITIZE_STRING);
+            $status = empty($status) ? '0' : '1';
+
+            $posting_medium = null;
+            if ($this->is_wp_social_sharing_exist && $status) {
+                $posting_medium = $this->wordpress_settings_prepare_selected_social_media_data();
+                if (! is_array($posting_medium) && is_string($posting_medium)) {
+                    $this->session->set_userdata('edit_wssh_error', $posting_medium);
+
+                    return $this->_viewcontroller($data);
+                }
+            }
 
             $data = [
+                'campaign_name' => $campaign_name,
                 'domain_name' => $domain_name,
                 'user_key' => $user_key,
                 'authentication_key' => $authentication_key,
+                'posting_medium' => isset($posting_medium['posting_medium']) && is_array($posting_medium['posting_medium'])
+                    ? json_encode($posting_medium['posting_medium'])
+                    : null,
+                'subreddits' => isset($posting_medium['subreddits']) && null != $posting_medium['subreddits']
+                    ? $posting_medium['subreddits']
+                    : null,    
                 'user_id' => $this->user_id,
-                'status' => empty($status) ? '0' : '1',
+                'status' => $status,
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
 
@@ -1773,7 +1885,9 @@ class Social_apps extends Home
                 ];
             }
 
-            if ($this->basic->update_data('wordpress_config_self_hosted', $where, $data)) {
+            $this->basic->update_data('wordpress_config_self_hosted', $where, $data);
+
+            if ($this->db->affected_rows() > 0) {
                 $message = $this->lang->line('Your wordpress site settings have been updated successfully.');
                 $this->session->set_userdata('edit_wssh_success', $message);                
                 redirect(base_url('social_apps/wordpress_settings_self_hosted'), 'location');
@@ -1794,6 +1908,9 @@ class Social_apps extends Home
             echo json_encode(['error' => $message]);
             exit;
         }
+
+        $this->csrf_token_check();
+
 
         $id = (int) $this->input->post('site_id');
 
@@ -1839,6 +1956,482 @@ class Social_apps extends Home
         exit;        
     }
 
+    public function wordpress_settings_prepare_selected_social_media_data()
+    {
+        $facebook_pages = (array) $this->input->post('facebook_pages', true);
+        $twitter_accounts = (array) $this->input->post('twitter_accounts', true);
+        $linkedin_accounts = (array) $this->input->post('linkedin_accounts', true);
+        $pinterest_accounts = (array) $this->input->post('pinterest_boards', true);
+        $reddit_accounts = (array) $this->input->post('reddit_accounts', true);
+        $subreddits = (string) $this->input->post('subreddits', true);
+
+        if (count($facebook_pages) == 0 
+            && count($twitter_accounts) == 0 
+            && count($linkedin_accounts) == 0 
+            && count($pinterest_accounts) == 0 
+            && count($reddit_accounts) == 0
+        ) {
+
+            return $this->lang->line("Please make sure that at least one social media is selected.");
+        }
+
+        if (count($reddit_accounts) > 0 && ! in_array($subreddits, $this->subRedditList())) {
+            return $this->lang->line("Please make sure that a subreddit is selected.");
+        }
+
+        $posting_medium = array();
+
+        $merged_array = array_merge(
+            $facebook_pages, 
+            $twitter_accounts, 
+            $linkedin_accounts, 
+            $pinterest_accounts, 
+            $reddit_accounts
+        );
+
+        $posting_medium = array_filter($merged_array);
+
+        $subreddits = ($subreddits && count($reddit_accounts) > 0) ? $subreddits : null;
+
+        return [
+            'posting_medium' => $posting_medium,
+            'subreddits' => $subreddits,
+        ];
+    }
+
+    public function wordpress_settings_get_social_media_data() 
+    {
+        $data = [];
+
+        // Prepares facebook user data
+        $existing_accounts = $this->basic->get_data('facebook_rx_fb_user_info', array('where' => array('user_id' => $this->user_id)));
+
+        $existing_account_info = [];
+        if(!empty($existing_accounts)) {
+            $i = 0;
+            foreach($existing_accounts as $value) {
+
+                $existing_account_info[$i]['fb_id'] = $value['fb_id'];
+                $existing_account_info[$i]['userinfo_table_id'] = $value['id'];
+                $existing_account_info[$i]['name'] = $value['name'];
+                $existing_account_info[$i]['email'] = $value['email'];
+                $existing_account_info[$i]['user_access_token'] = $value['access_token'];
+
+                $where = array();
+                $where['where'] = array(
+                    'facebook_rx_fb_user_info_id' => $value['id']
+                );
+                $select = array(
+                    'id', 'facebook_rx_fb_user_info_id', 'page_id', 'page_profile', 'page_name', 'username'
+                );
+                $page_count = $this->basic->get_data('facebook_rx_fb_page_info', $where, $select);
+                $existing_account_info[$i]['page_list'] = $page_count;
+
+                if(!empty($page_count)) {
+                    $existing_account_info[$i]['total_pages'] = count($page_count);
+                } else {
+                    $existing_account_info[$i]['total_pages'] = 0;
+                }
+
+                $group_count = $this->basic->get_data('facebook_rx_fb_group_info', $where);
+                $existing_account_info[$i]['group_list'] = $group_count;
+
+                if(!empty($group_count)) {
+                    $existing_account_info[$i]['total_groups'] = count($group_count);
+                } else {
+                    $existing_account_info[$i]['total_groups'] = 0;
+                }
+                $i++;
+            }
+        }
+
+
+        // Prepares pinterest user data
+        $pinterest_where['where'] = array('pinterest_users_info.user_id' => $this->user_id);
+        $pinterest_join = array('pinterest_board_info' => 'pinterest_users_info.id=pinterest_board_info.pinterest_table_id,left');
+        $pinterest_select = array('pinterest_users_info.id', 'user_name', 'board_name', 'pinterest_board_info.id as table_id', 'name', 'image');
+
+        $pinterest_list = $this->basic->get_data('pinterest_users_info', $pinterest_where, $pinterest_select, $pinterest_join);
+
+        $pinterest_info = array();
+        if(!empty($pinterest_list)) {
+            $i = 0;
+            foreach($pinterest_list as $value) {
+
+                $pinterest_info[$value['user_name']]['id'] = $value['id'];
+                $pinterest_info[$value['user_name']]['user_name'] = $value['user_name'];
+                $pinterest_info[$value['user_name']]['name'] = $value['name'];
+                $pinterest_info[$value['user_name']]['image'] = $value['image'];
+                $pinterest_info[$value['user_name']]['pinterest_info'][$i]['table_id'] = $value['table_id'];
+                $pinterest_info[$value['user_name']]['pinterest_info'][$i]['board_name'] = $value['board_name'];
+                $i++;
+            }
+        }
+
+        // Prepares reddit user data
+        $reddit_where = array(
+            'where' => array(
+                'user_id' => $this->user_id
+            )
+        );
+
+        $reddit_select = array(
+            'username', 'id', 'profile_pic', 'url'
+        );
+
+        $reddit_account_list = $this->basic->get_data('reddit_users_info',  $reddit_where, $reddit_select);
+        $data['reddit_account_list'] = $reddit_account_list;
+        $data['subreddits'] = $this->subRedditList();
+
+        $data['facebook_account_list'] = $existing_account_info;
+        $data['pinterest_account_list'] = $pinterest_info;
+
+        $data['twitter_account_list'] = $this->basic->get_data('twitter_users_info', array('where' => array('user_id' => $this->user_id)));
+        // $data['tumblr_account_list'] = $this->basic->get_data('tumblr_users_info', array('where' => array('user_id' => $this->user_id)));
+        $data['linkedin_account_list'] = $this->basic->get_data('linkedin_users_info', array('where' => array('user_id' => $this->user_id)));
+        $data['blogger_account_list'] = $this->basic->get_data('blogger_users_info', array('where' => array('user_id' => $this->user_id)));
+
+        return $data;
+    }
+
+    public function subRedditList()
+    {
+         
+        $subRedditListArr = array(
+            "0" => "Please select a subreddit",
+            "1200isplenty" => "1200isplenty",
+            "AdventureTime" => "AdventureTime",
+            "Android" => "Android",
+            "Android" => "Android",
+            "Animated" => "Animated",
+            "Anxiety" => "Anxiety",
+            "ArcherFX" => "ArcherFX",
+            "ArtPorn" => "ArtPorn",
+            "AskReddit" => "AskReddit",
+            "AskScience" => "AskScience",
+            "AskScience" => "AskScience",
+            "AskSocialScience" => "AskSocialScience",
+            "Baseball" => "Baseball",
+            "BetterCallSaul" => "BetterCallSaul",
+            "Bitcoin" => "Bitcoin",
+            "Bitcoin" => "Bitcoin",
+            "BobsBurgers" => "BobsBurgers",
+            "Books" => "Books",
+            "BreakingBad" => "BreakingBad",
+            "Cheap_Meals" => "Cheap_Meals",
+            "Classic4chan" => "Classic4chan",
+            "DeepIntoYouTube" => "DeepIntoYouTube",
+            "Discussion" => "Discussion",
+            "DnD" => "DnD",
+            "Doctor Who" => "Doctor Who",
+            "DoesAnybodyElse" => "DoesAnybodyElse",
+            "DunderMifflin" => "DunderMifflin",
+            "EDC" => "EDC",
+            "Economics" => "Economics",
+            "Entrepreneur" => "Entrepreneur",
+            "FlashTV" => "FlashTV",
+            "FoodPorn" => "FoodPorn",
+            "General" => "General",
+            "General" => "General",
+            "General" => "General",
+            "General" => "General",
+            "General" => "General",
+            "HistoryPorn" => "HistoryPorn",
+            "Hockey" => "Hockey",
+            "HybridAnimals" => "HybridAnimals",
+            "IASIP" => "IASIP",
+            "Jokes" => "Jokes",
+            "LetsNotMeet" => "LetsNotMeet",
+            "LifeProTips" => "LifeProTips",
+            "Lifestyle" => "Lifestyle",
+            "Linux" => "Linux",
+            "LiverpoolFC" => "LiverpoolFC",
+            "Netflix" => "Netflix",
+            "Occupation" => "Occupation",
+            "Offensive_Wallpapers" => "Offensive_Wallpapers",
+            "OutOfTheLoop" => "OutOfTheLoop",
+            "PandR" => "PandR",
+            "Pokemon" => "Pokemon",
+            "Seinfeld" => "Seinfeld",
+            "Sherlock" => "Sherlock",
+            "Soccer" => "Soccer",
+            "Sound" => "Sound",
+            "SpacePorn" => "SpacePorn",
+            "Television" => "Television",
+            "TheSimpsons" => "TheSimpsons",
+            "Tinder" => "Tinder",
+            "TrueDetective" => "TrueDetective",
+            "UniversityofReddit" => "UniversityofReddit",
+            "YouShouldKnow" => "YouShouldKnow",
+            "advice" => "advice",
+            "amiugly" => "amiugly",
+            "anime" => "anime",
+            "apple" => "apple",
+            "aquariums" => "aquariums",
+            "askculinary" => "askculinary",
+            "askengineers" => "askengineers",
+            "askengineers" => "askengineers",
+            "askhistorians" => "askhistorians",
+            "askmen" => "askmen",
+            "askphilosophy" => "askphilosophy",
+            "askwomen" => "askwomen",
+            "bannedfromclubpenguin" => "bannedfromclubpenguin",
+            "batman" => "batman",
+            "battlestations" => "battlestations",
+            "bicycling" => "bicycling",
+            "bigbrother" => "bigbrother",
+            "biology" => "biology",
+            "blackmirror" => "blackmirror",
+            "blackpeoplegifs" => "blackpeoplegifs",
+            "budgetfood" => "budgetfood",
+            "business" => "business",
+            "casualiama" => "casualiama",
+            "celebs" => "celebs",
+            "changemyview" => "changemyview",
+            "changemyview" => "changemyview",
+            "chelseafc" => "chelseafc",
+            "chemicalreactiongifs" => "chemicalreactiongifs",
+            "chemicalreactiongifs" => "chemicalreactiongifs",
+            "chemistry" => "chemistry",
+            "coding" => "coding",
+            "college" => "college",
+            "comics" => "comics",
+            "community" => "community",
+            "confession" => "confession",
+            "cooking" => "cooking",
+            "cosplay" => "cosplay",
+            "cosplay" => "cosplay",
+            "crazyideas" => "crazyideas",
+            "cyberpunk" => "cyberpunk",
+            "dbz" => "dbz",
+            "depression" => "depression",
+            "doctorwho" => "doctorwho",
+            "education" => "education",
+            "educationalgifs" => "educationalgifs",
+            "engineering" => "engineering",
+            "entertainment" => "entertainment",
+            "environment" => "environment",
+            "everymanshouldknow" => "everymanshouldknow",
+            "facebookwins" => "facebookwins",
+            "facepalm" => "facepalm",
+            "facepalm" => "facepalm",
+            "fantasy" => "fantasy",
+            "fantasyfootball" => "fantasyfootball",
+            "firefly" => "firefly",
+            "fitmeals" => "fitmeals",
+            "flexibility" => "flexibility",
+            "food" => "food",
+            "funny" => "funny",
+            "futurama" => "futurama",
+            "gadgets" => "gadgets",
+            "gallifrey" => "gallifrey",
+            "gamedev" => "gamedev",
+            "gameofthrones" => "gameofthrones",
+            "geek" => "geek",
+            "gentlemanboners" => "gentlemanboners",
+            "gifs" => "gifs",
+            "girlsmirin" => "girlsmirin",
+            "google" => "google",
+            "gravityfalls" => "gravityfalls",
+            "gunners" => "gunners",
+            "hardbodies" => "hardbodies",
+            "hardware" => "hardware",
+            "harrypotter" => "harrypotter",
+            "history" => "history",
+            "hockey" => "hockey",
+            "houseofcards" => "houseofcards",
+            "howto" => "howto",
+            "humor" => "humor",
+            "investing" => "investing",
+            "japanesegameshows" => "japanesegameshows",
+            "keto" => "keto",
+            "ketorecipes" => "ketorecipes",
+            "languagelearning" => "languagelearning",
+            "law" => "law",
+            "learnprogramming" => "learnprogramming",
+            "lectures" => "lectures",
+            "lego" => "lego",
+            "lifehacks" => "lifehacks",
+            "linguistics" => "linguistics",
+            "literature" => "literature",
+            "loseit" => "loseit",
+            "magicTCG" => "magicTCG",
+            "marvelstudios" => "marvelstudios",
+            "math" => "math",
+            "mrrobot" => "mrrobot",
+            "mylittlepony" => "mylittlepony",
+            "naruto" => "naruto",
+            "nasa" => "nasa",
+            "nbastreams" => "nbastreams",
+            "nosleep" => "nosleep",
+            "nutrition" => "nutrition",
+            "olympics" => "olympics",
+            "onepunchman" => "onepunchman",
+            "paleo" => "paleo",
+            "patriots" => "patriots",
+            "pettyrevenge" => "pettyrevenge",
+            "photoshop" => "photoshop",
+            "physics" => "physics",
+            "pics" => "pics",
+            "pizza" => "pizza",
+            "podcasts" => "podcasts",
+            "poetry" => "poetry",
+            "pokemon" => "pokemon",
+            "preppers" => "preppers",
+            "prettygirls" => "prettygirls",
+            "psychology" => "psychology",
+            "python" => "python",
+            "quotes" => "quotes",
+            "rainmeter" => "rainmeter",
+            "rateme" => "rateme",
+            "reactiongifs" => "reactiongifs",
+            "recipes" => "recipes",
+            "reddevils" => "reddevils",
+            "relationship_advice" => "relationship_advice",
+            "rickandmorty" => "rickandmorty",
+            "running" => "running",
+            "samplesize" => "samplesize",
+            "scifi" => "scifi",
+            "screenwriting" => "screenwriting",
+            "seinfeld" => "seinfeld",
+            "self" => "self",
+            "sex" => "sex",
+            "shield" => "shield",
+            "simpleliving" => "simpleliving",
+            "soccer" => "soccer",
+            "southpark" => "southpark",
+            "stockmarket" => "stockmarket",
+            "stocks" => "stocks",
+            "talesfromtechsupport" => "talesfromtechsupport",
+            "tattoos" => "tattoos",
+            "teachers" => "teachers",
+            "thewalkingdead" => "thewalkingdead",
+            "thinspo" => "thinspo",
+            "tinyhouses" => "tinyhouses",
+            "todayilearned" => "todayilearned",
+            "topgear" => "topgear",
+            "tumblr" => "tumblr",
+            "twinpeaks" => "twinpeaks",
+            "twitch" => "twitch",
+            "vandwellers" => "vandwellers",
+            "vegan" => "vegan",
+            "videos" => "videos",
+            "wallpaper" => "wallpaper",
+            "weathergifs" => "weathergifs",
+            "westworld" => "westworld",
+            "whitepeoplegifs" => "whitepeoplegifs",
+            "wikileaks" => "wikileaks",
+            "wikipedia" => "wikipedia",
+            "woodworking" => "woodworking",
+            "writing" => "writing",
+            "wwe" => "wwe",
+            "youtube" => "youtube",
+            "youtubehaiku" => "youtubehaiku",
+            "zombies" => "zombies"
+        );
+
+        $subRedditListArr = array_unique($subRedditListArr);
+
+        return $subRedditListArr;
+    }
+
+    public function wordpress_settings_self_hosted_load_categories() 
+    {
+        $this->ajax_check();
+
+        $wp_app_id = (string) $this->input->post('wp_app_id', true);
+
+        if (! $wp_app_id) {
+            echo json_encode([
+                'status' => false,
+                'message' => $this->lang->line('Unable to update categories'),
+            ]);
+
+            exit;
+        }
+
+        $where = [
+            'where' => [
+                'id' => $wp_app_id,
+                'user_id' => $this->user_id,
+                'status' => '1',
+            ],
+        ];
+
+        $select = [
+            'domain_name',
+            'user_key',
+            'authentication_key',
+        ];
+
+        $result = $this->basic->get_data('wordpress_config_self_hosted', $where, $select, '', 1);
+
+        if (1 != count($result)) {
+            echo json_encode([
+                'status' => false,
+                'message' => $this->lang->line('Unable to update categories'),
+            ]);
+
+            exit;
+        }
+
+        $app = $result[0];
+
+
+        $data = [
+            'domain_name' => $app['domain_name'],
+            'user_key' => $app['user_key'],
+            'authentication_key' => $app['authentication_key'],
+            'category' => true,
+        ];
+
+        $this->load->library('wordpress_self_hosted');
+
+        $response = '';
+
+        try {
+            $response = $this->wordpress_self_hosted->get_categories_wordpress_self_hosted($data);
+        } catch(\Exception $e) {
+            echo json_encode([
+                'status' => false,
+                'message' => $this->lang->line('Unable to update categories. Please check you blog url, user key, or authentication key'),
+            ]);
+
+            exit;
+        }
+
+        if ($response) {
+            $this->basic->update_data(
+                'wordpress_config_self_hosted', 
+                ['id' => $wp_app_id, 'user_id' => $this->user_id], 
+                ['blog_category' => $response]
+            );
+
+            if ($this->db->affected_rows() > 0) {
+                echo json_encode([
+                    'status' => true,
+                    'message' => $this->lang->line('Your blog categories have been updated successfully'),
+                ]);
+
+                exit;
+            }
+
+            echo json_encode([
+                'status' => true,
+                'message' => $this->lang->line('Your blog categories are up-to-date'),
+            ]);
+
+            exit;
+        } else {
+            echo json_encode([
+                'status' => false,
+                'message' => $this->lang->line('Failed to pull categories from your blog'),
+            ]);
+
+            exit;
+        }
+    }   
+
     /**
      * Generates random key used for authentication key
      */
@@ -1879,7 +2472,7 @@ class Social_apps extends Home
     public function delete_app_wordpress()
     {
         $this->ajax_check();
-
+        $this->csrf_token_check();
         $app_table_id = $this->input->post('app_table_id', true);
         $this->basic->delete_data('wordpress_config', array('id' => $app_table_id, 'user_id' => $this->user_id));
         echo json_encode(array('status' => '1', 'message' => $this->lang->line("App has deleted successfully.")));
@@ -1983,7 +2576,7 @@ class Social_apps extends Home
             $info[$i]['action'] .= "<div style='min-width:130px'><a href='".base_url('social_apps/edit_tumblr_settings/').$value['id']."' class='btn btn-outline-warning btn-circle' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Edit APP Settings')."'><i class='fas fa-edit'></i></a> ";
             
             if($this->is_demo != '1')
-            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
+            $info[$i]['action'] .= "<a href='#'  table_id='".$value['id']."' class='btn btn-outline-primary btn-circle change_state' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Change the state of this app.')."'><i class='fas fa-exchange-alt'></i></a> <a href='#' csrf_token='".$this->session->userdata('csrf_token_session')."' class='btn btn-outline-danger btn-circle delete_app' table_id='".$value['id']."' data-toggle='tooltip' data-placement='top' title='".$this->lang->line('Delete this APP')."'><i class='fas fa-trash-alt'></i></a></div>";
 
             $info[$i]["action"] .="<script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
             $i++;
@@ -2054,9 +2647,11 @@ class Social_apps extends Home
         }
         else {
 
-            $insert_data['app_name'] = $this->input->post('app_name');
-            $insert_data['consumer_id'] = $this->input->post('consumer_id');
-            $insert_data['consumer_secret'] = $this->input->post('consumer_secret');
+            $this->csrf_token_check();
+
+            $insert_data['app_name'] = strip_tags($this->input->post('app_name',true));
+            $insert_data['consumer_id'] = strip_tags($this->input->post('consumer_id',true));
+            $insert_data['consumer_secret'] = strip_tags($this->input->post('consumer_secret',true));
             $insert_data['user_id'] = $this->user_id;
 
             
@@ -2088,7 +2683,7 @@ class Social_apps extends Home
     public function delete_app_tumblr()
     {
         $this->ajax_check();
-
+        $this->csrf_token_check();
         $app_table_id = $this->input->post('app_table_id', true);
         $this->basic->delete_data('tumblr_config', array('id' => $app_table_id, 'user_id' => $this->user_id));
         echo json_encode(array('status' => '1', 'message' => $this->lang->line("App has deleted successfully.")));

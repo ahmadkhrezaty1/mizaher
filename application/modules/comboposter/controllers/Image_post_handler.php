@@ -49,6 +49,7 @@ class Image_post_handler
 		}
 
 		$data['campaigns_social_media'] = json_decode($campaign_info[0]['posting_medium'], true);
+		$data['wpsh_selected_category'] = json_decode($campaign_info[0]['wpsh_selected_category'], true);
 		unset($campaign_info[0]['posting_medium']);
 		$data['campaign_form_info'] = $campaign_info[0];
 
@@ -88,6 +89,7 @@ class Image_post_handler
 		}
 
 		$data['campaigns_social_media'] = json_decode($campaign_info[0]['posting_medium'], true);
+		$data['wpsh_selected_category'] = json_decode($campaign_info[0]['wpsh_selected_category'], true);
 		unset($campaign_info[0]['posting_medium']);
 		$data['campaign_form_info'] = $campaign_info[0];
 
@@ -156,7 +158,7 @@ class Image_post_handler
 				$time_interval = $processed_input_data['time_interval'];
 
 				/* insert parent campaign */
-				if ($processed_input_data['repeat_times'] >= 0) {
+				if ($processed_input_data['repeat_times'] > 0) {
 					$processed_input_data['parent_campaign_id'] = 0;
 				}
 				$this->comboposter->basic->insert_data('comboposter_campaigns', $processed_input_data);
@@ -281,6 +283,7 @@ class Image_post_handler
 
 		$data['message'] = $this->comboposter->input->post('message', true);
 		$data['title'] = strip_tags($this->comboposter->input->post('title', true));
+		$data['link'] = strip_tags($this->comboposter->input->post('link', true));
 		$data['rich_content'] = htmlspecialchars($this->comboposter->input->post('rich_content'));
 
 		$data['schedule_type'] = $this->comboposter->input->post('schedule_type', true);
@@ -313,6 +316,7 @@ class Image_post_handler
 		$wordpress_accounts = $this->comboposter->input->post('wordpress_accounts', true);
 		$blogger_blogs = $this->comboposter->input->post('blogger_blogs', true);
 		$wordpress_accounts_self_hosted = $this->comboposter->input->post('wordpress_accounts_self_hosted', true);
+		$wpsh_selected_category = $this->comboposter->input->post('wpsh_selected_category', true);
 
 
 		/* ensure that they are array */
@@ -330,6 +334,7 @@ class Image_post_handler
 		}
 		if (!is_array($wordpress_accounts_self_hosted)) {
 			$wordpress_accounts_self_hosted = array();
+			$wpsh_selected_category = array();
 		}
 		if (!is_array($blogger_blogs)) {
 			$blogger_blogs = array();
@@ -349,6 +354,13 @@ class Image_post_handler
 
 			return json_encode($response);
 		}
+ 
+		if (count($wordpress_accounts_self_hosted) > 0 && ! count($wpsh_selected_category) > 0) {
+			$response['status'] = 'error';
+			$response['message'] = $this->comboposter->lang->line("Please make sure that at least one blog category is selected.");
+
+			return json_encode($response);			
+		}
 
 
 		/* get all social media in an array and process it */
@@ -366,6 +378,7 @@ class Image_post_handler
 		});
 
 		$posting_mediums = $this->comboposter->mutiArrToSingleArr($posting_mediums);
+		$data['wpsh_selected_category'] = json_encode($wpsh_selected_category);
 		$data['posting_mediums_count'] = count($posting_mediums);
 		$data['posting_medium'] = json_encode($posting_mediums);
 

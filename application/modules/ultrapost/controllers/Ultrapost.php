@@ -107,6 +107,16 @@ class Ultrapost extends Home
         $total_rows_array=$this->basic->count_row($table,$where,$count=$table.".id",$join,$group_by='');
         $total_result=$total_rows_array[0]['total_rows'];
 
+
+        /* complete main campaign count */
+        $query = $this->db->query("SELECT parent_campaign_id, COUNT(posting_status) as complete FROM `facebook_rx_auto_post` WHERE parent_campaign_id != '0' AND posting_status = '2' GROUP BY parent_campaign_id");
+        $temp_complete_results = $query->result_array();
+        $complete_results = array();
+
+        foreach ($temp_complete_results as $key => $value) {
+            $complete_results[$value['parent_campaign_id']] = $value['complete'];
+        }
+
         for($i=0;$i<count($info);$i++)
         {   
             $action_count = 5;
@@ -135,8 +145,20 @@ class Ultrapost extends Home
             }
            
             // status section started
-            if(($posting_status=='0' || $posting_status == '2')  && ($schedule_type == 'later' && $parent_id == '0' && $is_all_posted=='0' ))
-                $info[$i]['status'] = '<div style="min-width:120px;" class="text-muted"><i class="fas fa-exclamation-circle"></i> '.$this->lang->line("not all completed").'</div>';
+            if($posting_status == '2'  && ($schedule_type == 'later' && $parent_id == '0' && $is_all_posted=='0' )) {
+
+                $completed = 1;
+                if (isset($complete_results[$info[$i]['id']])) {
+                    $completed = $complete_results[$info[$i]['id']] + 1;
+                }
+                $total = $info[$i]['repeat_times'] + 1;
+
+                if ($completed == $total_result) {
+                    $info[$i]['status'] = '<div style="min-width:120px;" class="text-success"><i class="fas fa-check-circle"></i> '.$this->lang->line("Completed").'</div>'; 
+                } else {
+                    $info[$i]['status'] = '<div style="min-width:120px;" class="text-muted"><i class="fas fa-exclamation-circle"></i> '.$completed. '/'. $total. ' '.$this->lang->line("completed").'</div>';
+                }
+            }
             else if( $posting_status == '2') 
                 $info[$i]['status'] = '<div style="min-width:120px;" class="text-success"><i class="fas fa-check-circle"></i> '.$this->lang->line("Completed").'</div>';
             else if( $posting_status == '1') 
@@ -184,10 +206,15 @@ class Ultrapost extends Home
 
 
             // visit post action
-            if($posting_status=='2')
-                $visit_post = "<a target='_BLANK' href='".$info[$i]['post_url']."' data-toggle='tooltip' title='".$this->lang->line("Visit Post")."' class='btn btn-circle btn-outline-info'><i class='fas fa-hand-point-right'></i></a>";
-            else 
+            if ($posting_status == '2'  && ($schedule_type == 'later' && $parent_id == '0' && $is_all_posted=='0' )) {
                 $visit_post = "<a data-toggle='tooltip' title='".$this->lang->line("not published yet.")."' class='btn btn-circle btn-light pointer text-muted'><i class='fas fa-hand-point-right'></i></a>";
+            }
+            else if($posting_status=='2') {
+                $visit_post = "<a target='_BLANK' href='".$info[$i]['post_url']."' data-toggle='tooltip' title='".$this->lang->line("Visit Post")."' class='btn btn-circle btn-outline-info'><i class='fas fa-hand-point-right'></i></a>";
+            }
+            else {
+                $visit_post = "<a data-toggle='tooltip' title='".$this->lang->line("not published yet.")."' class='btn btn-circle btn-light pointer text-muted'><i class='fas fa-hand-point-right'></i></a>";
+            }
 
             // view report action
             if ($schedule_type == 'later' && $parent_id == '0')
@@ -238,6 +265,7 @@ class Ultrapost extends Home
 
     public function text_image_link_video_poster()
     {
+        $this->is_group_posting_exist=$this->group_posting_exist();
         if($this->session->userdata('user_type') != 'Admin' && !in_array(223,$this->module_access)) exit();
 
         if ($this->config->item('facebook_poster_group_enable_disable') == '' || $this->config->item('facebook_poster_group_enable_disable')=='0')
@@ -888,6 +916,10 @@ class Ultrapost extends Home
                $insert_data['page_or_group_or_user_name'] = $page_info_arr[$insert_data['page_group_user_id']];
 
                $x=$post['time_interval'];
+               if($x=="" || $x==0){
+               	$x=rand(15,100);
+               }
+
                for ($i=0; $i <= $times ; $i++) { 
                    
                     if($i == 0)
@@ -932,6 +964,10 @@ class Ultrapost extends Home
                    $insert_data['page_or_group_or_user_name'] = $group_info_arr[$insert_data['page_group_user_id']];
 
                    $y = $post['time_interval'];
+                   if($y=="" || $y==0){
+	               		$y=rand(15,100);
+	               }
+
                    for ($i=0; $i <= $times ; $i++) { 
                        
                         if($i == 0)
@@ -1088,6 +1124,7 @@ class Ultrapost extends Home
 
     public function text_image_link_video_edit_auto_post($auto_post_id)
     {
+        $this->is_group_posting_exist=$this->group_posting_exist();
         if($this->session->userdata('user_type') != 'Admin' && !in_array(223,$this->module_access)) exit();
         if ($this->config->item('facebook_poster_group_enable_disable') == '' || $this->config->item('facebook_poster_group_enable_disable')=='0')
             $data['facebook_poster_group'] = '0';
@@ -1284,6 +1321,11 @@ class Ultrapost extends Home
                    $data['page_or_group_or_user_name'] = $page_info_arr[$data['page_group_user_id']];
 
                  $x=$interval;
+
+                 if($x=="" || $x==0){
+	               	$x=rand(15,100);
+	               }
+
                    for ($i=0; $i <=$times ; $i++) { 
                        
                         if($i == 0)
@@ -2101,6 +2143,11 @@ class Ultrapost extends Home
                $insert_data['page_or_group_or_user'] = 'page';
                $insert_data['page_group_user_id'] = $post['post_to_pages'][$insert_counter];
                $x=$post['time_interval'];
+
+               if($x=="" || $x==0){
+               	$x=rand(15,100);
+               }
+
                for ($i=0; $i <=$times ; $i++) { 
                    
                     if($i == 0)
@@ -2329,6 +2376,11 @@ class Ultrapost extends Home
                //$insert_data['page_or_group_or_user'] = $page_info_arr[$insert_data['page_group_user_id']];
 
                $x=$interval;
+               
+               if($x=="" || $x==0){
+               		$x=rand(15,100);
+               }
+
                for ($i=0; $i <=$times ; $i++) { 
                    
                     if($i == 0)
@@ -3106,6 +3158,12 @@ class Ultrapost extends Home
                 $data['page_or_group_or_user_name'] = $page_info_arr[$data['page_group_user_id']];
 
                 $x=$interval;
+
+               if($x=="" || $x==0){
+               	$x=rand(15,100);
+               }
+
+
                 for ($i=0; $i <= $times ; $i++) { 
 
                      if($i == 0)
@@ -3331,6 +3389,11 @@ class Ultrapost extends Home
                $data['page_or_group_or_user_name'] = $page_info_arr[$data['page_group_user_id']];
 
                $x=$time_interval;
+
+               if($x=="" || $x==0){
+               	$x=rand(15,100);
+               }
+
                for ($i=0; $i <=$times ; $i++) { 
                    
                     if($i == 0)

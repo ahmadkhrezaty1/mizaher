@@ -27,7 +27,7 @@
                 <p class="section-lead"><?php echo $campaigns_info['title']; ?></p>
               <?php endif ?>
 
-              <?php if ($campaign_type == 'link' && $campaigns_info['link'] != ''): ?>              
+              <?php if (($campaign_type == 'link' || $campaign_type == 'image') && $campaigns_info['link'] != ''): ?>              
                 <!-- link section -->
                 <h2 class="section-title" style="margin-top: 10px;"><?php echo $this->lang->line("Link"); ?></h2>
                 <p class="section-lead"><?php echo $campaigns_info['link']; ?></p>
@@ -38,6 +38,7 @@
                 <h2 class="section-title" style="margin-top: 10px;"><?php echo $this->lang->line("Privacy Type"); ?></h2>
                 <p class="section-lead"><?php echo ucfirst($campaigns_info['privacy_type']); ?></p>
               <?php endif ?>
+              
               
               <?php if ($campaign_type == 'image' && $campaigns_info['image_url'] != ''): ?>              
                 <!-- image section -->
@@ -138,7 +139,12 @@
                                                   </div>
 
                                                   <div class="col-10 col-md-3">
-                                                    <?php if (isset($report['report']) && strpos($report['report'], 'http') !== false): ?>
+                                                    <?php // if (isset($report['report']) && strpos($report['report'], 'http') !== false): ?>
+
+                                                      <?php 
+
+                                                      $first_4_http_check=substr($report['report'], 0,4); ; 
+                                                        if(isset($report['report']) && $first_4_http_check=='http'): ?>
                                                          <a class="btn btn-outline-primary btn-rounded float-right" href="<?php echo $report['report']; ?>"><?php echo $this->lang->line("Visit Post"); ?></a>   
                                                     <?php elseif(isset($report['report'])): ?>    
                                                         <?php echo $report['report']; ?>

@@ -291,7 +291,7 @@
                   </div> 
                   <br/>
 
-                  <div class="row">
+                  <div class="row" id="delay_and_typing_on_<?php echo $k; ?>">
                     <div class="col-12 col-sm-6">
                       <div class="row">
                         <div class="col-6"><label for="" style="margin-top: 8px; color: #34395e; font-size: 14px;"><?php echo $this->lang->line('Typing on display :'); ?></label></div>
@@ -338,6 +338,30 @@
                     </div>  
                   </div>
 
+                  <div class="row" id="One_Time_Notification_div_<?php echo $k; ?>" style="display: none;"> 
+                    <div class="col-12 col-md-6">              
+                      <div class="form-group">
+                        <label><?php echo $this->lang->line("Title"); ?>
+                        </label>
+                        <input class="form-control" type="text" name="otn_title_<?php echo $k; ?>" id="otn_title_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'One Time Notification') echo $full_message[$k]['attachment']['payload']['title'];?>">
+                      </div>        
+                    </div> 
+                    <div class="col-12 col-md-6">              
+                      <div class="form-group">
+                        <label><?php echo $this->lang->line("OTN Postback"); ?>
+                        </label>
+                        <?php 
+                          if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'One Time Notification')
+                            $selected_otn_postback = $full_message[$k]['attachment']['payload']['payload'];
+                          else
+                            $selected_otn_postback = ''; 
+                          $name_id = "otn_postback_".$k;
+                          echo form_dropdown($name_id,$otn_postback_list,$selected_otn_postback,'id="'.$name_id.'" class="form-control push_otn_postback select2"');
+                        ?>
+                      </div>        
+                    </div> 
+                  </div>
+
                   <div class="row" id="image_div_<?php echo $k; ?>" style="display: none;">             
                     <div class="col-12">              
                       <div class="form-group">
@@ -345,7 +369,7 @@
 
                         <span class="badge badge-status blue load_preview_modal float-right" item_type="image" file_path="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'image') echo $full_message[$k]['attachment']['payload']['url'];?>"><i class="fa fa-eye"></i> <?php echo $this->lang->line('preview'); ?></span>
 
-                        <input type="hidden" class="form-control"  name="image_reply_field_<?php echo $k; ?>" id="image_reply_field_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'image') echo $full_message[$k]['attachment']['payload']['url'];?>">
+                        <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="image_reply_field_<?php echo $k; ?>" id="image_reply_field_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'image') echo $full_message[$k]['attachment']['payload']['url'];?>">
                         <div id="image_reply_<?php echo $k; ?>"><?php echo $this->lang->line("upload") ?></div>
                         <img id="image_reply_div_<?php echo $k; ?>" style="display: none;" height="200px;" width="400px;">
                       </div>       
@@ -693,7 +717,7 @@
 
                                   <span class="badge badge-status blue load_preview_modal float-right" item_type="image" file_path="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'generic template' && isset($full_message[$k]['attachment']['payload']['elements'][0]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][0]['image_url'];?>"><i class="fa fa-eye"></i> <?php echo $this->lang->line('preview'); ?></span>
 
-                                  <input type="hidden" class="form-control"  name="generic_template_image_<?php echo $k; ?>" id="generic_template_image_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'generic template' && isset($full_message[$k]['attachment']['payload']['elements'][0]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][0]['image_url'];?>" />
+                                  <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="generic_template_image_<?php echo $k; ?>" id="generic_template_image_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'generic template' && isset($full_message[$k]['attachment']['payload']['elements'][0]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][0]['image_url'];?>" />
                                   <div id="generic_image_<?php echo $k; ?>"><?php echo $this->lang->line('upload'); ?></div>
                                 </div>                         
                               </div>
@@ -812,7 +836,14 @@
                     <div class="col-12" id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" style="<?php if(!isset($full_message[$k]['attachment']['payload']['elements'][$j-1])) echo 'display: none;'; ?>"> 
                       <div class="card card-secondary">
                         <div class="card-header">
-                          <h4><?php echo $this->lang->line('Carousel Template').' '.$j; ?></h4>
+                          <h4 class="full_width">
+                            <?php echo $this->lang->line('Carousel Template').' '.$j; ?>
+                            <?php if($j != 1 && $j == count($full_message[$k]['attachment']['payload']['elements'])) : ?>
+                              <i class="fa fa-times-circle remove_carousel_template float-right red" previous_row_id="carousel_div_<?php echo $j-1; ?>_<?php echo $k; ?>" current_row_id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" counter_variable="carousel_template_counter_<?php echo $k; ?>" template_add_button="carousel_template_add_button_<?php echo $k; ?>" title="<?php echo $this->lang->line('Remove this item'); ?>"></i>
+                            <?php else : ?>
+                              <i class="fa fa-times-circle remove_carousel_template float-right red" style="display: none;" previous_row_id="carousel_div_<?php echo $j-1; ?>_<?php echo $k; ?>" current_row_id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" counter_variable="carousel_template_counter_<?php echo $k; ?>" template_add_button="carousel_template_add_button_<?php echo $k; ?>" title="<?php echo $this->lang->line('Remove this item'); ?>"></i>
+                            <?php endif; ?>
+                          </h4>
                         </div>
                         <div class="card-body">
                           <div style="padding: 10px 20px;">
@@ -824,7 +855,7 @@
 
                                   <span class="badge badge-status blue load_preview_modal float-right" item_type="image" file_path="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'carousel' && isset($full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'];?>"><i class="fa fa-eye"></i> <?php echo $this->lang->line('preview'); ?></span>
 
-                                  <input type="hidden" class="form-control"  name="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" id="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'carousel' && isset($full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'];?>"/>
+                                  <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" id="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'carousel' && isset($full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'];?>"/>
                                   <div id="generic_imageupload_<?php echo $j; ?>_<?php echo $k; ?>"><?php echo $this->lang->line('upload'); ?></div>
                                 </div>                         
                               </div>
@@ -1272,6 +1303,23 @@ $(document).ready(function(){
     if(temp < 6) $("#multiple_template_add_button").show();
   });
 
+  // remove carousel template 
+  $(document).on('click','.remove_carousel_template',function(){
+    var remove_carousel_counter_variable = $(this).attr('counter_variable');
+    var template_add_button = $(this).attr('template_add_button');
+    var remove_carousel_row_id = $(this).attr('current_row_id');
+    var previous_carousel_row_id = $(this).attr('previous_row_id');
+    $("#"+remove_carousel_row_id).find('textarea,input,select').val('');
+    $("#"+remove_carousel_row_id).hide();
+    eval(remove_carousel_counter_variable+"--");
+    var temp = eval(remove_carousel_counter_variable);
+    if(temp != 1)
+    {
+      $("#"+previous_carousel_row_id).find(".remove_carousel_template").show();
+    }
+    if(temp < 10) $("#"+template_add_button).show();
+  });
+
   $(document).on('click','.lead_first_name',function(){
   
   	var textAreaTxt = $(this).parent().next().next().next().children('.emojionearea-editor').html();
@@ -1569,13 +1617,14 @@ $(document).ready(function(){
         var selected_template = $("#template_type_<?php echo $template_type ?>").val();
         selected_template = selected_template.replace(/ /gi, "_");
 
-        var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media'];
+        var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media','One_Time_Notification'];
         template_type_array.forEach(templates_hide_show_function);
         function templates_hide_show_function(item, index)
         {
           var template_type_preview_div_name = "#"+item+"_preview_div";
-
           var template_type_div_name = "#"+item+"_div_<?php echo $template_type; ?>";
+          var delay_and_typing_on_div = "#delay_and_typing_on_<?php echo $template_type; ?>";
+
           if(selected_template == item){
             $(template_type_div_name).show();
             $(template_type_preview_div_name).show();
@@ -1584,10 +1633,15 @@ $(document).ready(function(){
             $(template_type_div_name).hide();
             $(template_type_preview_div_name).hide();
           }
+          $(delay_and_typing_on_div).show();
 
           if(selected_template == 'quick_reply')
           {
             $("#quick_reply_row_1_<?php echo $template_type; ?>").show();
+          }
+
+          if(selected_template=='One_Time_Notification'){
+            $(delay_and_typing_on_div).hide();
           }
 
           if(selected_template == 'media')
@@ -1629,13 +1683,14 @@ $(document).ready(function(){
         var selected_template_on_change = $("#template_type_<?php echo $template_type ?>").val();
         selected_template_on_change = selected_template_on_change.replace(/ /gi, "_");
 
-        var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media'];
+        var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media','One_Time_Notification'];
         template_type_array.forEach(templates_hide_show_function);
         function templates_hide_show_function(item, index)
         {
           var template_type_preview_div_name = "#"+item+"_preview_div";
-
           var template_type_div_name = "#"+item+"_div_<?php echo $template_type; ?>";
+          var delay_and_typing_on_div = "#delay_and_typing_on_<?php echo $template_type; ?>";
+
           if(selected_template_on_change == item){
             $(template_type_div_name).show();
             $(template_type_preview_div_name).show();
@@ -1644,10 +1699,15 @@ $(document).ready(function(){
             $(template_type_div_name).hide();
             $(template_type_preview_div_name).hide();
           }
+          $(delay_and_typing_on_div).show();
 
           if(selected_template_on_change == 'quick_reply')
           {
             $("#quick_reply_row_1_<?php echo $template_type; ?>").show();
+          }
+
+          if(selected_template_on_change=='One_Time_Notification'){
+            $(delay_and_typing_on_div).hide();
           }
 
           if(selected_template_on_change == 'media')
@@ -2007,6 +2067,9 @@ $(document).ready(function(){
          carousel_template_counter_<?php echo $template_type; ?>++;
       
          var x = carousel_template_counter_<?php echo $template_type; ?>;
+         // remove template
+         var previous_template_counter = x-1;
+         $("#carousel_div_"+previous_template_counter+"_<?php echo $template_type; ?>").find(".remove_carousel_template").hide();
       
          $("#carousel_div_"+x+"_<?php echo $template_type; ?>").show();
          $("#carousel_row_"+x+"_1"+"_<?php echo $template_type; ?>").show();

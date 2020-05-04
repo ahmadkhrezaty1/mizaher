@@ -45,6 +45,9 @@
     <div class="row">
       <div class="col-12">
           <form action="<?php echo base_url("admin/advertisement_settings_action"); ?>" method="POST">
+            
+            <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
+
             <div class="card">
               <div class="card-body">
                   <div class="form-group">

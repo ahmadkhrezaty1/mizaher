@@ -701,10 +701,6 @@ else
                 <p><?php echo $this->lang->line("Those users who interacted with your messenger bot within 24 hours. This subscribers are eligible to get promotional message through Subscriber Broadcast."); ?></p>
               </div>
               <div class="section">                
-                <h2 class="section-title"><?php echo $this->lang->line('24H+1 Subscribers'); ?></h2>
-                <p><?php echo $this->lang->line("Pages may also send one additional message after the 24-hour time limit has expired. . This is commonly referred to as the 24 + 1 policy. This is subscriber count that may eligible for getting promotional message by 24+1 policy. This count may less due to some extra security measured in calculation to avoid risk for sending promotional message."); ?></p>
-              </div>
-              <div class="section">                
                 <h2 class="section-title"><?php echo $this->lang->line('Unavailable'); ?></h2>
                 <p><?php echo $this->lang->line("You may find red color number as unavailable beside both Conversation Subscribers & BOT Subscribers means the number of users are unavailable for broadcast, because in last broadcasting campaign, Facebook responded with error during sending message to them. They will not be eligible for future broadcast campaign. However once that user send message to your page again, then user become available again."); ?></p>
               </div>

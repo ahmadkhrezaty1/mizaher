@@ -5,6 +5,12 @@
       // echo ($store_data['store_logo']!='') ? '<img style="height:50px;" alt="'.$store_data['store_name'].'" class="img-fluid" src="'.base_url("upload/ecommerce/".$store_data['store_logo']).'">' : $store_data['store_name'];
       $currency = isset($ecommerce_config['currency']) ? $ecommerce_config['currency'] : "USD";
       $currency_icon = isset($currency_icons[$currency]) ? $currency_icons[$currency] : "$";
+      $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+      $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+      $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
+      $currency_left = $currency_right = "";
+      if($currency_position=='left') $currency_left = $currency_icon;
+      if($currency_position=='right') $currency_right = $currency_icon;
 
       $form_action = base_url('ecommerce/store/'.$store_data['store_unique_id']);
       $subscriber_id = isset($_GET['subscriber_id']) ? $_GET['subscriber_id'] : "";
@@ -17,7 +23,7 @@
 
       $store_link = base_url("ecommerce/store/".$store_data['store_unique_id']);
       if($subscriber_id!='') $store_link.='?subscriber_id='.$subscriber_id;
-      $store_name_logo = ($store_data['store_logo']!='') ? '<img style="height:50px;" alt="'.$store_data['store_name'].'" class="img-fluid" src="'.base_url("upload/ecommerce/".$store_data['store_logo']).'">' : $store_data['store_name'];
+      $store_name_logo = ($store_data['store_logo']!='') ? '<img alt="'.$store_data['store_name'].'" class="img-fluid" src="'.base_url("upload/ecommerce/".$store_data['store_logo']).'">' : $store_data['store_name'];
       echo $store_name_logo = "<a href='".$store_link."'>".$store_name_logo."</a>";
 
       ?>        
@@ -77,8 +83,8 @@
         ?>
         <div class="col-12 col-sm-6 col-md-6 col-lg-4">
           <article class="article article-style-c">            
-            <a href="<?php echo $product_link;?>"><img style="height: 270px;width: 100%" src="<?php echo ($value['thumbnail']!='') ? base_url('upload/ecommerce/'.$value['thumbnail']) : base_url('assets/img/products/product-1.jpg'); ?>"/></a>
-            <?php echo mec_display_price($value['original_price'],$value['sell_price'],$currency_icon,'4'); ?>           
+            <a href="<?php echo $product_link;?>"><img style="height: 345px;width: 100%" src="<?php echo ($value['thumbnail']!='') ? base_url('upload/ecommerce/'.$value['thumbnail']) : base_url('assets/img/products/product-1.jpg'); ?>"/></a>
+            <?php echo mec_display_price($value['original_price'],$value['sell_price'],$currency_icon,'4',$currency_position,$decimal_point,$thousand_comma); ?>           
             <div class="article-details">
               <div class="article-title">                
                 <h2>
@@ -91,7 +97,7 @@
                 <a class="float-right"><?php echo isset($category_list[$value['category_id']]) ? $category_list[$value['category_id']] : $this->lang->line("Uncategorised");?></a>
                 <h6 class='text-center d-inline' style="font-size: 15px">
                   <?php 
-                  echo mec_display_price($value['original_price'],$value['sell_price'],$currency_icon);
+                  echo mec_display_price($value['original_price'],$value['sell_price'],$currency_icon,'1',$currency_position,$decimal_point,$thousand_comma);
                   ?>                    
                 </h6>
               </div>
@@ -105,7 +111,7 @@
               } 
               else 
               { ?>
-                <a href="<?php echo $product_link;?>" class="btn btn-primary"><i class="fas fa-filter"></i> <?php echo $this->lang->line("Choose Options"); ?></a>
+                <a href="<?php echo $product_link;?>" class="btn btn-primary"><i class="fas fa-palette"></i> <?php echo $this->lang->line("Choose Options"); ?></a>
               <?php 
               } ?>
 
@@ -119,7 +125,7 @@
               } 
               if($cart_count>0)  
               { ?>
-                <a href="<?php echo $current_cart_url;?>" class="btn btn-outline-info float-right"><i class="fas fa-shopping-basket"></i> <?php echo $this->lang->line("Visit Cart"); ?></a>
+                <a href="<?php echo $current_cart_url;?>" class="btn btn-outline-dark float-right"><i class="fas fa-shopping-basket"></i> <?php echo $this->lang->line("Visit Cart"); ?></a>
               <?php 
               } ?>
             </div>
@@ -130,12 +136,20 @@
     </div>
   </div>
 
-
-  <div class="section-header">
-    <?php echo "&copy".date("Y")." ".$store_data['store_name'];?>  
-  </div>
 </section>
 
+<?php
+$store_mapping = base_url("ecommerce/store/".$store_data['store_unique_id']);
+if($subscriber_id!="") $store_mapping .= "?subscriber_id=".$subscriber_id;
+$footer_copyright = "<a href='".$store_mapping."'>".$store_data['store_name']."</a>";
+$footer_terms_use_link = $store_data['terms_use_link'];
+$footer_refund_link = $store_data['refund_policy_link'];
+?>
+<div class="mt-3 mb-3 text-center">
+  <?php echo "&copy".date("Y")." ".$footer_copyright;?><br>
+    <?php if(isset($footer_terms_use_link) && !empty($footer_terms_use_link))echo "<a href='".base_url("ecommerce/terms_of_service/".$store_data['store_unique_id']."/".$subscriber_id)."'>".$this->lang->line('Terms of service')."</a>"; ?>
+    <?php if(isset($footer_refund_link) && !empty($footer_refund_link)) echo "&nbsp;&nbsp;<a href='".base_url("ecommerce/refund_policy/".$store_data['store_unique_id']."/".$subscriber_id)."'>".$this->lang->line('Refund policy')."</a>"; ?>
+</div>
 
 
 <script> 
@@ -165,3 +179,4 @@
 
 <?php include(APPPATH."views/ecommerce/cart_js.php"); ?>
 <?php include(APPPATH."views/ecommerce/cart_style.php"); ?>
+<?php include(APPPATH."views/ecommerce/common_style.php"); ?>

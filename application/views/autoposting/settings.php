@@ -77,13 +77,16 @@
                     <div class="dropdown d-inline dropright">
                       <button class="btn btn-outline-primary dropdown-toggle no_caret" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-briefcase"></i></button>
 
-                      <div class="dropdown-menu mini_dropdown text-center" style="width:208px !important">
+                      <div class="dropdown-menu mini_dropdown text-center" style="width:250px !important">
 
                         <a href="" data-id="'.$value['id'].'" data-toggle="tooltip" title="'.$this->lang->line("Settings").'" class="btn btn-circle btn-outline-primary campaign_settings"><i class="fas fa-cog"></i></a>';
 
                          if($value['status']=='1')
                          echo  '<a href="" data-id="'.$value['id'].'" data-toggle="tooltip" title="'.$this->lang->line("Disable").'" class="btn btn-circle btn-outline-warning disable_settings"><i class="fas fa-ban"></i></a>';
                          else echo  '<a href="" data-id="'.$value['id'].'" data-toggle="tooltip" title="'.$this->lang->line("Enable").'" class="btn btn-circle btn-outline-success enable_settings"><i class="fas fa-check-circle"></i></a>';
+
+                         if($value['cron_status']=='1')
+                         echo  '<a href="" data-id="'.$value['id'].'" data-toggle="tooltip" title="'.$this->lang->line("Force Process").'" class="btn btn-circle btn-outline-warning force_process"><i class="fas fa-play"></i></a>';
 
                          echo '<a href="" data-id="'.$value['id'].'" data-toggle="tooltip" title="'.$this->lang->line("Delete").'" class="btn btn-circle btn-outline-danger delete_settings"><i class="fas fa-trash-alt"></i></a>';
 
@@ -365,6 +368,36 @@
                success:function(response)
                {  
                  iziToast.success({title: '<?php echo $this->lang->line("Success"); ?>',message: '<?php echo $this->lang->line("Campaign has been disabled successfully."); ?>',position: 'bottomRight'});
+                 setTimeout(function(){ location.reload(); }, 1000);
+               }
+           });
+        } 
+      });
+     
+    });
+
+    $(document).on('click','.force_process',function(e){ 
+      e.preventDefault();
+
+      var id=$(this).attr('data-id');
+
+      swal({
+        title: '<?php echo $this->lang->line("Delete Campaign"); ?>',
+        text: '<?php echo $this->lang->line("Do you really want to force process this campaign? This can be helpful if your RSS posting tools have stopped for some unknown reasons and not responding."); ?>',
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+      })
+      .then((willDelete) => {
+        if (willDelete) 
+        {
+            $.ajax({
+               type:'POST' ,
+               url: base_url+"autoposting/force_process",
+               data: {id:id},
+               success:function(response)
+               {  
+                 iziToast.success({title: '<?php echo $this->lang->line("Success"); ?>',message: '<?php echo $this->lang->line("Campaign has been processed by force successfully."); ?>',position: 'bottomRight'});
                  setTimeout(function(){ location.reload(); }, 1000);
                }
            });

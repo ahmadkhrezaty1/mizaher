@@ -16,6 +16,7 @@
 		  ?>
 
           <form method="POST" action="<?php echo base_url("change_password/reset_password_action"); ?>">
+            <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
           	<div class="form-group">
           		<label for="old_password"><?php echo $this->lang->line("Old Password"); ?></label>
           		<div>

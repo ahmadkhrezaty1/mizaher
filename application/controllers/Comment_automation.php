@@ -54,6 +54,7 @@ class Comment_automation extends Home
 
     public function get_page_list()
     {
+      $this->is_broadcaster_exist=$this->broadcaster_exist();
       $data['body'] = 'comment_automation/auto_reply_page_list';
       $data['page_title'] = $this->lang->line('Create Campaign');
 
@@ -635,7 +636,7 @@ class Comment_automation extends Home
         $sql = '';
         if ($search_value != '') 
         {
-        	$sql = "ultrapost_campaign_name like '%".$search_value."%' OR page_name like '%".$search_value."%'";
+        	$sql = "(ultrapost_campaign_name like '%".$search_value."%' OR page_name like '%".$search_value."%')";
         	$this->db->where($sql);
         }
         
@@ -643,6 +644,7 @@ class Comment_automation extends Home
         $where  = array('where'=>$where_simple);
         $table = "ultrapost_auto_reply";
         $info  = $this->basic->get_data($table,$where,$select='',$join='',$limit,$start,$order_by,$group_by='');
+        
         if($sql != '') $this->db->where($sql);
         $total_rows_array=$this->basic->count_row($table,$where,$count=$table.".id",$join='',$group_by='');
         $total_result=$total_rows_array[0]['total_rows'];
@@ -667,7 +669,7 @@ class Comment_automation extends Home
             }
         }
 
-        $result = $this->basic->delete_data('ultrapost_auto_reply', ['id' => $table_id]);
+        $result = $this->basic->delete_data('ultrapost_auto_reply', ['id' => $table_id, 'user_id' => $this->user_id]);
 
         if ($result) 
             echo "successfull";
@@ -1744,6 +1746,7 @@ class Comment_automation extends Home
 
     public function auto_reply_report($page_info_table_id=0)
     {
+        $this->is_broadcaster_exist=$this->broadcaster_exist();
         if($page_info_table_id==0) exit();
         $page_info = $this->basic->get_data('facebook_ex_autoreply',array('where'=>array('page_info_table_id'=>$page_info_table_id,'user_id'=>$this->user_id)),'','',1);
 
@@ -2080,6 +2083,7 @@ class Comment_automation extends Home
 
     public function all_auto_reply_report($post_id=0)
     {
+    	$this->is_broadcaster_exist=$this->broadcaster_exist();
         $page_info = array();
         $page_list = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("user_id"=>$this->user_id,"facebook_rx_fb_user_info_id"=>$this->session->userdata("facebook_rx_fb_user_info"))));
         if(!empty($page_list))

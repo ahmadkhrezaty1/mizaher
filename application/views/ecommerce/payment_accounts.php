@@ -55,20 +55,87 @@
                       <input name="stripe_publishable_key" value="<?php echo isset($xvalue['stripe_publishable_key']) ? $xvalue['stripe_publishable_key'] :""; ?>" class="form-control" type="text">  
                       <span class="red"><?php echo form_error('stripe_publishable_key'); ?></span>
                       <br>
-                      <label for=""><i class="fas fa-coins"></i>  <?php echo $this->lang->line("Currency");?></label>
-                      <?php $default_currency = isset($xvalue['currency']) ? $xvalue['currency'] : "USD"; ?>                   
-                      <select name='currency' class='form-control select2' style='width:100% !important;'>
-                      <?php
-                      foreach ($currecny_list_all as $key => $value)
-                      {
-                        $paypal_supported = in_array($key, $currency_list) ? "[PayPal & Stripe]" : "";
-                        if($default_currency==$key) $selected_curr = "selected='selected'";
-                        else $selected_curr = '';
-                        echo '<option value="'.$key.'" '.$selected_curr.' >'.str_replace('And', '&', ucwords($value))." : ".$key." ".$paypal_supported.'</option>';
-                      }
-                      ?>
-                      </select>
-                      <span class="red"><?php echo form_error('currency'); ?></span>
+                      
+                      <div class="form-group">
+                        <label for=""><i class="fas fa-coins"></i>  <?php echo $this->lang->line("Currency");?></label>
+                        <?php $default_currency = isset($xvalue['currency']) ? $xvalue['currency'] : "USD"; ?>                   
+                        <select name='currency' class='form-control select2' style='width:100% !important;'>
+                        <?php
+                        foreach ($currecny_list_all as $key => $value)
+                        {
+                          $paypal_supported = in_array($key, $currency_list) ? "[PayPal & Stripe]" : "";
+                          if($default_currency==$key) $selected_curr = "selected='selected'";
+                          else $selected_curr = '';
+                          echo '<option value="'.$key.'" '.$selected_curr.' >'.str_replace('And', '&', ucwords($value))." : ".$key." ".$paypal_supported.'</option>';
+                        }
+                        ?>
+                        </select>
+                        <span class="red"><?php echo form_error('currency'); ?></span>
+                       </div>
+
+                       <div class="row">
+                        <div class="col-12 col-md-4">   
+                          <div class="form-group">                       
+                            <label for="">
+                            	<i class="fas fa-align-left"></i> <?php echo $this->lang->line('Currency Alignment');?>
+                            	<a href="#" data-placement="top" data-toggle="tooltip" title="<?php echo $this->lang->line("Right alignment could be helpful for several currencies. Example display : 25৳");?>"><i class="fa fa-info-circle"></i> </a>
+                        	</label>
+                            <br>
+                            <?php 
+                            $currency_position =isset($xvalue['currency_position'])?$xvalue['currency_position']:"";
+                            if($currency_position == '') $currency_position='left';
+                            ?>
+                            <label class="custom-switch mt-2">
+                              <input type="checkbox" name="currency_position" value="right" class="custom-switch-input"  <?php if($currency_position=='right') echo 'checked'; ?>>
+                              <span class="custom-switch-indicator"></span>
+                              <span class="custom-switch-description"><?php echo $this->lang->line('Right');?></span>
+                              <span class="red"><?php echo form_error('currency_position'); ?></span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                          <div class="form-group">
+                           <label for="">
+                           	<i class="fas fa-circle"></i> <?php echo $this->lang->line("Two Decimal Places");?>
+                           	<a href="#" data-placement="top" data-toggle="tooltip" title="<?php echo $this->lang->line("If enabled prices will be displayed with two decimal points. Example display : $25.99");?>"><i class="fa fa-info-circle"></i> </a>
+                       	   </label>
+                       	   <?php 
+                       	   $decimal_point =isset($xvalue['decimal_point'])?$xvalue['decimal_point']:"";
+                       	   if($decimal_point == '') $decimal_point='2';
+                       	   ?>
+                       	   <br>
+                       	   <label class="custom-switch mt-2">
+                       	     <input type="checkbox" name="decimal_point" value="2" class="custom-switch-input"  <?php if($decimal_point=='2') echo 'checked'; ?>>
+                       	     <span class="custom-switch-indicator"></span>
+                       	     <span class="custom-switch-description"><?php echo $this->lang->line('Enable');?></span>
+                       	     <span class="red"><?php echo form_error('decimal_point'); ?></span>
+                       	   </label>            
+                           <span class="red"><?php echo form_error('decimal_point'); ?></span>
+                          </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <div class="form-group">
+                            <label for="">
+                            	<i class="fas fa-dollar-sign"></i> <?php echo $this->lang->line('Comma Separated');?>
+                            	<a href="#" data-placement="top" data-toggle="tooltip" title="<?php echo $this->lang->line("If enabled prices will be displayed comma separated. Example display : $25,000");?>"><i class="fa fa-info-circle"></i> </a>
+
+                        	</label>
+                            <br>
+                            <?php 
+                            $thousand_comma =isset($xvalue['thousand_comma'])?$xvalue['thousand_comma']:"";
+                            if($thousand_comma == '') $thousand_comma='0';
+                            ?>
+                            <label class="custom-switch mt-2">
+                              <input type="checkbox" name="thousand_comma" value="1" class="custom-switch-input"  <?php if($thousand_comma=='1') echo 'checked'; ?>>
+                              <span class="custom-switch-indicator"></span>
+                              <span class="custom-switch-description"><?php echo $this->lang->line('Enable');?></span>
+                              <span class="red"><?php echo form_error('thousand_comma'); ?></span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
                   </div>                  
                   <div id="manual-payins" class="col-12 col-md-6">
@@ -77,7 +144,7 @@
                       <textarea name="manual_payment_instruction" class="form-control summernote" style="height: 130px !important"><?php echo set_value('manual_payment_instruction', isset($xvalue['manual_payment_instruction']) ? $xvalue['manual_payment_instruction'] : ""); ?></textarea>
                       <span class="red"><?php echo form_error('manual_payment_instruction'); ?></span>
                     </div>
-                  </div>  
+                  </div>
                 </div>
 
 

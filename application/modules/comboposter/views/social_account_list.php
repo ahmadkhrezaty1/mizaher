@@ -403,41 +403,43 @@
 				</div>
 			<?php endif; ?>
 
-			<div class="col-12 col-sm-12 col-lg-6">
-				<div class="card makeScroll">
-				  	<div class="card-header">
-					    <h4><i class="fab fa-wordpress"></i> <?php echo $this->lang->line('Wordpress Site (Self-Hosted)'); ?></h4>
-					    <div class="card-header-action wordpress_self_hosted_login_button">
-					    	<?php echo $wordpress_self_hosted_login_button; ?>
-					    </div>
-				  	</div><!-- card-header -->
-					<div class="card-body">
-					    
-				        <ul class="list-unstyled user-details list-unstyled-border list-unstyled-noborder">
-				        	<?php foreach ($wordpress_account_list_self_hosted as $key => $single_account): ?>
+			<?php if($this->session->userdata('user_type') == 'Admin' || in_array(109,$this->module_access)) : ?>
+				<div class="col-12 col-sm-12 col-lg-6">
+					<div class="card makeScroll">
+					  	<div class="card-header">
+						    <h4><i class="fab fa-wordpress"></i> <?php echo $this->lang->line('Wordpress Site (Self-Hosted)'); ?></h4>
+						    <div class="card-header-action wordpress_self_hosted_login_button">
+						    	<?php echo $wordpress_self_hosted_login_button; ?>
+						    </div>
+					  	</div><!-- card-header -->
+						<div class="card-body">
+						    
+					        <ul class="list-unstyled user-details list-unstyled-border list-unstyled-noborder">
+					        	<?php foreach ($wordpress_account_list_self_hosted as $key => $single_account): ?>
 
-				        		<li class="media">
-	        		    	    	<div class="avatar-item" style="margin-right:20px;">
-	        		        	  		<img alt="image" width="50" src="<?php echo base_url('assets/images/wordpress.png'); ?>" class="img-fluid">
-	        		        	  		<div id="delete-wssh-settings" class="avatar-badge" data-original-title="<?php echo $this->lang->line("Delete Account"); ?>" data-site-id="<?php echo $single_account['id']; ?>" data-toggle="tooltip">
-	        		    	    	  		<a href="#">
-	        		    	    	  			<i class="fas fa-trash-alt red" style="margin-left: 0;"></i>
-	        		    	    	  		</a>
-	        		    	    	  	</div>
-	        		    	    	</div>
-				        		    <div class="media-body">
-				        		      	<div class="media-title" style="padding-top: 12px;"><?php echo $single_account['domain_name']; ?></div>
-				        		      	<div class="text-muted"><?php echo $single_account['user_key'] ?></div>
-				        		    </div>
-				        		</li>
-				        		
-				        	<?php endforeach ?>
-					        
-				        </ul>
-					      
-					</div><!-- card-body -->
-				</div>
-			</div>			
+					        		<li class="media">
+		        		    	    	<div class="avatar-item" style="margin-right:20px;">
+		        		        	  		<img alt="image" width="50" src="<?php echo base_url('assets/images/wordpress.png'); ?>" class="img-fluid">
+		        		        	  		<div id="delete-wssh-settings" class="avatar-badge" data-original-title="<?php echo $this->lang->line("Delete Account"); ?>" data-site-id="<?php echo $single_account['id']; ?>" data-toggle="tooltip">
+		        		    	    	  		<a href="#">
+		        		    	    	  			<i class="fas fa-trash-alt red" style="margin-left: 0;"></i>
+		        		    	    	  		</a>
+		        		    	    	  	</div>
+		        		    	    	</div>
+					        		    <div class="media-body">
+					        		      	<div class="media-title" style="padding-top: 12px;"><?php echo $single_account['domain_name']; ?></div>
+					        		      	<div class="text-muted"><?php echo $single_account['user_key'] ?></div>
+					        		    </div>
+					        		</li>
+					        		
+					        	<?php endforeach ?>
+						        
+					        </ul>
+						      
+						</div><!-- card-body -->
+					</div>
+				</div>			
+			<?php endif; ?>
 
 
 		</div>

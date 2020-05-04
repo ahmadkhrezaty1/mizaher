@@ -15,6 +15,7 @@
     <div class="row">
       <div class="col-12">
         <form class="form-horizontal" action="<?php echo site_url().'announcement/edit_action';?>" method="POST">
+          <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
           <div class="card">
             <div class="card-body">
               <div class="form-group">

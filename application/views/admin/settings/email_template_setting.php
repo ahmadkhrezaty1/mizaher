@@ -1,3 +1,20 @@
+<?php 
+	
+if($this->basic->is_exist("add_ons",array("project_id"=>31)))
+	echo "<style>
+ 	#new-webview-form-submission-alert{
+ 		display: block;
+ 	}
+ </style>";
+else
+	echo "<style>
+	 	#new-webview-form-submission-alert{
+	 		display: none;
+	 	}
+	 </style>";
+
+ ?>
+
 <section class="section">
 	<div class="section-header">
 		<h1><i class="fas fa-id-card"></i> <?php echo $page_title; ?></h1>
@@ -19,6 +36,9 @@
 
 
 	<form class="form-horizontal text-c" action="<?php echo site_url('admin/email_template_settings_action');?>" method="POST">
+		
+		<input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
+
 		<div class="section-body">
 			<div id="output-status"></div>
 			<div class="row">
@@ -123,5 +143,7 @@
     	$(".settings_menu a").removeClass("active");
     	$(this).addClass("active");
     });
+    
+
   });
 </script>

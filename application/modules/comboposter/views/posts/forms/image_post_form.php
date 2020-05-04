@@ -11,31 +11,33 @@
 				<div class="col-12 col-md-6">
 					<div class="form-group">
 						<label><?php echo $this->lang->line('Campaign Name');?></label>
-						<input type="input" class="form-control"  name="campaign_name" id="campaign_name" value="<?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['campaign_name']; ?>"
->
+						<input type="input" class="form-control"  name="campaign_name" id="campaign_name" value="<?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['campaign_name']; ?>">
 					</div>
 
 					<div class="form-group">
 					    <label><?php echo $this->lang->line("Title (Wordpress, Blogger)"); ?> </label>
-					    <input class="form-control" name="title" id="campaign_title" type="input" value="<?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['title']; ?>"
->
+					    <input class="form-control" name="title" id="campaign_title" type="input" value="<?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['title']; ?>">
 					</div>
 
 					<div class="form-group">
-						<label><?php echo $this->lang->line('Image'); ?> <?php echo $this->lang->line('(Max size: )');?> <?php echo $this->config->item('comboposter_image_upload_limit'); ?>
-							<a href="#" data-placement="top" data-toggle="popover" data-content="<?php echo $this->lang->line("You can attach an attachment up to 5MB size.").' '.$this->lang->line("Allowed files are .png,.jpg,.jpeg,.bmp,.tiff"); ?>"><i class='fa fa-info-circle'></i> 
-							</a>
-						</label>
-						<input name="image_url" id="image_file" placeholder="" type="hidden" value="<?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['image_url']; ?>"
->
-						<div id="upload_image" class="pointer"><?php echo $this->lang->line('Upload'); ?></div>
+					    <label><?php echo $this->lang->line("Link (Pinterest)"); ?> </label>
+					    <input class="form-control" name="link" id="campaign_link" type="input" value="<?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['link']; ?>">
 					</div>
 				</div>
 
 				<div class="col-12 col-md-6">
 					<div class="form-group">
 						<label><?php echo $this->lang->line('Message (Facebook, Twitter, Pinterest)'); ?></label>
-						<textarea class="form-control" name="message" id="message" rows="11" placeholder="<?php echo $this->lang->line('Type your message here...');?>" style="height: 235px !important;"><?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['message']; ?></textarea>
+						<textarea class="form-control" name="message" id="message" rows="11" placeholder="<?php echo $this->lang->line('Type your message here...');?>" style="height: 135px !important;"><?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['message']; ?></textarea>
+					</div>
+
+					<div class="form-group">
+						<label><?php echo $this->lang->line('Image'); ?> <?php echo $this->lang->line('(Max size: ');?> <?php echo $this->config->item('comboposter_image_upload_limit').'MB)'; ?>
+							<a href="#" data-placement="top" data-toggle="popover" data-content="<?php echo $this->lang->line("You can attach an attachment up to 5MB size.").' '.$this->lang->line("Allowed files are .png,.jpg,.jpeg,.bmp,.tiff"); ?>"><i class='fa fa-info-circle'></i> 
+							</a>
+						</label>
+						<input name="image_url" id="image_file" placeholder="" type="hidden" value="<?php if ($post_action == 'edit' || $post_action == 'clone') echo $campaign_form_info['image_url']; ?>">
+						<div id="upload_image" class="pointer"><?php echo $this->lang->line('Upload'); ?></div>
 					</div>
 				</div>
 			</div>

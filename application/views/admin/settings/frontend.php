@@ -40,6 +40,9 @@
 
 
 	<form class="form-horizontal text-c" enctype="multipart/form-data" action="<?php echo site_url('admin/frontend_settings_action');?>" method="POST">	
+		
+		<input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
+
 		<div class="section-body">
 			<div id="output-status"></div>
 			<div class="row">

@@ -28,6 +28,7 @@ class Messenger_bot_analytics extends Home
 
         $this->load->library('fb_rx_login');
         $analytics_data = $this->fb_rx_login->get_analytics_data($page_access_token,$from_date,$to_date);
+       
         if(isset($analytics_data['error']) && $error_message=='')
         {
             // if(isset($analytics_data['error']['code'])) $error_message.="#".$analytics_data['error']['code']." - ";
@@ -83,7 +84,6 @@ class Messenger_bot_analytics extends Home
 
            $i++;
         }
-
 
         $page_messages_active_threads_unique_summary=array("today"=>0,"week"=>0,"month"=>0,"search"=>0);
         $page_messages_active_threads_unique=array();
@@ -207,6 +207,7 @@ class Messenger_bot_analytics extends Home
 
 
         $data['page_messages_new_conversations_unique'] = $page_messages_new_conversations_unique;
+        //echo "<pre>";print_r($data['page_messages_new_conversations_unique']);exit;
         $data['page_messages_active_threads_unique'] = $page_messages_active_threads_unique;
         $data['page_messages_blocked_conversations_unique'] = $page_messages_blocked_conversations_unique;
         $data['page_messages_reported_conversations_unique'] = $page_messages_reported_conversations_unique;

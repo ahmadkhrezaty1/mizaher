@@ -44,12 +44,14 @@
               </div>
 
               <div class="col-12 col-md-3">
-
-            	<?php
-			          echo $drop_menu ='<a href="javascript:;" id="search_date_range" class="btn btn-outline-primary btn-lg float-right icon-left btn-icon"><i class="fas fa-calendar"></i> '.$this->lang->line("Choose Date").'</a><input type="hidden" id="search_date_range_val">';
-			        ?>
-
-                                         
+              	<?php
+  			          echo $drop_menu ='<a href="javascript:;" id="search_date_range" class="btn btn-outline-primary btn-lg float-right icon-left btn-icon"><i class="fas fa-calendar"></i> '.$this->lang->line("Choose Date").'</a><input type="hidden" id="search_date_range_val">';
+  			        ?>                                         
+              </div>
+              <div class="col-12 text-left">
+                <?php
+                  echo '<a href="'.base_url("ecommerce/download_csv").'" target="_BLANK" class="btn btn-outline-primary"><i class="fas fa-file-csv"></i> '.$this->lang->line("Download Orders").'</a>';
+                ?>                                         
               </div>
             </div>
 
@@ -67,9 +69,10 @@
                       <th><?php echo $this->lang->line("Status")?></th>              
                       <th><?php echo $this->lang->line("Coupon")?></th>                   
                       <th><?php echo $this->lang->line("Amount")?></th>                   
-                      <th><?php echo $this->lang->line("Method")?></th>                   
-                      <th><?php echo $this->lang->line("Transaction ID")?></th>                   
+                      <th><?php echo $this->lang->line("Currency")?></th>                   
                       <th><?php echo $this->lang->line("Invoice")?></th>                   
+                      <th><?php echo $this->lang->line("Transaction ID")?></th>                   
+                      <th><?php echo $this->lang->line("Method")?></th>                   
                       <th><?php echo $this->lang->line("Manual Payment")?></th>                                      
                       <th><?php echo $this->lang->line("Ordered at")?></th>                   
                       <th><?php echo $this->lang->line("Paid at")?></th>                  
@@ -110,7 +113,7 @@
 	  serverSide: true,
 	  processing:true,
 	  bFilter: false,
-	  order: [[ 11, "desc" ]],
+	  order: [[ 12, "desc" ]],
 	  pageLength: 10,
 	  ajax: {
 	      url: base_url+'ecommerce/order_list_data',
@@ -130,11 +133,11 @@
 	  dom: '<"top"f>rt<"bottom"lip><"clear">',
 	  columnDefs: [
 	    {
-	        targets: [1],
+	        targets: [1,3],
 	        visible: false
 	    },
 	    {
-	        targets: [2,4,8,9,10,11,12],
+	        targets: [2,4,7,8,9,10,11,12,13],
 	        className: 'text-center'
 	    },
       {
@@ -142,7 +145,7 @@
           className: 'text-right'
       },
 	    {
-	        targets: [4,9,10],
+	        targets: [4,8,11],
 	        sortable: false
 	    }
 	  ],
@@ -188,41 +191,44 @@
       	table1.draw();
     	});
 
-    	var Doyouwanttodeletethisrecordfromdatabase = "<?php echo $this->lang->line('Do you really want to change this order status?'); ?>";
-    	$(document).on('change','.payment_status',function(e){
+
+      $(document).on('change','.payment_status',function(e){
           var table_id = $(this).attr('data-id');
           var payment_status = $(this).val();
-    	    swal({
-    	        title: '<?php echo $this->lang->line("Change Order Status"); ?>',
-    	        text: Doyouwanttodeletethisrecordfromdatabase,
-    	        icon: 'warning',
-    	        buttons: true,
-    	        dangerMode: true,
-    	    })
-    	    .then((willDelete) => {
-    	        if (willDelete) 
-    	        {
-    	            $.ajax({
-    	                context: this,
-    	                type:'POST' ,
-    	                dataType:'JSON',
-    	                url:"<?php echo base_url('ecommerce/change_payment_status')?>",
-    	                data:{table_id:table_id,payment_status:payment_status},
-    	                success:function(response)
-    	                { 
-    	                    if(response.status == '1')
-    	                    {
-    	                      iziToast.success({title: '',message: response.message,position: 'bottomRight',timeout: 3000});
-    	                    }
-                          else
-    	                    {
-    	                      iziToast.error({title: '',message: response.message,position: 'bottomRight',timeout: 3000});
-    	                    }
-    	                    table1.draw();
-    	                }
-    	            });
-    	        } 
-    	    });
+          $("#status_changed_cart_id").val(table_id);
+          $("#status_changed_status").val(payment_status);
+          $("#status_changed_note").val("");
+          $("#change_payment_status_modal").modal();
+      });
+
+
+    	$(document).on('click','#change_payment_status_submit',function(e){
+          var table_id = $("#status_changed_cart_id").val();
+          var payment_status = $("#status_changed_status").val();
+          var status_changed_note = $("#status_changed_note").val();
+          $(this).addClass('btn-progress');
+          $.ajax({
+              context: this,
+              type:'POST' ,
+              dataType:'JSON',
+              url:"<?php echo base_url('ecommerce/change_payment_status')?>",
+              data:{table_id:table_id,payment_status:payment_status,status_changed_note:status_changed_note},
+              success:function(response)
+              { 
+                  $(this).removeClass('btn-progress');
+                  if(response.status == '1')
+                  {
+                    iziToast.success({title: '',message: response.message,position: 'bottomRight',timeout: 3000});
+                  }
+                  else
+                  {
+                    iziToast.error({title: '',message: response.message,position: 'bottomRight',timeout: 3000});
+                  }
+                  $("#change_payment_status_modal").modal('hide');
+                  table1.draw();
+              }
+          });
+    	        
     	});
 
       $(document).on('click', '#mp-download-file', function(e) {
@@ -318,6 +324,31 @@
       </div>
       <div class="modal-footer bg-whitesmoke br"> 
         <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal"><i class="fa fa-remove"></i> <?php echo $this->lang->line("Close"); ?></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="modal fade" id="change_payment_status_modal" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-mega" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><?php echo $this->lang->line("Update Order Status");?></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label><?php echo $this->lang->line("Update Note"); ?> (<?php echo $this->lang->line("Optional"); ?>)</label>
+        <input type="hidden" id="status_changed_cart_id">
+        <input type="hidden" id="status_changed_status">
+        <textarea id="status_changed_note" class="form-control" style="min-height: 200px"></textarea>
+      </div>
+      <div class="modal-footer bg-whitesmoke br"> 
+        <button type="button" class="btn btn-primary btn-lg" id="change_payment_status_submit"><i class="fas fa-paper-plane"></i> <?php echo $this->lang->line("Submit"); ?></button>
+        <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal"><i class="fas fa-times"></i> <?php echo $this->lang->line("Close"); ?></button>
       </div>
     </div>
   </div>

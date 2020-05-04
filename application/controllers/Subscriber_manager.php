@@ -319,7 +319,6 @@ class Subscriber_manager extends Home
         if(isset($bot_unavailable_info[0]['unavailable'])) $bot_unavailable = custom_number_format($bot_unavailable_info[0]['unavailable']);
 
         $subscriber_24 = 0;
-        $subscriber_24_1 = 0;
         $migrated_bot_subscriber = 0;
 
         date_default_timezone_set('UTC');
@@ -336,9 +335,6 @@ class Subscriber_manager extends Home
         $where_simple2['unavailable'] = '0';
         $where_simple2['is_bot_subscriber'] = '1';
         $where = array('where'=>$where_simple2);
-
-        $subscriber_24_1_info = $this->basic->get_data('messenger_bot_subscriber',$where,array('count(id) as total_subscriber'));
-        if(isset($subscriber_24_1_info[0]['total_subscriber'])) $subscriber_24_1 = custom_number_format($subscriber_24_1_info[0]['total_subscriber']);
 
 
         $where = array(
@@ -484,21 +480,7 @@ class Subscriber_manager extends Home
                         </div>
                       </div>
                     </div>
-                    <div class="col-md-4 col-12">
-                      <div class="card card-statistic-1">
-                        <div class="card-icon bg-body">
-                          <i class="fas fa-user-plus text-primary"></i>
-                        </div>
-                        <div class="card-wrap">
-                          <div class="card-header">
-                            <h4>'.$this->lang->line("24+1 Eligible Subscriber").'</h4>
-                          </div>
-                          <div class="card-body">
-                            '.$subscriber_24_1.'
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+
                     <div class="col-md-4 col-12">
                       <div class="card card-statistic-1">
                         <div class="card-icon bg-body">
@@ -766,6 +748,12 @@ class Subscriber_manager extends Home
 
     public function download_full($user_id_and_page_info)
     {        
+
+       if(function_exists('ini_set')){
+          ini_set('memory_limit', '-1');
+       } 
+
+       
         if($this->is_demo == '1')
         {
             if($this->session->userdata('user_type') == "Admin")
@@ -1034,6 +1022,8 @@ class Subscriber_manager extends Home
 
     public function bot_subscribers($auto_selected_subscriber=0,$auto_selected_page=0)
     {
+      $this->is_webview_exist=$this->webview_exist();
+      $this->is_ecommerce_exist=$this->ecommerce_exist();
       $page_info = array();
       $page_list = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("user_id"=>$this->user_id,"facebook_rx_fb_user_info_id"=>$this->session->userdata("facebook_rx_fb_user_info"),"bot_enabled"=>"1")));
    
@@ -1049,12 +1039,163 @@ class Subscriber_manager extends Home
       $data['page_title'] = $this->lang->line('Bot Subscribers');
       $data['auto_selected_subscriber'] = $auto_selected_subscriber; // used for showing single subscriber data
       $data['auto_selected_page'] = $auto_selected_page; // used for showing single page data
-      if($this->is_webview_exist)
-        $data['webview_access'] = 'yes';
-      else
-        $data['webview_access'] = 'no';
+      if($this->is_webview_exist) $data['webview_access'] = 'yes';
+      else $data['webview_access'] = 'no';
+
+      $data['ecommerce_exist'] = $this->is_ecommerce_exist ? 'yes' : 'no';
+
+      $data['status_list'] = $this->get_payment_status();
 
       $this->_viewcontroller($data);
+    }
+
+    public function my_orders_data()
+    { 
+        $this->ajax_check();
+        $this->load->helpers(array('ecommerce_helper'));
+        $ecommerce_config = $this->get_ecommerce_config();
+        $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+        $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+        $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
+
+
+        $search_value = $this->input->post("search_value");
+        $subscriber_id = $this->input->post("search_subscriber_id");  
+        $search_status = $this->input->post("search_status");        
+        $search_date_range = $this->input->post("search_date_range");
+
+        $display_columns = 
+        array(
+          "#",
+          "CHECKBOX",
+          'status',
+          'discount',
+          'payment_amount',
+          'currency',
+          'payment_method',
+          'transaction_id',
+          'invoice',
+          'manual_filename',
+          'updated_at',
+          'paid_at'
+        );
+        $search_columns = array('coupon_code','transaction_id');
+
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+        $limit = isset($_POST['length']) ? intval($_POST['length']) : 10;
+        $sort_index = isset($_POST['order'][0]['column']) ? strval($_POST['order'][0]['column']) : 10;
+        $sort = isset($display_columns[$sort_index]) ? $display_columns[$sort_index] : 'updated_at';
+        $order = isset($_POST['order'][0]['dir']) ? strval($_POST['order'][0]['dir']) : 'desc';
+        $order_by=$sort." ".$order;
+
+        if($search_status!="") $this->db->where(array("ecommerce_cart.status"=>$search_status));    
+        $where_custom="ecommerce_cart.subscriber_id = '".$subscriber_id."'";
+
+        if ($search_value != '') 
+        {
+            foreach ($search_columns as $key => $value) 
+            $temp[] = $value." LIKE "."'%$search_value%'";
+            $imp = implode(" OR ", $temp);
+            $where_custom .=" AND (".$imp.") ";
+        }
+        if($search_date_range!="")
+        {
+            $exp = explode('|', $search_date_range);
+            $from_date = isset($exp[0])?$exp[0]:"";
+            $to_date = isset($exp[1])?$exp[1]:"";
+            if($from_date!="Invalid date" && $to_date!="Invalid date")
+            $where_custom .= " AND ecommerce_cart.updated_at >= '{$from_date}' AND ecommerce_cart.updated_at <='{$to_date}'";
+        }
+        $this->db->where($where_custom);      
+        
+        $table="ecommerce_cart";
+        $select = "ecommerce_cart.id,action_type,ecommerce_cart.user_id,store_id,subscriber_id,coupon_code,coupon_type,discount,payment_amount,currency,ordered_at,transaction_id,card_ending,payment_method,manual_additional_info,manual_filename,paid_at,ecommerce_cart.status,ecommerce_cart.updated_at,status_changed_note";
+        $info=$this->basic->get_data($table,$where='',$select,$join='',$limit,$start,$order_by,$group_by='');
+        // echo $this->db->last_query();
+        
+        if($search_status!="") $this->db->where(array("ecommerce_cart.status"=>$search_status));
+        $this->db->where($where_custom);
+        $total_rows_array=$this->basic->count_row($table,$where='',$count=$table.".id",$join='',$group_by='');
+
+        $total_result=$total_rows_array[0]['total_rows'];
+        
+
+        $payment_status = $this->get_payment_status();
+        foreach($info as $key => $value) 
+        {
+            $config_currency = isset($value['currency']) ? $value['currency'] : "USD";
+            // $info[$key]['currency']= isset($this->currency_icon[$config_currency]) ? $this->currency_icon[$config_currency] : "$";
+
+            if($value['coupon_code']!='')
+            $info[$key]['discount']= mec_number_format($info[$key]['discount'],$decimal_point,$thousand_comma);
+            else $info[$key]['discount'] = "";
+
+            $info[$key]['payment_amount'] = mec_number_format($info[$key]['payment_amount'],$decimal_point,$thousand_comma);
+
+            if($info[$key]['payment_method'] == 'Cash on Delivery') $pay = "Cash";
+            else $pay = $info[$key]['payment_method'];
+            
+            $info[$key]['payment_method'] = $pay." ".$info[$key]['card_ending'];
+            if(trim($info[$key]['payment_method'])=="") $info[$key]['payment_method'] = "x";
+
+            $info[$key]['transaction_id'] = ($info[$key]['transaction_id']!="") ? "<b class='text-primary'>".$info[$key]['transaction_id']."</b>" : "x";
+
+            $updated_at = date("M j, y H:i",strtotime($info[$key]['updated_at']));
+            $info[$key]['updated_at'] =  "<div style='min-width:110px;'>".$updated_at."</div>";
+
+            if($value["paid_at"]!='0000-00-00 00:00:00')
+            {
+              $paid_at = date("M j, y H:i",strtotime($info[$key]['paid_at']));
+              $info[$key]['paid_at'] =  "<div style='min-width:110px;'>".$paid_at."</div>";
+            }
+            else $info[$key]['paid_at'] = 'x';
+
+            $st1=$st2="";
+            $file = base_url('upload/ecommerce/'.$value['manual_filename']);
+            $st1 = ($value['payment_method']=='Manual') ? $this->handle_attachment($value['id'], $file):"";
+            
+            if($value['payment_method']=='Manual')
+            $st2 = ' <a data-id="'.$value['id'].'" href="#"  class="btn btn-outline-primary additional_info" data-toggle="tooltip" title="" data-original-title="'.$this->lang->line("Additional Info").'"><i class="fas fa-info-circle"></i></a>';
+
+            $info[$key]['manual_filename'] = ($st1=="" && $st2=="") ? "x" : "<div style='width:100px;'>".$st1.$st2."</div>"; 
+            
+            $info[$key]['invoice'] =  "<a class='btn btn-outline-primary' target='_BLANK' data-toggle='tooltip' title='".$this->lang->line("Invoice")."' href='".base_url("ecommerce/order/".$value['id'])."'><i class='fas fa-receipt'></i></a>";
+
+            $info[$key]["invoice"] .= '<script>$(\'[data-toggle="tooltip"]\').tooltip();</script>';
+            $info[$key]["invoice"] .= '<script>$(\'[data-toggle="popover"]\').popover();</script>';
+
+            $payment_status = $info[$key]['status'];
+
+            if($payment_status=='pending') $payment_status_badge = "<span class='text-danger'><i class='fas fa-spinner'></i> ".$this->lang->line("Pending")."</span>";
+            else if($payment_status=='approved') $payment_status_badge = "<span class='text-primary'><i class='fas fa-thumbs-up'></i> ".$this->lang->line("Approved")."</span>";
+            else if($payment_status=='rejected') $payment_status_badge = "<span class='text-danger'><i class='fas fa-thumbs-down'></i> ".$this->lang->line("Rejected")."</span>";
+            else if($payment_status=='shipped') $payment_status_badge = "<span class='text-info'><i class='fas fa-truck'></i> ".$this->lang->line("Shipped")."</span>";
+            else if($payment_status=='delivered') $payment_status_badge = "<span class='text-info'><i class='fas fa-truck-loading'></i> ".$this->lang->line("Delivered")."</span>";
+            else if($payment_status=='completed') $payment_status_badge = "<span class='text-success'><i class='fas fa-check-circle'></i> ".$this->lang->line("Completed")."</span>";
+
+            if($info[$key]['status_changed_note']!='')$payment_status_badge.='&nbsp;&nbsp;&nbsp;<a href="#" data-placement="bottom" data-toggle="popover" data-trigger="focus" title="'.$this->lang->line("Note").'" data-content="'.htmlspecialchars($info[$key]['status_changed_note']).'"><i class="fas fa-comment text-primary"></i> </a>';
+            $info[$key]['status'] = $payment_status_badge;           
+
+        }
+        $data['draw'] = (int)$_POST['draw'] + 1;
+        $data['recordsTotal'] = $total_result;
+        $data['recordsFiltered'] = $total_result;
+        $data['data'] = convertDataTableResult($info, $display_columns ,$start,$primary_key="id");
+        echo json_encode($data);
+    }
+
+    private function get_payment_status()
+    {
+      return array('pending'=>$this->lang->line('Pending'),'approved'=>$this->lang->line('Approved'),'rejected'=>$this->lang->line('Rejected'),'shipped'=>$this->lang->line('Shipped'),'delivered'=>$this->lang->line('Delivered'),'completed'=>$this->lang->line('Completed'));
+    }
+
+    private function get_ecommerce_config($user_id='0')
+    {
+      if($user_id=='0') $user_id = $this->user_id;
+      $data = $this->basic->get_data("ecommerce_config",array("where"=>array("user_id"=>$user_id)));
+      if(isset($data[0])) return $data[0];
+      else return array();
     }
 
 
@@ -1066,6 +1207,9 @@ class Subscriber_manager extends Home
         $search_value = $this->input->post("search_value");
         $page_id = $this->input->post("page_id");
         $label_id = $this->input->post("label_id");
+        $email_phone_birth = $this->input->post("email_phone_birth");
+        $gender = $this->input->post("gender");
+
         $display_columns = 
         array(
           "#",
@@ -1101,6 +1245,19 @@ class Subscriber_manager extends Home
             $where_custom .=" AND (".$imp.") ";
         }
 
+        if(is_array($email_phone_birth))
+        {
+          foreach ($email_phone_birth as $key => $value) {
+            if($value == 'has_phone')
+              $this->db->where("phone_number !=", '');
+            if($value == 'has_email')
+              $this->db->where("email !=", '');
+            if($value == 'has_birthdate')
+              $this->db->where("birthdate !=", '0000-00-00');
+          }
+        }
+
+        if($gender != '') $this->db->where('gender', $gender);
         if($page_id!="") $this->db->where("page_table_id", $page_id);
         if($label_id!="") $this->db->where("FIND_IN_SET('$label_id',messenger_bot_subscriber.contact_group_id) !=", 0);       
 
@@ -1109,47 +1266,29 @@ class Subscriber_manager extends Home
         $select = "messenger_bot_subscriber.*,page_name";
         $this->db->where($where_custom);
         $info=$this->basic->get_data($table,$where='',$select,$join,$limit,$start,$order_by,$group_by='');
-         
-        // for download result 
-        $bot_subscribers_sql = array("table"=>$table,"where_custom"=>$where_custom,"select"=>$select,"join"=>$join,"order_by"=>$order_by);
-        $bot_subscribers_sql["where"]="";
-        if($page_id!="") $bot_subscribers_sql["page_table_id"] = $page_id;
-        if($label_id!="") $bot_subscribers_sql["where"] = array("FIND_IN_SET('$label_id',messenger_bot_subscriber.contact_group_id) !=", 0);
-        $this->session->set_userdata("bot_subscribers_sql",$bot_subscribers_sql);
-        // for download result 
-        
+        $this->session->set_userdata("bot_subscribers_sql",$this->db->last_query());         
+       
         $this->db->where($where_custom);
+        if(is_array($email_phone_birth))
+        {
+          foreach ($email_phone_birth as $key => $value) {
+            if($value == 'has_phone')
+              $this->db->where("phone_number !=", '');
+            if($value == 'has_email')
+              $this->db->where("email !=", '');
+            if($value == 'has_birthdate')
+              $this->db->where("birthdate !=", '0000-00-00');
+          }
+        }
+        if($gender != '') $this->db->where('gender', $gender);
         if($page_id!="") $this->db->where("page_table_id", $page_id);
         if($label_id!="") $this->db->where("FIND_IN_SET('$label_id',messenger_bot_subscriber.contact_group_id) !=", 0);
         $total_rows_array=$this->basic->count_row($table,$where='',$count=$table.".id",$join,$group_by='');
 
         $total_result=$total_rows_array[0]['total_rows'];
 
-        /*This block is commeneted because we are not showing labels in datatable for speed issue*/
-        // $table = 'messenger_bot_broadcast_contact_group';
-        // $select = array('group_name','id');
-        // $where_group['where'] = array('user_id'=>$this->user_id);
-        // $contact_group_info = $this->basic->get_data($table,$where_group,$select);
-        // $contact_group_info_formatted = array();
-        // foreach ($contact_group_info as $key => $value) 
-        // {
-        //   $contact_group_info_formatted[$value['id']] = $value['group_name'];
-        // }
-
         foreach($info as $key => $value) 
         {
-            // $contact_group_id = $info[$key]['contact_group_id'];
-            // $exp = explode(",",$contact_group_id);
-            // $str = '';
-            // foreach ($exp as $value1)
-            // {
-            //    if(isset($contact_group_info_formatted[$value1]))
-            //    $str.= $contact_group_info_formatted[$value1].", ";
-            // }               
-            // $str = trim($str);
-            // $str = trim($str, ",");
-            // $info[$key]['label_names']= $str;
-
             $info[$key]['label_names']= "";
 
             $info[$key]['subscribed_at']= date("jS M y H:i",strtotime($info[$key]["subscribed_at"]));            
@@ -1200,7 +1339,13 @@ class Subscriber_manager extends Home
 
 
     public function download_result()
-    {        
+    {      
+
+       if(function_exists('ini_set')){
+          ini_set('memory_limit', '-1');
+       } 
+
+
         if($this->is_demo == '1')
         {
             if($this->session->userdata('user_type') == "Admin")
@@ -1210,18 +1355,13 @@ class Subscriber_manager extends Home
             }
         }
 
-        // gettings last search data from session to download
         $bot_subscribers_sql = $this->session->userdata("bot_subscribers_sql");
-        $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot_subscriber.page_table_id,left");          
-        $table="messenger_bot_subscriber";
-        $select = "messenger_bot_subscriber.*,page_name";
-        
-        $this->db->where($bot_subscribers_sql["where_custom"]);
-        if(isset($bot_subscribers_sql["page_table_id"]) && $bot_subscribers_sql["page_table_id"]!="") $this->db->where("page_table_id",$bot_subscribers_sql["page_table_id"]);        
-        if(isset($bot_subscribers_sql["where"]) && $bot_subscribers_sql["where"]!="") $this->db->where($bot_subscribers_sql["where"]);
-        
-        $info=$this->basic->get_data($bot_subscribers_sql["table"],$where='',$bot_subscribers_sql["select"],$bot_subscribers_sql["join"],'',NULL,$bot_subscribers_sql["order_by"],$group_by='');
-        // echo $this->db->last_query(); exit();    
+        if(empty($bot_subscribers_sql)) exit();
+
+        $xp = explode('LIMIT', $bot_subscribers_sql);
+        $sql_without_limit = isset($xp[0]) ? $xp[0] : "";
+        if(empty($sql_without_limit)) exit();
+        $info = $this->basic->execute_query($sql_without_limit);
 
         $info_count = count($info);
 
@@ -1531,6 +1671,7 @@ class Subscriber_manager extends Home
     public function subscriber_actions_modal()
     {
       $this->ajax_check();
+      $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
       $id = $this->input->post("id",true);
       $page_table_id = $this->input->post("page_id",true);
       $subscribe_id = $this->input->post("subscribe_id",true);
@@ -1764,7 +1905,7 @@ class Subscriber_manager extends Home
                   '.$optin_ref.'  
                 </div>
 
-                <div id="broadcast_block">'.$broadcast_block.'</div>
+                <!--<div id="broadcast_block">'.$broadcast_block.'</div>-->
 
               </div>
 
@@ -1866,32 +2007,12 @@ class Subscriber_manager extends Home
 
     }
 
-    // public function create_label_and_assign()
-    // {
-    //   $this->ajax_check();
-    //   $id = $this->input->post("id",true); // subscriber auto id
-    //   $page_table_id = $this->input->post("page_id",true);
-    //   $label_name = $this->input->post("label_name",true);
 
-    //   $is_exists = $this->basic->get_data("messenger_bot_broadcast_contact_group",array("where"=>array("page_id"=>$page_table_id,"group_name"=>$label_name)));
-    //   if(isset($is_exists[0]))
-    //   {
-    //        $insert_id = $is_exists[0]['id'];
-    //        $label_id = '';
-    //   }
-    //   else
-    //   {
-    //     $label_id="";
-    //     $this->basic->insert_data("messenger_bot_broadcast_contact_group",array("page_id"=>$page_table_id,"group_name"=>$label_name,"user_id"=>$this->user_id,"label_id"=>$label_id));
-    //     $insert_id = $this->db->insert_id();
-    //   }
-
-    //   echo json_encode(array('id'=>$insert_id,"text"=>$label_name));
-    // }
 
     public function save_subscriber_changes()
     {
       $this->ajax_check();
+      $this->is_drip_campaigner_exist=$this->drip_campaigner_exist(); 
       $id = $this->input->post("id");
       $page_id = $this->input->post("page_id");
       $group_id = $this->input->post("group_id");

@@ -1,4 +1,4 @@
-  <?php if( (($this->session->userdata("user_type")=="Admin" || in_array(79,$this->module_access)) && strtotime(date("Y-m-d")) <= strtotime("2020-3-15")) || $this->is_broadcaster_exist) { ?>
+  <?php if( (($this->session->userdata("user_type")=="Admin" || in_array(79,$this->module_access)) && strtotime(date("Y-m-d")) <= strtotime("2020-3-15")) || $this->is_broadcaster_exist || ($this->session->userdata("user_type")=="Admin" || in_array(275,$this->module_access)) ) { ?>
   <section class="section">
   <div class="section-header">
     <h1>
@@ -59,6 +59,21 @@
         </div>
       </div>
       <?php } ?>
+
+      <?php if($this->session->userdata("user_type")=="Admin"  || in_array(275,$this->module_access)) : ?>
+      <div class="col-12 col-lg-6">
+        <div class="card card-large-icons">
+          <div class="card-icon text-primary">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="card-body">
+            <h4><?php echo $this->lang->line("OTN Subscriber Broadcast"); ?> </h4>
+             <p><?php echo $this->lang->line("One-Time Notification request follow-up message broadcasting."); ?></p>
+            <a href="<?php echo base_url("messenger_bot_broadcast/otn_subscriber_broadcast_campaign"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
+          </div>
+        </div>
+      </div>
+      <?php endif; ?>
 
 
       <!-- deprecated -->
@@ -198,32 +213,49 @@ if($this->basic->is_exist("modules",array("id"=>264))) {
       <div class="section-body">
           <div class="row">  
 
-              <div class="col-lg-6">
-                  <div class="card card-large-icons">
-                      <div class="card-icon text-primary"><i class="fas fa-plug"></i></div>
-                      <div class="card-body">
-                          <h4><?php echo $this->lang->line("SMS API Settings"); ?></h4>
-                          <p><?php echo $this->lang->line("Twilio, Plivo, Clickatell, Nexmo, AfricasTalking..."); ?></p>
-                          <div class="dropdown">
-                              <a class="no_hover" href="<?php echo base_url('sms_email_manager/sms_api_lists'); ?>"><?php echo $this->lang->line("Actions"); ?> <i class="fas fa-chevron-right"></i></a>
-                          </div>
-                      </div>
-                  </div>
-              </div>
+            <div class="col-lg-4">
+                <div class="card card-large-icons">
+                    <div class="card-icon text-primary"><i class="fas fa-plug"></i></div>
+                    <div class="card-body">
+                        <h4><?php echo $this->lang->line("SMS API Settings"); ?></h4>
+                        <p><?php echo $this->lang->line("Twilio, Plivo, Clickatell, Nexmo, AfricasTalking..."); ?></p>
+                        <div class="dropdown">
+                            <a class="no_hover" href="<?php echo base_url('sms_email_manager/sms_api_lists'); ?>"><?php echo $this->lang->line("Actions"); ?> <i class="fas fa-chevron-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-              <div class="col-lg-6">
-                  <div class="card card-large-icons">
-                      <div class="card-icon text-primary"><i class="fas fa-sms"></i></div>
-                      <div class="card-body">
-                          <h4><?php echo $this->lang->line("SMS Campaign"); ?></h4>
-                          <p><?php echo $this->lang->line("Campaign list, new campaign, report..."); ?></p>
-                          <div class="dropdown">
-                              <a class="no_hover" href="<?php echo base_url('sms_email_manager/sms_campaign_lists'); ?>"><?php echo $this->lang->line("Actions"); ?> <i class="fas fa-chevron-right"></i></a>
-                          </div>
-                      </div>
-                  </div>
-              </div>
+            <div class="col-lg-4">
+                <div class="card card-large-icons">
+                    <div class="card-icon text-primary"><i class="fas fa-sms"></i></div>
+                    <div class="card-body">
+                        <h4><?php echo $this->lang->line("SMS Campaign"); ?></h4>
+                        <p><?php echo $this->lang->line("Campaign list, new campaign, report..."); ?></p>
+                        <div class="dropdown">
+                            <a class="no_hover" href="<?php echo base_url('sms_email_manager/sms_campaign_lists'); ?>"><?php echo $this->lang->line("Actions"); ?> <i class="fas fa-chevron-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <?php 
+              if($this->basic->is_exist("modules",array("id"=>270))) { 
+                if($this->session->userdata('user_type') == 'Admin' || in_array(270,$this->module_access)) {  ?>
+                <div class="col-lg-4">
+                    <div class="card card-large-icons">
+                        <div class="card-icon text-primary"><i class="fas fa-th-list"></i></div>
+                        <div class="card-body">
+                            <h4><?php echo $this->lang->line("SMS Template"); ?></h4>
+                            <p><?php echo $this->lang->line("Sequence SMS Templates.."); ?></p>
+                            <div class="dropdown">
+                                <a class="no_hover" href="<?php echo base_url('sms_email_sequence/template_lists/sms'); ?>"><?php echo $this->lang->line("Actions"); ?> <i class="fas fa-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+            <?php } ?>
           </div>
       </div>
   </section>
@@ -247,7 +279,7 @@ if($this->basic->is_exist("modules",array("id"=>263))) {
       <div class="section-body">
           <div class="row">  
 
-              <div class="col-lg-6">
+              <div class="col-lg-4">
                   <div class="card card-large-icons">
                       <div class="card-icon text-primary"><i class="fas fa-plug"></i></div>
                       <div class="card-body">
@@ -267,7 +299,7 @@ if($this->basic->is_exist("modules",array("id"=>263))) {
                   </div>
               </div>
 
-              <div class="col-lg-6">
+              <div class="col-lg-4">
                   <div class="card card-large-icons">
                       <div class="card-icon text-primary"><i class="fas fa-envelope"></i></div>
                       <div class="card-body">
@@ -279,6 +311,24 @@ if($this->basic->is_exist("modules",array("id"=>263))) {
                       </div>
                   </div>
               </div>
+              
+              <?php 
+                if($this->basic->is_exist("modules",array("id"=>271))) { 
+                  if($this->session->userdata('user_type') == 'Admin' || in_array(271,$this->module_access)) {  ?>
+                <div class="col-lg-4">
+                    <div class="card card-large-icons">
+                        <div class="card-icon text-primary"><i class="fas fa-th-list"></i></div>
+                        <div class="card-body">
+                            <h4><?php echo $this->lang->line("Email Templates"); ?></h4>
+                            <p><?php echo $this->lang->line("Sequence Email Templates.."); ?></p>
+                            <div class="dropdown">
+                                <a href="<?php echo base_url('sms_email_sequence/template_lists/email'); ?>" class="no_hover"><?php echo $this->lang->line("Actions"); ?> <i class="fas fa-chevron-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+              <?php } ?>
 
           </div>
       </div>
@@ -290,4 +340,5 @@ if($this->basic->is_exist("modules",array("id"=>263))) {
 <style type="text/css">
   .popover{min-width: 330px !important;}
   .no_hover:hover{text-decoration: none;}
+  .otn_info_modal{cursor: pointer;}
 </style>

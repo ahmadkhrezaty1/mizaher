@@ -31,6 +31,7 @@ class Social_accounts extends Home
   
     public function account_import()
     {
+        $this->is_group_posting_exist=$this->group_posting_exist();
         $data['body'] = 'facebook_rx/account_import';
         $data['page_title'] = $this->lang->line('Facebook Account Import');
 
@@ -201,6 +202,7 @@ class Social_accounts extends Home
       }
 
       $this->ajax_check();
+      $this->csrf_token_check();
       $app_table_id = $this->input->post('app_table_id',true);
       $app_info = $this->basic->get_data('facebook_rx_config',array('where'=>array('id'=>$app_table_id,'user_id'=>$this->user_id)));
       if(empty($app_info))
@@ -463,23 +465,23 @@ class Social_accounts extends Home
        if(!$this->basic->is_exist("messenger_bot",array("postback_id"=>"UNSUBSCRIBE_QUICK_BOXER","page_id"=>$auto_id)))
        {
             $sql='INSERT INTO messenger_bot (user_id,page_id,fb_page_id,template_type,bot_type,keyword_type,keywords,message,buttons,images,audio,video,file,status,bot_name,postback_id,last_replied_at,is_template) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "post-back","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"تم إلغاء اشتراكك بنجاح من البوت,يمكنك في أي وقت الاشراك مرة أخرى عن طريق الضغط على إعادة الاشتراك, شكرا لكم","buttons":[{"type":"postback","payload":"RESUBSCRIBE_QUICK_BOXER","title":"إعادة الاشتراك"}]}}}}}\', "", "", "", "", "", "1", "UNSUBSCRIBE BOT", "UNSUBSCRIBE_QUICK_BOXER", "", "1");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "post-back","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"You have been successfully unsubscribed from our list. It sad to see you go. It is not the same without you ! You can join back by clicking the button below.","buttons":[{"type":"postback","payload":"RESUBSCRIBE_QUICK_BOXER","title":"Resubscribe"}]}}}}}\', "", "", "", "", "", "1", "UNSUBSCRIBE BOT", "UNSUBSCRIBE_QUICK_BOXER", "", "1");';
 
             $this->db->query($sql);
             $insert_id=$this->db->insert_id();
             $sql='INSERT INTO messenger_bot_postback(user_id,postback_id,page_id,use_status,status,messenger_bot_table_id,bot_name,is_template,template_jsoncode,template_name,template_for) VALUES
-            ("'.$user_id.'","UNSUBSCRIBE_QUICK_BOXER","'.$auto_id.'","0","1","'.$insert_id.'","UNSUBSCRIBE BOT","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"تم إلغاء اشتراكك بنجاح من البوت,يمكنك في أي وقت الاشراك مرة أخرى عن طريق الضغط على إعادة الاشتراك, شكرا لكم","buttons":[{"type":"postback","payload":"RESUBSCRIBE_QUICK_BOXER","title":"إعادة الاشتراك"}]}}}}}\',"UNSUBSCRIBE TEMPLATE","unsubscribe")';
+            ("'.$user_id.'","UNSUBSCRIBE_QUICK_BOXER","'.$auto_id.'","0","1","'.$insert_id.'","UNSUBSCRIBE BOT","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"You have been successfully unsubscribed from our list. It sad to see you go. It is not the same without you ! You can join back by clicking the button below.","buttons":[{"type":"postback","payload":"RESUBSCRIBE_QUICK_BOXER","title":"Resubscribe"}]}}}}}\',"UNSUBSCRIBE TEMPLATE","unsubscribe")';
             $this->db->query($sql);
        }
 
        if(!$this->basic->is_exist("messenger_bot",array("postback_id"=>"RESUBSCRIBE_QUICK_BOXER","page_id"=>$auto_id)))
        {
             $sql='INSERT INTO messenger_bot (user_id,page_id,fb_page_id,template_type,bot_type,keyword_type,keywords,message,buttons,images,audio,video,file,status,bot_name,postback_id,last_replied_at,is_template) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "post-back","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"أهلا بعودتك!, لن تفوت أبدا بعد الان أي عرض او تخفيضات, شكرا لكم","buttons":[{"type":"postback","payload":"UNSUBSCRIBE_QUICK_BOXER","title":"إلغاء الاشتراك"}]}}}}}\', "", "", "", "", "", "1", "RESUBSCRIBE BOT", "RESUBSCRIBE_QUICK_BOXER", "", "1");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "post-back","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"Welcome back ! We have not seen you for a while. You will no longer miss our important updates.","buttons":[{"type":"postback","payload":"UNSUBSCRIBE_QUICK_BOXER","title":"Unsubscribe"}]}}}}}\', "", "", "", "", "", "1", "RESUBSCRIBE BOT", "RESUBSCRIBE_QUICK_BOXER", "", "1");';
             $this->db->query($sql);
             $insert_id=$this->db->insert_id();
             $sql='INSERT INTO messenger_bot_postback(user_id,postback_id,page_id,use_status,status,messenger_bot_table_id,bot_name,is_template,template_jsoncode,template_name,template_for) VALUES
-            ("'.$user_id.'","RESUBSCRIBE_QUICK_BOXER","'.$auto_id.'","0","1","'.$insert_id.'","RESUBSCRIBE BOT","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"أهلا بعودتك!, لن تفوت أبدا بعد الان أي عرض او تخفيضات, شكرا لكم","buttons":[{"type":"postback","payload":"UNSUBSCRIBE_QUICK_BOXER","title":"إلغاء الاشتراك"}]}}}}}\',"RESUBSCRIBE TEMPLATE","resubscribe")';
+            ("'.$user_id.'","RESUBSCRIBE_QUICK_BOXER","'.$auto_id.'","0","1","'.$insert_id.'","RESUBSCRIBE BOT","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"Welcome back ! We have not seen you for a while. You will no longer miss our important updates.","buttons":[{"type":"postback","payload":"UNSUBSCRIBE_QUICK_BOXER","title":"Unsubscribe"}]}}}}}\',"RESUBSCRIBE TEMPLATE","resubscribe")';
             $this->db->query($sql);
        }
 
@@ -494,11 +496,11 @@ class Social_accounts extends Home
        {
             $user_id=$this->user_id;
             $sql='INSERT INTO `messenger_bot` ( `user_id`, `page_id`, `fb_page_id`, `template_type`, `bot_type`, `keyword_type`, `keywords`, `message`, `buttons`, `images`, `audio`, `video`, `file`, `status`, `bot_name`, `postback_id`, `last_replied_at`, `is_template`) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "email-quick-reply","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"شكرا لكم, تلقينا البريد الالكتروني الخاص بكم, من الان فصاعدا ستتلقون التحديثات والعروض عبر الايميل, شكرا لكم"}}}\', "", "", "", "", "", "1", "QUICK REPLY EMAIL REPLY", "QUICK_REPLY_EMAIL_REPLY_BOT", "0000-00-00 00:00:00", "0");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "email-quick-reply","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Thanks, we have received your email. We will keep you updated. Thank you for being with us."}}}\', "", "", "", "", "", "1", "QUICK REPLY EMAIL REPLY", "QUICK_REPLY_EMAIL_REPLY_BOT", "0000-00-00 00:00:00", "0");';
             $this->db->query($sql);
             $insert_id=$this->db->insert_id();
             $sql='INSERT INTO messenger_bot_postback(user_id,postback_id,page_id,use_status,status,messenger_bot_table_id,bot_name,is_template,template_jsoncode,template_name,template_for) VALUES
-            ("'.$user_id.'","QUICK_REPLY_EMAIL_REPLY_BOT","'.$auto_id.'","0","1","'.$insert_id.'","QUICK REPLY EMAIL REPLY","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"شكرا لكم, تلقينا البريد الالكتروني الخاص بكم, من الان فصاعدا ستتلقون التحديثات والعروض عبر الايميل, شكرا لكم"}}}\',"QUICK REPLY EMAIL REPLY","email-quick-reply")';
+            ("'.$user_id.'","QUICK_REPLY_EMAIL_REPLY_BOT","'.$auto_id.'","0","1","'.$insert_id.'","QUICK REPLY EMAIL REPLY","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Thanks, we have received your email. We will keep you updated. Thank you for being with us."}}}\',"QUICK REPLY EMAIL REPLY","email-quick-reply")';
             $this->db->query($sql);
         }
         return true;
@@ -510,11 +512,11 @@ class Social_accounts extends Home
        {
             $user_id=$this->user_id;
             $sql='INSERT INTO `messenger_bot` ( `user_id`, `page_id`, `fb_page_id`, `template_type`, `bot_type`, `keyword_type`, `keywords`, `message`, `buttons`, `images`, `audio`, `video`, `file`, `status`, `bot_name`, `postback_id`, `last_replied_at`, `is_template`) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "phone-quick-reply","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"شكرا لكم, لقد تلقينا رقم الهاتف, من الان فصاعدا ستتلقون التحديثات عبر الرسائل النصية على الهاتف, شكرا "}}}\', "", "", "", "", "", "1", "QUICK REPLY PHONE REPLY", "QUICK_REPLY_PHONE_REPLY_BOT", "0000-00-00 00:00:00", "0");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "phone-quick-reply","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Thanks, we have received your phone. Thank you for being with us."}}}\', "", "", "", "", "", "1", "QUICK REPLY PHONE REPLY", "QUICK_REPLY_PHONE_REPLY_BOT", "0000-00-00 00:00:00", "0");';
             $this->db->query($sql);
             $insert_id=$this->db->insert_id();
             $sql='INSERT INTO messenger_bot_postback(user_id,postback_id,page_id,use_status,status,messenger_bot_table_id,bot_name,is_template,template_jsoncode,template_name,template_for) VALUES
-            ("'.$user_id.'","QUICK_REPLY_PHONE_REPLY_BOT","'.$auto_id.'","0","1","'.$insert_id.'","QUICK REPLY PHONE REPLY","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"شكرا لكم, لقد تلقينا رقم الهاتف, من الان فصاعدا ستتلقون التحديثات عبر الرسائل النصية على الهاتف, شكرا "}}}\',"QUICK REPLY PHONE REPLY","phone-quick-reply")';
+            ("'.$user_id.'","QUICK_REPLY_PHONE_REPLY_BOT","'.$auto_id.'","0","1","'.$insert_id.'","QUICK REPLY PHONE REPLY","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Thanks, we have received your phone. Thank you for being with us."}}}\',"QUICK REPLY PHONE REPLY","phone-quick-reply")';
             $this->db->query($sql);
         }
         return true;
@@ -526,11 +528,11 @@ class Social_accounts extends Home
        {
             $user_id=$this->user_id;
             $sql='INSERT INTO `messenger_bot` ( `user_id`, `page_id`, `fb_page_id`, `template_type`, `bot_type`, `keyword_type`, `keywords`, `message`, `buttons`, `images`, `audio`, `video`, `file`, `status`, `bot_name`, `postback_id`, `last_replied_at`, `is_template`) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "location-quick-reply","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Tشكرا لكم, لقد تلقينا موقعكم, شكرا لأنكم معنا في كل وقت "}}}\', "", "", "", "", "", "1", "QUICK REPLY LOCATION REPLY", "QUICK_REPLY_LOCATION_REPLY_BOT", "0000-00-00 00:00:00", "0");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "location-quick-reply","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Thanks, we have received your location. Thank you for being with us."}}}\', "", "", "", "", "", "1", "QUICK REPLY LOCATION REPLY", "QUICK_REPLY_LOCATION_REPLY_BOT", "0000-00-00 00:00:00", "0");';
             $this->db->query($sql);
             $insert_id=$this->db->insert_id();
             $sql='INSERT INTO messenger_bot_postback(user_id,postback_id,page_id,use_status,status,messenger_bot_table_id,bot_name,is_template,template_jsoncode,template_name,template_for) VALUES
-            ("'.$user_id.'","QUICK_REPLY_LOCATION_REPLY_BOT","'.$auto_id.'","0","1","'.$insert_id.'","QUICK REPLY LOCATION REPLY","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Tشكرا لكم, لقد تلقينا موقعكم, شكرا لأنكم معنا في كل وقت "}}}\',"QUICK REPLY LOCATION REPLY","location-quick-reply")';
+            ("'.$user_id.'","QUICK_REPLY_LOCATION_REPLY_BOT","'.$auto_id.'","0","1","'.$insert_id.'","QUICK REPLY LOCATION REPLY","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Thanks, we have received your location. Thank you for being with us."}}}\',"QUICK REPLY LOCATION REPLY","location-quick-reply")';
             $this->db->query($sql);
         }
         return true;
@@ -542,11 +544,11 @@ class Social_accounts extends Home
        {
             $user_id=$this->user_id;
             $sql='INSERT INTO `messenger_bot` ( `user_id`, `page_id`, `fb_page_id`, `template_type`, `bot_type`, `keyword_type`, `keywords`, `message`, `buttons`, `images`, `audio`, `video`, `file`, `status`, `bot_name`, `postback_id`, `last_replied_at`, `is_template`) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "birthday-quick-reply","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"لقد تلقينا عيد ميلادكم , شكرا لكم لانكم معنا, ستتلقى العروض في عيد ميلادك"}}}\', "", "", "", "", "", "1", "QUICK REPLY BIRTHDAY REPLY", "QUICK_REPLY_BIRTHDAY_REPLY_BOT", "0000-00-00 00:00:00", "0");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "birthday-quick-reply","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Thanks, we have received your birthday. Thank you for being with us."}}}\', "", "", "", "", "", "1", "QUICK REPLY BIRTHDAY REPLY", "QUICK_REPLY_BIRTHDAY_REPLY_BOT", "0000-00-00 00:00:00", "0");';
             $this->db->query($sql);
             $insert_id=$this->db->insert_id();
             $sql='INSERT INTO messenger_bot_postback(user_id,postback_id,page_id,use_status,status,messenger_bot_table_id,bot_name,is_template,template_jsoncode,template_name,template_for) VALUES
-            ("'.$user_id.'","QUICK_REPLY_BIRTHDAY_REPLY_BOT","'.$auto_id.'","0","1","'.$insert_id.'","QUICK REPLY BIRTHDAY REPLY","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"لقد تلقينا عيد ميلادكم , شكرا لكم لانكم معنا, ستتلقى العروض في عيد ميلادك"}}}\',"QUICK REPLY BIRTHDAY REPLY","birthday-quick-reply")';
+            ("'.$user_id.'","QUICK_REPLY_BIRTHDAY_REPLY_BOT","'.$auto_id.'","0","1","'.$insert_id.'","QUICK REPLY BIRTHDAY REPLY","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Thanks, we have received your birthday. Thank you for being with us."}}}\',"QUICK REPLY BIRTHDAY REPLY","birthday-quick-reply")';
             $this->db->query($sql);
         }
         return true;
@@ -560,22 +562,22 @@ class Social_accounts extends Home
        if(!$this->basic->is_exist("messenger_bot",array("postback_id"=>"YES_START_CHAT_WITH_HUMAN","page_id"=>$auto_id)))
        {
             $sql='INSERT INTO messenger_bot (user_id,page_id,fb_page_id,template_type,bot_type,keyword_type,keywords,message,buttons,images,audio,video,file,status,bot_name,postback_id,last_replied_at,is_template) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "post-back","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"شكرا, من الممتع التحدث معك, سيأتي أحد فريق الدعم الان وسيكون معك خلال لحظات, اذا اردت التكم مع ميلانا مرة اخرى الرجاء اضغط على الزر في الاسفل","buttons":[{"type":"postback","payload":"YES_START_CHAT_WITH_BOT","title":"التكلم ثانية مع البوت"}]}}}}}\', "", "", "", "", "", "1", "CHAT WITH HUMAN", "YES_START_CHAT_WITH_HUMAN", "", "1");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "post-back","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"Thanks! It is a pleasure talking you. One of our team member will reply you soon. If you want to chat with me again, just click the button below.","buttons":[{"type":"postback","payload":"YES_START_CHAT_WITH_BOT","title":"Resume Chat with Bot"}]}}}}}\', "", "", "", "", "", "1", "CHAT WITH HUMAN", "YES_START_CHAT_WITH_HUMAN", "", "1");';
             $this->db->query($sql);
             $insert_id=$this->db->insert_id();
             $sql='INSERT INTO messenger_bot_postback(user_id,postback_id,page_id,use_status,status,messenger_bot_table_id,bot_name,is_template,template_jsoncode,template_name,template_for) VALUES
-            ("'.$user_id.'","YES_START_CHAT_WITH_HUMAN","'.$auto_id.'","0","1","'.$insert_id.'","CHAT WITH HUMAN","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"شكرا, من الممتع التحدث معك, سيأتي أحد فريق الدعم الان وسيكون معك خلال لحظات, اذا اردت التكم مع ميلانا مرة اخرى الرجاء اضغط على الزر في الاسفل","buttons":[{"type":"postback","payload":"YES_START_CHAT_WITH_BOT","title":"التكلم ثانية مع البوت"}]}}}}}\',"CHAT WITH HUMAN TEMPLATE","chat-with-human")';
+            ("'.$user_id.'","YES_START_CHAT_WITH_HUMAN","'.$auto_id.'","0","1","'.$insert_id.'","CHAT WITH HUMAN","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"Thanks! It is a pleasure talking you. One of our team member will reply you soon. If you want to chat with me again, just click the button below.","buttons":[{"type":"postback","payload":"YES_START_CHAT_WITH_BOT","title":"Resume Chat with Bot"}]}}}}}\',"CHAT WITH HUMAN TEMPLATE","chat-with-human")';
             $this->db->query($sql);
        }
 
        if(!$this->basic->is_exist("messenger_bot",array("postback_id"=>"YES_START_CHAT_WITH_BOT","page_id"=>$auto_id)))
        {
             $sql='INSERT INTO messenger_bot (user_id,page_id,fb_page_id,template_type,bot_type,keyword_type,keywords,message,buttons,images,audio,video,file,status,bot_name,postback_id,last_replied_at,is_template) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "post-back","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"انا سعيدة لوجودك معي مرة اخرى, سأحاول جاهدة بذل أقصى ما بوسعي لخدمتك سيدي والاجابة على كل استفساراتك, إذا أردت التكلم مع الدعم مرة أخرى اضغط على الخيار في الاسفل","buttons":[{"type":"postback","payload":"YES_START_CHAT_WITH_HUMAN","title":"التكلم مع الدعم"}]}}}}}\', "", "", "", "", "", "1", "CHAT WITH BOT", "YES_START_CHAT_WITH_BOT", "", "1");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "post-back","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"I am gald to have you back. I will try my best to answer all questions. If you want to start chat with human again you can simply click the button below.","buttons":[{"type":"postback","payload":"YES_START_CHAT_WITH_HUMAN","title":"Chat with human"}]}}}}}\', "", "", "", "", "", "1", "CHAT WITH BOT", "YES_START_CHAT_WITH_BOT", "", "1");';
             $this->db->query($sql);
             $insert_id=$this->db->insert_id();
             $sql='INSERT INTO messenger_bot_postback(user_id,postback_id,page_id,use_status,status,messenger_bot_table_id,bot_name,is_template,template_jsoncode,template_name,template_for) VALUES
-            ("'.$user_id.'","YES_START_CHAT_WITH_BOT","'.$auto_id.'","0","1","'.$insert_id.'","RESUBSCRIBE BOT","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"انا سعيدة لوجودك معي مرة اخرى, سأحاول جاهدة بذل أقصى ما بوسعي لخدمتك سيدي والاجابة على كل استفساراتك, إذا أردت التكلم مع الدعم مرة أخرى اضغط على الخيار في الاسفل","buttons":[{"type":"postback","payload":"YES_START_CHAT_WITH_HUMAN","title":"التكلم مع الدعم"}]}}}}}\',"CHAT WITH BOT TEMPLATE","chat-with-bot")';
+            ("'.$user_id.'","YES_START_CHAT_WITH_BOT","'.$auto_id.'","0","1","'.$insert_id.'","RESUBSCRIBE BOT","1",\'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text_with_buttons","typing_on_settings":"off","delay_in_reply":"0","attachment":{"type":"template","payload":{"template_type":"button","text":"I am gald to have you back. I will try my best to answer all questions. If you want to start chat with human again you can simply click the button below.","buttons":[{"type":"postback","payload":"YES_START_CHAT_WITH_HUMAN","title":"Chat with human"}]}}}}}\',"CHAT WITH BOT TEMPLATE","chat-with-bot")';
             $this->db->query($sql);
        }
        return true;
@@ -589,7 +591,7 @@ class Social_accounts extends Home
        if(!$this->basic->is_exist("messenger_bot",array("keyword_type"=>"get-started","page_id"=>$auto_id)))
        {
             $sql='INSERT INTO messenger_bot (user_id,page_id,fb_page_id,template_type,bot_type,keyword_type,keywords,message,buttons,images,audio,video,file,status,bot_name,postback_id,last_replied_at,is_template) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "get-started","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"مرحبا #LEAD_USER_FIRST_NAME#,أهلا بكم في صفحتنا"}}}\', "", "", "", "", "", "1", "GET STARTED", "", "", "0");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "get-started","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Hi #LEAD_USER_FIRST_NAME#, Welcome to our page."}}}\', "", "", "", "", "", "1", "GET STARTED", "", "", "0");';
             $this->db->query($sql);
        }
        return true;
@@ -602,7 +604,7 @@ class Social_accounts extends Home
        if(!$this->basic->is_exist("messenger_bot",array("keyword_type"=>"no match","page_id"=>$auto_id)))
        {
             $sql='INSERT INTO messenger_bot (user_id,page_id,fb_page_id,template_type,bot_type,keyword_type,keywords,message,buttons,images,audio,video,file,status,bot_name,postback_id,last_replied_at,is_template) VALUES
-            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "no match","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"عذرا, لم نجد أي تطابق مع كلامك في بوت ميلانا, الرجاء الانتظار اذا كنت تريد الدعم الفني سيدخل الان أحد عاملي الدعم الفني وسيتولى مساعدتك. شكرا لكم"}}}\', "", "", "", "", "", "1", "NO MATCH FOUND", "", "", "0");';
+            ("'.$user_id.'", "'.$auto_id.'", "'.$page_id.'", "text", "generic", "no match","", \'{"1":{"recipient":{"id":"replace_id"},"message":{"template_type":"text","typing_on_settings":"off","delay_in_reply":"0","text":"Sorry, we could not find any content to show. One of our team member will reply you soon."}}}\', "", "", "", "", "", "1", "NO MATCH FOUND", "", "", "0");';
             $this->db->query($sql);
        }
        return true;
@@ -798,6 +800,7 @@ class Social_accounts extends Home
 
     public function manual_renew_account()
     {
+        $this->is_group_posting_exist=$this->group_posting_exist();
         $id = $this->session->userdata('fb_rx_login_database_id');
         $redirect_url = base_url()."social_accounts/manual_renew_account";
 

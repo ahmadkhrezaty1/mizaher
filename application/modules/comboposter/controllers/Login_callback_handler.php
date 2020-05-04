@@ -556,24 +556,35 @@ class Login_callback_handler
 
 		$this->comboposter->pinterests->app_initialize($app_id);
 
-		$board_list = $this->comboposter->pinterests->get_userinfo($authentication_code); 
-
 		/* get user info */
-		$pinterest_username = $this->comboposter->session->userdata('pinterest_username');
-		$pinterest_access_token = $this->comboposter->session->userdata('pinterest_access_token');
-		$pinterest_name = $this->comboposter->session->userdata('pinterest_name');
-		$pinterest_image = $this->comboposter->session->userdata('pinterest_image');
-		$pinterest_pins = $this->comboposter->session->userdata('pinterest_pins');
-		$pinterest_boards = $this->comboposter->session->userdata('pinterest_boards');
+
+		$user_details = $this->comboposter->pinterests->get_userinfo($authentication_code); 
+
+		if(isset($user_details['error']) && $user_details['error_message']){
+
+			$this->comboposter->session->set_userdata('account_import_error', $user_details['error_message']);
+			redirect(base_url('comboposter/social_accounts'),'refresh');
+		    exit();
+		}
+
+
+		$pinterest_username = isset($user_details['username']) ? $user_details['username'] :"" ;
+		$pinterest_user_id = isset($user_details['id']) ? $user_details['id'] :"" ;
+		$pinterest_access_token = isset($user_details['access_token']) ? $user_details['access_token'] :"" ;
+		$pinterest_name = $user_details['first_name']." ". $user_details['last_name'];
+		$pinterest_image = isset($user_details['image']) ? $user_details['image'] :"" ;
+		$pinterest_pins = isset($user_details['pins_count']) ? $user_details['pins_count'] :"" ;
+		$pinterest_boards = isset($user_details['boards_count']) ? $user_details['boards_count'] :"" ; 
+		$board_list=isset($user_details['board_list']) ? $user_details['board_list']:array();
 
 		if (!isset($pinterest_username) || !isset($pinterest_access_token)) {
-
 		    $this->comboposter->session->set_userdata('account_import_error', $this->comboposter->lang->line("Something went wrong while importing your account."));
 			redirect(base_url('comboposter/social_accounts'),'refresh');
 		}
 
 		$data = array(
 		    'user_id' => $this->comboposter->user_id,
+		    'pinterest_user_id' => $pinterest_user_id,
 		    'user_name' => $pinterest_username,
 		    'name' => $pinterest_name,
 		    'image' => $pinterest_image,
@@ -609,20 +620,21 @@ class Login_callback_handler
 		    $this->comboposter->basic->update_data('pinterest_users_info', $where, $data);
 		}
 
-
 		$data = array();
-		foreach($board_list as $key => $value) {
+		foreach($board_list as $value) {
 
 		    $data = array(
 		        'pinterest_table_id' => $pinterest_table_id,
 		        'user_id' => $this->comboposter->user_id,
-		        'board_name' => $value
+		        'board_name' => $value['name'],
+		        'board_url' => $value['url'],
+		        'board_id'	=> $value['id']
 		    );
 
 		    $where = array();
 		    $where['where'] = array(
 		        'pinterest_table_id' => $pinterest_table_id,
-		        'board_name' => $value
+		        'board_name' => $value['name']
 		    );
 		    $exist_or_not = $this->comboposter->basic->get_data('pinterest_board_info', $where);
 
@@ -632,18 +644,11 @@ class Login_callback_handler
 
 		        $where = array(
 		            'pinterest_table_id' => $pinterest_table_id,
-		            'board_name' => $value
+		           'board_name' => $value['name']
 		        );
 		        $this->comboposter->basic->update_data('pinterest_board_info', $where, $data);
 		    }
 		}
-
-		$this->comboposter->session->unset_userdata('pinterest_username');
-		$this->comboposter->session->unset_userdata('pinterest_access_token');
-		$this->comboposter->session->unset_userdata('pinterest_name');
-		$this->comboposter->session->unset_userdata('pinterest_image');
-		$this->comboposter->session->unset_userdata('pinterest_pins');
-		$this->comboposter->session->unset_userdata('pinterest_boards');
 		
 		redirect(base_url('comboposter/social_accounts'),'refresh');
 	}

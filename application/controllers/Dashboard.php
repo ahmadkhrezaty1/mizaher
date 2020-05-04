@@ -34,6 +34,7 @@ class Dashboard extends Home
     
     public function index($default_value='0')
     {
+        $this->is_broadcaster_exist=$this->broadcaster_exist(); 
         if($this->session->userdata('user_type') != 'Admin') $default_value='0';
         if($default_value == '0')
         {
@@ -556,6 +557,7 @@ class Dashboard extends Home
     public function get_first_div_content($system_dashboard='no')
     {
         $this->ajax_check();
+        $this->is_broadcaster_exist=$this->broadcaster_exist(); 
         $month_no = $this->input->post('month_no',true);
         if($month_no == 'year')
             $search_year = date("Y");

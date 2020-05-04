@@ -87,6 +87,7 @@
 
 		<!-- Load Facebook Messenger SDK -->
 		
+	<!-- 	
 		<script  type="text/javascript">
 
 
@@ -118,7 +119,7 @@
 
 
 			
-		</script>
+		</script> -->
 
 	</head>
 

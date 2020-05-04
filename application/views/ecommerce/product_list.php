@@ -40,7 +40,7 @@
                 </div>'; ?>                                          
               </div>          
 
-              <div class="d-none d-sm-block col-md-3">             
+              <div class="col-md-3">             
                 <a href="<?php echo base_url('ecommerce/add_product'); ?>" class="btn btn-lg btn-primary float-right"><i class="fas fa-plus-circle"></i> <?php echo $this->lang->line("Add Product"); ?></a>                                 
               </div>
 
@@ -66,7 +66,7 @@
                       <th><?php echo $this->lang->line("Store")?></th>                   
                       <th><?php echo $this->lang->line("Status")?></th>                   
                       <th><?php echo $this->lang->line("Actions")?></th>                 
-                      <th><?php echo $this->lang->line("Taxable")?></th>                   
+                      <th><?php echo $this->lang->line("Stock")?></th>                   
                       <th><?php echo $this->lang->line("Category")?></th>                   
                       <th><?php echo $this->lang->line("Updated at")?></th>                   
                   	</tr>
@@ -125,7 +125,7 @@
 	  dom: '<"top"f>rt<"bottom"lip><"clear">',
 	  columnDefs: [
 	    {
-	        targets: [1,5,8,9,10],
+	        targets: [1,5,9,10],
 	        visible: false
 	    },
 	    {
@@ -177,7 +177,7 @@
 
 
 
-      	var Doyouwanttodeletethisrecordfromdatabase = "<?php echo $this->lang->line('Do you want to detete this record?'); ?>";
+      	var Doyouwanttodeletethisrecordfromdatabase = "<?php echo $this->lang->line('Do you want to detete this products? Deleting product does not affect existing orders.'); ?>";
       	$(document).on('click','.delete_row',function(e){
       	    e.preventDefault();
       	    swal({

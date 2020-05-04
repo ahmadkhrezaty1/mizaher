@@ -113,7 +113,11 @@
           var search = $("#search").val();
           var ticket_status = $("#ticket_status").val();
           $("#waiting").show();
-          if(reset) $("#search_submit").addClass("btn-progress");
+          if(reset) 
+          {
+            $("#search_submit").addClass("btn-progress");
+            counter = 0;
+          }
           $.ajax({
             url: base_url+'simplesupport/ticket_data',
             type: 'POST',
@@ -124,19 +128,11 @@
                 $("#waiting").hide();
                 $("#nodata").hide();
                 $("#search_submit").removeClass("btn-progress");
-
-                counter += response.found;
-                if(!reset) 
-                {
-                  $("#load_more").attr("data-start",counter); 
-                  $("#load_data").append(response.html);
-                }      
-                else
-                {
-                  $("#load_more").attr("data-start","0");
-                  $("#load_data").html(response.html);
-                  counter = 0;
-                }
+                
+                counter += response.found; 
+                $("#load_more").attr("data-start",counter); 
+                if(!reset)  $("#load_data").append(response.html);
+                else $("#load_data").html(response.html);
 
                 if(response.found!='0') $("#load_more").show();                
                 else 

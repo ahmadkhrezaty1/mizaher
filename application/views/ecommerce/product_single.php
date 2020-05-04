@@ -5,10 +5,13 @@
       $subscriber_id = isset($_GET['subscriber_id']) ? $_GET['subscriber_id'] : "";
       $store_link = base_url("ecommerce/store/".$product_data['store_unique_id']);
       if($subscriber_id!='') $store_link.='?subscriber_id='.$subscriber_id;
-      $store_name_logo = ($product_data['store_logo']!='') ? '<img style="height:50px;" alt="'.$product_data['store_name'].'" class="img-fluid" src="'.base_url("upload/ecommerce/".$product_data['store_logo']).'">' : $product_data['store_name'];
+      $store_name_logo = ($product_data['store_logo']!='') ? '<img alt="'.$product_data['store_name'].'" class="img-fluid" src="'.base_url("upload/ecommerce/".$product_data['store_logo']).'">' : $product_data['store_name'];
       echo $store_name_logo = "<a href='".$store_link."'>".$store_name_logo."</a>";
       $currency = isset($ecommerce_config['currency']) ? $ecommerce_config['currency'] : "USD";
       $currency_icon = isset($currency_icons[$currency]) ? $currency_icons[$currency] : "$";
+      $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+      $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+      $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
 
       // $attribute_map="";
       // if($product_data['attribute_ids']!='') $attribute_map = mec_attribute_map($attribute_list,$product_data['attribute_ids']);
@@ -33,7 +36,7 @@
       ?>        
     </h1>
     <div class="section-header-breadcrumb">
-        <div class="breadcrumb-item"><a href="<?php echo $store_link; ?>"><?php echo $product_data['store_name'];?></a></div>
+        <!-- <div class="breadcrumb-item"><a href="<?php echo $store_link; ?>"><?php echo $product_data['store_name'];?></a></div> -->
         <div class="breadcrumb-item"><?php echo $product_data['product_name'];?></div>
         <a class="badge badge-danger text-white" id="cart_count_display" href="<?php echo $current_cart_url;?>" style="margin-left: 10px;<?php if($subscriber_id=="" || $current_cart_id==0) echo 'display:none;';?>"><i class="fas fa-shopping-cart"></i> <?php echo $cart_count; ?>
         </a>
@@ -42,40 +45,43 @@
 
   <div class="section-body">
     <div class="row">
-      <div class="col-12 col-sm-12 col-md-5 col-lg-4">
-        <article class="article article-style-c">            
-          <img style="height: 270px;width: 100%" src="<?php echo ($product_data['thumbnail']!='') ? base_url('upload/ecommerce/'.$product_data['thumbnail']) : base_url('assets/img/products/product-1.jpg'); ?>"/>
-          <?php echo mec_display_price($product_data['original_price'],$product_data['sell_price'],$currency_icon,'4'); ?>           
+      <div class="col-12 col-sm-12 col-md-6 col-lg-4">
+        <article class="article article-style-c" style="min-height: 497px">            
+          <img style="height: 345px;width: 100%" src="<?php echo ($product_data['thumbnail']!='') ? base_url('upload/ecommerce/'.$product_data['thumbnail']) : base_url('assets/img/products/product-1.jpg'); ?>"/>
+          <?php echo mec_display_price($product_data['original_price'],$product_data['sell_price'],$currency_icon,'4',$currency_position,$decimal_point,$thousand_comma); ?>           
           <div class="article-details">
-
-            <div class="row">
-              <div class="col-6 col-md-6">
-                <div class="form-group  float-right" style="margin-bottom: 0">
-                  <div class="input-group mb-3">
-                    <div class="input-group-append">
-                      <button class="btn btn-outline-primary add_to_cart" data-product-id="<?php echo $product_data['id'];?>" data-attributes="<?php echo $product_data['attribute_ids'];?>" data-action="remove" type="button" style="border-radius: 4px 0 0 4px;" data-toggle="tooltip" title="<?php echo $this->lang->line('Remove Item'); ?>"><h4 style="margin: 0;">-</h4></button>
-                    </div>
-                    <input type="text" class="form-control text-center" id="item_count" readonly value="<?php echo $quantity_in_cart;?>" style="max-width: 50px;">
-                    <div class="input-group-append">
-                      <button class="btn btn-outline-primary add_to_cart" data-product-id="<?php echo $product_data['id'];?>"  data-attributes="<?php echo $product_data['attribute_ids'];?>" data-action="add" type="button" data-toggle="tooltip" title="<?php echo $this->lang->line('Add Item');?>"><h4 style="margin: 0;">+</h4></button>
-                    </div>
-                  </div>
+            
+            <div class="form-group">
+              <div class="input-group mb-3">
+                <div class="input-group-append">
+                  <button class="btn btn-outline-primary add_to_cart" data-product-id="<?php echo $product_data['id'];?>" data-attributes="<?php echo $product_data['attribute_ids'];?>" data-action="remove" type="button" style="border-radius: 4px 0 0 4px;min-width: 120px;" data-toggle="tooltip" title="<?php echo $this->lang->line('Remove 1 from Cart'); ?>"><i class="fas fa-minus-circle"></i> <?php echo $this->lang->line('Remove'); ?> <?php echo $this->lang->line('(-1)');?></button>
                 </div>
-              </div>
-              <div class="col-6 col-md-6">
-                <a href="" class="btn btn-primary btn-lg btn-icon icon-left add_to_cart" data-product-id="<?php echo $product_data['id'];?>" <?php echo $have_attributes ? 'data-have-attribute="1"' :  'data-have-attribute="0"';?> data-action='add'><i class="fas fa-cart-plus"></i> <?php echo $this->lang->line("Add to Cart"); ?></a>
+                <input type="text" class="form-control text-center" data-toggle="tooltip" title="<?php echo $this->lang->line('Currently added to cart');?>" id="item_count" readonly value="<?php echo $quantity_in_cart;?>">
+                <div class="input-group-append">
+                  <button style="min-width: 120px;" class="btn btn-outline-primary add_to_cart" data-product-id="<?php echo $product_data['id'];?>"  data-attributes="<?php echo $product_data['attribute_ids'];?>" data-action="add" type="button" data-toggle="tooltip" title="<?php echo $this->lang->line('Add 1 to Cart');?>"><i class="fas fa-cart-plus"></i> <?php echo $this->lang->line('Add');?> <?php echo $this->lang->line('(+1)');?></button>
+                </div>
               </div>
             </div>
 
+            <!-- <a href="" class="btn btn-primary btn-lg btn-icon icon-left add_to_cart" data-product-id="<?php echo $product_data['id'];?>" <?php echo $have_attributes ? 'data-have-attribute="1"' :  'data-have-attribute="0"';?> data-action='add'><i class="fas fa-cart-plus"></i> <?php echo $this->lang->line("Add to Cart"); ?></a> -->
+
+            <div class="text-center">
+              
+              <a href="" id="single_buy_now" class="btn btn-primary add_to_cart buy_now btn-lg <?php echo ($cart_count==0 && $product_data['attribute_ids']=='')?'':'d-none'; ?>" data-attributes="<?php echo $product_data['attribute_ids'];?>" data-product-id="<?php echo $product_data['id'];?>" data-action='add'><i class="fas fa-credit-card"></i> <?php echo $this->lang->line("Buy Now"); ?></a>                    
+              
+              <a href="<?php echo $current_cart_url;?>" id="single_visit_store" class="btn btn-outline-dark btn-lg <?php if($cart_count==0) echo 'd-none';?>"><i class="fas fa-shopping-basket"></i> <?php echo $this->lang->line("Visit Cart"); ?></a>
+              
+            </div>
+             
           </div>
         </article>
       </div>     
-      <div class="col-12 col-sm-12 col-md-7 col-lg-8">
+      <div class="col-12 col-sm-12 col-md-6 col-lg-8">
         <div class="card" style="margin-bottom: 0;border-radius: 3px 3px 0 0;">
           <div class="card-header">
              <h4 style="font-size: 20px;" class="full_width">
               <?php echo $product_data['product_name'];?>
-              <span class="float-right"><?php echo mec_display_price($product_data['original_price'],$product_data['sell_price'],$currency_icon);?></span>          
+              <span class="float-right"><?php echo mec_display_price($product_data['original_price'],$product_data['sell_price'],$currency_icon,'1',$currency_position,$decimal_point,$thousand_comma);?></span>          
             </h4>
           </div>
         </div>
@@ -93,12 +99,12 @@
                 <a class="nav-link"  id="purchase_note-tab2" data-toggle="tab" href="#purchase_note" role="tab" aria-controls="purchase_note" aria-selected="false"><?php echo $this->lang->line("Note"); ?></a>
               </li>
             </ul>
-            <div class="tab-content tab-bordered" id="myTab3Content">
+            <div class="tab-content tab-bordered" id="myTab3Content" style="min-height: 333px">
               <div class="tab-pane fade <?php echo $have_attributes ? 'active show' : '';?>" id="details" role="tabpanel" aria-labelledby="details-tab2">
                 <div class="row">
                  <?php if($have_attributes) 
                  { ?>
-                  <div class="col-12 col-md-6">
+                  <div class="col-12 col-lg-6">
                     <ul class="list-group">
                       <?php                      
                       $attr_count = 0;
@@ -134,18 +140,20 @@
                   </div>
                  <?php 
                  } ?>
-                 <div class="<?php echo $have_attributes ? 'col-12 col-md-6' : 'col-12';?>">
-                    <div class="hero bg-primary text-white text-center" style="padding: 30px 20px;height: 100%;">
+                 <div class="<?php echo $have_attributes ? 'col-12 col-lg-6' : 'col-12';?>">
+                    <div class="hero bg-light text-drk text-center" style="padding: 30px 20px;height: 100%;">
                       <div class="hero-inner">                        
                         <p class="lead">                          
                           <?php echo isset($category_list[$product_data['category_id']]) ? $category_list[$product_data['category_id']] : $this->lang->line("Uncategorised");?>
                         </p>
-                        <h5>
-                          <?php echo $product_data['sales_count'];?> 
-                          <?php echo $this->lang->line("Sales"); ?>
-                        </h5>
+                        <h6>                          
+                          <?php echo $this->lang->line("Sales"); ?> : <?php echo $product_data['sales_count']." ".$this->lang->line("Units");?>  <br>
+                        </h6>
+                        <h6>
+                          <?php if($product_data['stock_display']=='1') echo$this->lang->line("Stock")." : ".$product_data['stock_item']." ".$this->lang->line("Units");?>
+                        </h6>
                         <div class="mt-3">
-                          <a href="<?php echo $store_link; ?>" class="btn btn-outline-white btn-icon icon-left"><i class="fas fa-store-alt"></i> <?php echo $this->lang->line("Visit")." ".$product_data['store_name']; ?></a>
+                          <a href="<?php echo $store_link; ?>" class="btn btn-outline-primary btn-icon icon-left"><i class="fas fa-store-alt"></i> <?php echo $this->lang->line("Visit")." ".$product_data['store_name']; ?></a>
                         </div>
                       </div>
                     </div>
@@ -164,16 +172,54 @@
           </div>
         </div>
                 
-      </div>     
+      </div>
     </div>
-  </div>
-  <br>
 
-  <div class="section-header">
-    <?php echo "&copy".date("Y")." ".$product_data['store_name'];?>  
+      <?php 
+      if($product_data['featured_images']!="")
+      {
+        $featured_images_array = explode(',', $product_data['featured_images']); ?>     
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h4><?php echo $this->lang->line("Featured Images"); ?></h4>
+              </div>
+              <div class="card-body">
+                  <div class="row">                 
+                      <?php 
+                      $slide=0;
+                      foreach ($featured_images_array as $key => $value)
+                      {
+                        $slide++;
+                          echo ' <div class="col-12 col-sm-6 col-md-6 col-lg-4" style="min-height:350px;"><div class="gallery gallery-md"><div class="gallery-item img-thumbnail" data-image="'.base_url('upload/ecommerce/'.$value).'"></div></div></div>';
+                      } ?>
+                    </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <?php 
+      } ?>
+
   </div>
 </section>
 
+<?php
+$store_mapping = base_url("ecommerce/store/".$product_data['store_unique_id']);
+if($subscriber_id!="") $store_mapping .= "?subscriber_id=".$subscriber_id;
+$footer_copyright = "<a href='".$store_mapping."'>".$product_data['store_name']."</a>";
+$footer_terms_use_link = $product_data['terms_use_link'];
+$footer_refund_link = $product_data['refund_policy_link'];
+?>
+<div class="mt-3 mb-3 text-center">
+  <?php echo "&copy".date("Y")." ".$footer_copyright;?><br>
+    <?php if(isset($footer_terms_use_link) && !empty($footer_terms_use_link))echo "<a href='".base_url("ecommerce/terms_of_service/".$product_data['store_unique_id']."/".$subscriber_id)."'>".$this->lang->line('Terms of service')."</a>"; ?>
+    <?php if(isset($footer_refund_link) && !empty($footer_refund_link)) echo "&nbsp;&nbsp;<a href='".base_url("ecommerce/refund_policy/".$product_data['store_unique_id']."/".$subscriber_id)."'>".$this->lang->line('Refund policy')."</a>"; ?>
+</div>
 
 <?php include(APPPATH."views/ecommerce/cart_js.php"); ?>
 <?php include(APPPATH."views/ecommerce/cart_style.php"); ?>
+<?php include(APPPATH."views/ecommerce/common_style.php"); ?>
+
+

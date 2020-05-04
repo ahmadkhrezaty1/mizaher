@@ -29,8 +29,41 @@
               <img class="mr-3 rounded-circle" width="50" src="<?php echo base_url('assets/images/wordpress.png'); ?>" alt="avatar">
               <div class="media-body">
                   <div class="accounts_details_collapse pointer">
-                      <h6 class="media-title"><?php echo $single_account['domain_name']; ?></h6>
-                      <div class="text-small text-muted"><?php echo $single_account['user_key']; ?></div>
+                        <h6 class="media-title"><?php echo $single_account['domain_name']; ?></h6>
+                        <div class="text-small text-muted"><?php echo $single_account['user_key']; ?></div>
+                        <?php
+                            if (isset($single_account['blog_category']) && ! empty($single_account['blog_category'])) :
+                            $categories = json_decode($single_account['blog_category'], true);
+                            $categories = (null != $categories && is_array($categories)) ? $categories : [];
+
+                            foreach ($categories as $key => $value) :
+                        ?>
+                            <div class="custom-control custom-checkbox">
+                              <input 
+                                    type="checkbox" 
+                                    name="wpsh_selected_category[]" 
+                                    class="custom-control-input" 
+                                    id="wp-blog-category-<?php echo $key; ?>" 
+                                    value="<?php echo $key; ?>"
+                                    <?php 
+                                        if (($post_action == 'edit' || $post_action == 'clone') 
+                                            && (is_array($campaigns_social_media) 
+                                                && count($campaigns_social_media) > 0)) :
+
+                                            $media_string = join($campaigns_social_media);
+                                            if (false !== strpos($media_string, 'wordpress_self_hosted_users_info')):
+                                                if (is_array($wpsh_selected_category) && in_array($key, $wpsh_selected_category)) :
+                                    ?>
+                                    checked
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                >
+                              <label class="custom-control-label" for="wp-blog-category-<?php echo $key; ?>"><?php echo $value ?></label>
+                            </div>        
+                            
+                        <?php endforeach; ?>
+                        <?php endif; ?>
                   </div>
               </div>
               

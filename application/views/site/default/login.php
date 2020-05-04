@@ -58,7 +58,10 @@
                   </a>
                 </div>
               </div>
-              <input id="password" type="password"value="<?php echo $default_pass ?>"  class="form-control" name="password" tabindex="2" required>
+              <input id="password" type="password" value="<?php echo $default_pass ?>"  class="form-control" name="password" tabindex="2" required>
+
+              <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
+
               <!-- <div class="invalid-feedback">
                 please fill in your password
               </div> -->

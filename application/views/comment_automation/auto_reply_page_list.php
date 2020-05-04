@@ -104,16 +104,6 @@
 		</div>
 	  </div>
 </section>
-<div class='text-center' style='padding:12px;border:.5px solid #dee2e6; color:#6777ef;background: #fff;'><?php echo $this->lang->line("الكومنت الاتوماتيكي : هو عبارة عن كومنت يتم وضعه على بوست محدد من الصفحة ويكون باسم الصفحة , بالتالي هذا البوست سيعود للظهور عند الفانز , خصوصا إولئك الذين وضعوا لايك, كومنت, تفاعل على هذا المنشور, وأيضا سيظهر لأصدقائهم بالتالي سيزيد تفاعل المنشور وبالتالي تفاعل الصفحة."); ?> 
-  <?php if(strtotime(date("Y-m-d")) <= strtotime("2024-3-4")) echo "<br><br><p class='text-danger'>".$this->lang->line("الرد التلقائي : يكون على مستوى الكومنتات والتعليقات فقط , فهو عبارة عن أدارة تستخدم للرد على تعليقات وتساؤلات الزبائن أو المستخدمين على المنشور الواحد الذي تم تفعيله للرد التلقائي, أو على مستوى كل منشورات الصفحة , وهنا يجب عليك استخدام الردود التلقائية على مستوى الصفحة .")."<p>"; ?>
-</div>
-
-	<!--<div class="section-header1">
-     
-<h1> ملاحظة هامة : هناك فرق كبير بين مصطلح الكومنت الاتوماتيكي والرد التلقائي.</h1>
-            <h1> <?php echo $this->lang->line("الكومنت التلقائي");?><a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("كومنت على البوست") ?>" data-content="<?php echo $this->lang->line("هو كومنت باسم الصفحة على بوستات محددة يهدف إلى زيادة التفاعل للصفحة وزيادة فرص رؤية البوستات من قبل الفانز") ?>"><i class='fas fa-info-circle'></i> </a></h1> <h1>هو كومنت باسم الصفحة لزيادة التفاعل, بينما</h1>
-            <h1> <?php echo $this->lang->line("الرد التلقائي");?><a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("على مستوى البوست المحدد فقط") ?>" data-content="<?php echo $this->lang->line("هو رد اتوماتيكي على كومنتات المستخدمين أو الفانز والذين وضعوا كومنت على بوستات الصفحة") ?>"><i class='fas fa-info-circle'></i> </a></h1><h1>هو رد باسم الصفحة على كومنت المستخدم</h1>
-        </div>-->
 
 
 <?php if(empty($page_info))
@@ -379,6 +369,8 @@ else
 			$("#auto_reply_post_id").val(post_id);
 			$("#manual_enable").val(manual_enable);
 
+			$("#create_label_auto_reply").attr("page_id_for_label",page_table_id);
+
 			$(".message").val('').click();
 			$(".filter_word").val('');
 			$("#auto_campaign_name").val('');
@@ -608,6 +600,7 @@ else
 							  $("#pageresponse_auto_reply_message_modal").modal('hide');
 							  $("#manual_reply_by_post").modal('hide');
 							  $("#manual_check_button_div").html('');
+							  $("#create_label_auto_reply").attr("page_id_for_label","");
 							});
 						$("button[post_id="+post_id+"][manual_enable='no']").removeClass('btn-outline-success').addClass('btn-outline-warning disabled').html(AlreadyEnabled);
 					}
@@ -623,19 +616,111 @@ else
 
 		});
 
-		
+
+		// create an new label and put inside label list
+		$(document).on('click','#create_label_auto_reply',function(e){
+		  e.preventDefault();
+
+		  	var page_id=$(this).attr('page_id_for_label');
+
+	  		swal("<?php echo $this->lang->line('Label Name'); ?>", {
+		    	content: "input",
+		    	button: {text: "<?php echo $this->lang->line('Create'); ?>"},
+		  	})
+		  	.then((value) => {
+		    	var label_name = `${value}`;
+			    if(label_name!="" && label_name!='null')
+			    {
+		      		$("#save_changes").addClass("btn-progress");
+			      	$.ajax({
+			        	context: this,
+			        	type:'POST',
+			        	dataType:'JSON',
+			        	url:"<?php echo site_url();?>home/common_create_label_and_assign",
+			        	data:{page_id:page_id,label_name:label_name},
+			        	success:function(response){
+
+			           		$("#save_changes").removeClass("btn-progress");
+
+			           		if(response.error) {
+			              		var span = document.createElement("span");
+			              		span.innerHTML = response.error;
+
+				              	swal({
+				                	icon: 'error',
+				                	title: '<?php echo $this->lang->line('Error'); ?>',
+				                	content:span,
+				              	});
+
+			           		} else {
+			              		var newOption = new Option(response.text, response.id, true, true);
+			              		$('#label_ids').append(newOption).trigger('change');
+			            	}
+			        	}
+			      	});
+			    }
+		  	});
+		});
+
+
+		// create an new label and put inside label list
+		$(document).on('click','#create_label_edit_auto_reply',function(e){
+		  e.preventDefault();
+
+		  	var page_id=$(this).attr('page_id_for_label');
+
+	  		swal("<?php echo $this->lang->line('Label Name'); ?>", {
+		    	content: "input",
+		    	button: {text: "<?php echo $this->lang->line('Create'); ?>"},
+		  	})
+		  	.then((value) => {
+		    	var label_name = `${value}`;
+			    if(label_name!="" && label_name!='null')
+			    {
+		      		$("#save_changes").addClass("btn-progress");
+			      	$.ajax({
+			        	context: this,
+			        	type:'POST',
+			        	dataType:'JSON',
+			        	url:"<?php echo site_url();?>home/common_create_label_and_assign",
+			        	data:{page_id:page_id,label_name:label_name},
+			        	success:function(response){
+
+			           		$("#save_changes").removeClass("btn-progress");
+
+			           		if(response.error) {
+			              		var span = document.createElement("span");
+			              		span.innerHTML = response.error;
+
+				              	swal({
+				                	icon: 'error',
+				                	title: '<?php echo $this->lang->line('Error'); ?>',
+				                	content:span,
+				              	});
+
+			           		} else {
+			              		var newOption = new Option(response.text, response.id, true, true);
+			              		$('#edit_label_ids').append(newOption).trigger('change');
+			            	}
+			        	}
+			      	});
+			    }
+		  	});
+		});
 
 		$(document).on('click','#modal_close',function(){
 			$(".page_list_item.active").click();
 			$("#auto_reply_message_modal").modal('hide');
 			$("#pageresponse_auto_reply_message_modal").modal('hide');
 			$("#manual_reply_by_post").modal('hide');
+			$("#create_label_auto_reply").attr('page_id_for_label','');
 		});
 
 		$(document).on('click','#edit_modal_close',function(){  
 			$(".page_list_item.active").click();
 			$("#edit_auto_reply_message_modal").modal('hide');
 			$("#pageresponse_edit_auto_reply_message_modal").modal('hide');
+			$("#create_label_edit_auto_reply").attr("page_id_for_label","");
 		});
 
 
@@ -688,6 +773,7 @@ else
 			  		$('#edit_label_ids').val(null).trigger('change');
 
 				$("#edit_auto_reply_page_id").val(response.edit_auto_reply_page_id);
+				$("#create_label_edit_auto_reply").attr('page_id_for_label',response.edit_auto_reply_page_id);
 				$("#edit_auto_reply_post_id").val(response.edit_auto_reply_post_id);
 				$("#edit_auto_campaign_name").val(response.edit_auto_campaign_name);
 
@@ -963,6 +1049,7 @@ else
 							  $(".page_list_item.active").click();
 							  $("#edit_auto_reply_message_modal").modal('hide');
 							  $("#pageresponse_edit_auto_reply_message_modal").modal('hide');
+							  $("#create_label_edit_auto_reply").attr("page_id_for_label","");
 							});
 					}
 					else
@@ -1133,6 +1220,9 @@ Add label will only work once private reply is setup.  And you will need to sync
 				              <label style="width:100%"><i class="fas fa-tags"></i> 
 				              '.$this->lang->line("Choose Labels").' '.$popover.'
 				              </label>                                 
+				              <label>
+				              	<a class="blue float-right pointer" page_id_for_label="" id="create_label_auto_reply"><i class="fas fa-plus-circle"></i> '.$this->lang->line("Create Label").'</a>
+				              </label>
 				            </div>       
 				        </div>
 				        <div class="col-9 col-md-9 hidden dropdown_con"> 
@@ -1601,7 +1691,10 @@ Add label will only work once private reply is setup.  And you will need to sync
 			            <div class="form-group">
 			              <label style="width:100%"><i class="fas fa-tags"></i> 
 			              '.$this->lang->line("Choose Labels").' '.$popover.'
-			              </label>                                 
+			              </label>
+			              <label>
+			              	<a class="blue float-right pointer" page_id_for_label="" id="create_label_edit_auto_reply"><i class="fas fa-plus-circle"></i> '.$this->lang->line("Create Label").'</a>
+			              </label>                              
 			            </div>       
 			        </div>
 			        <div class="col-9 col-md-9 hidden dropdown_con"> 

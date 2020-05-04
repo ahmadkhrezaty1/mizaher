@@ -22,6 +22,9 @@
     <div class="row">
       <div class="col-12">
           <form action="<?php echo base_url("admin/smtp_settings_action"); ?>" method="POST">
+            
+          <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
+
           <div class="card">
             <div class="card-body">              
                 <div class="form-group">
@@ -85,14 +88,14 @@
                           <label class="custom-switch">
                             <input type="radio" name="smtp_type" value="tls" class="custom-switch-input" <?php if($smtp_type=='tls') echo 'checked'; ?>>
                             <span class="custom-switch-indicator"></span>
-                            <span class="custom-switch-description"><?php echo $this->lang->line('TLS'); ?></span>
+                            <span class="custom-switch-description">TLS</span>
                           </label>
                         </div>
                         <div class="col-4 col-md-2">
                           <label class="custom-switch">
                             <input type="radio" name="smtp_type" value="ssl" class="custom-switch-input" <?php if($smtp_type=='ssl') echo 'checked'; ?>>
                             <span class="custom-switch-indicator"></span>
-                            <span class="custom-switch-description"><?php echo $this->lang->line('SSL'); ?></span>
+                            <span class="custom-switch-description">SSL</span>
                           </label>
                         </div>
                       </div>                                  
@@ -128,6 +131,7 @@
       var email=$("#recipient_email").val();
       var subject=$("#subject").val();
       var message=$("#message").val(); 
+      var csrf_token=$("#csrf_token").val(); 
 
       if(email=='') {
         $("#recipient_email").addClass('is-invalid');
@@ -159,7 +163,7 @@
         context: this,
         type:'POST' ,
         url: "<?php echo site_url(); ?>admin/send_test_email",
-        data:{email:email,message:message,subject:subject},
+        data:{email:email,message:message,subject:subject,csrf_token:csrf_token},
         success:function(response){
 
           $(this).removeClass('btn-progress');      

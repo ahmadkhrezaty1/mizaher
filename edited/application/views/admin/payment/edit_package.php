@@ -1,13 +1,3 @@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="<?php echo base_url() ?>assets/css/froala_editor.min.css">
-<link rel="stylesheet" href="<?php echo base_url() ?>assets/css/froala_style.min.css">
-<link rel="stylesheet" href="<?php echo base_url() ?>assets/css/plugins/code_view.css">
-<link rel="stylesheet" href="<?php echo base_url() ?>assets/css/plugins/image_manager.css">
-<link rel="stylesheet" href="<?php echo base_url() ?>assets/css/plugins/image.css">
-<link rel="stylesheet" href="<?php echo base_url() ?>assets/css/plugins/table.css">
-<link rel="stylesheet" href="<?php echo base_url() ?>assets/css/plugins/video.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.css">
-
 <section class="section section_custom">
   <div class="section-header">
     <h1><i class="fas fa-edit"></i> <?php echo $page_title; ?></h1>
@@ -23,8 +13,8 @@
   <div class="row">
     <div class="col-12">
 
-      <?php echo form_open_multipart(site_url('payment/edit_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
-        
+      <form class="form-horizontal" action="<?php echo site_url().'payment/edit_package_action';?>" method="POST">
+        <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
         <input name="id" value="<?php echo $value[0]["id"];?>"  class="form-control" type="hidden">              
         <input name="is_default" value="<?php echo $value[0]["is_default"];?>"  class="form-control" type="hidden">   
         
@@ -116,7 +106,7 @@
               <div class="col-12">
                 <div class="form-group">
                   <label for="description"> <?php echo $this->lang->line("Description")?></label>
-                  <textarea id="textarea" name="description" value="<?php echo $value[0]["description"];?>"  class="form-control"><?php echo $value[0]["description"];?></textarea>
+                  <textarea id="" name="description" style="height:300px !important;" class="summernote form-control"><?php echo $value[0]["description"];?></textarea>
                   <span class="red"><?php echo form_error('description'); ?></span>
                 </div>
               </div>
@@ -332,42 +322,3 @@
 <style type="text/css" media="screen">
   table label{margin-top: 10px;}
 </style>
-
-
-  <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.js"></script>
-  <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/mode/xml/xml.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/froala_editor.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/align.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/code_beautifier.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/code_view.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/draggable.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/image.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/image_manager.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/link.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/lists.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/paragraph_format.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/paragraph_style.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/table.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/video.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/url.min.js"></script>
-  <script type="text/javascript" src="<?php echo base_url() ?>assets/js/plugins/entities.min.js"></script>
-
-  <script>
-    (function () {
-      const editorInstance = new FroalaEditor('#textarea', {
-        enter: FroalaEditor.ENTER_P,
-        placeholderText: null,
-        events: {
-          initialized: function () {
-            const editor = this
-            this.el.closest('form').addEventListener('submit', function (e) {
-              console.log(editor.$oel.val())
-              e.preventDefault()
-            })
-          }
-        }
-      })
-    })()
-  </script>

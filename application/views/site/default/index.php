@@ -58,9 +58,9 @@ Description: This is a default theme provided by the Author of XeroChat. We high
     <![endif]-->
 
     <!--- PRELOADER -->
-    <div class="preeloader">
+   <!--  <div class="preeloader">
         <div class="preloader-spinner"></div>
-    </div>
+    </div> -->
 
     <!--SCROLL TO TOP-->
     <a href="#home" class="scrolltotop"><i class="fas fa-arrow-circle-up"></i></a>
@@ -93,6 +93,11 @@ Description: This is a default theme provided by the Author of XeroChat. We high
                                 <li <?php if($this->config->item('display_video_block') == '0') echo "class='hidden'"; ?>>
                                     <a href="#tutorial"><?php echo $this->lang->line('Tutorial');?></a>
                                 </li>
+                                <?php if ($this->session->userdata('license_type') == 'double')  {?>
+                                <li>
+                                    <a href="<?php echo base_url('blog');?>"><?php echo $this->lang->line('Blog'); ?></a>
+                                </li>
+                                <?php } ?>
                                 <li>
                                     <a href="#contact"><?php echo $this->lang->line('Contact'); ?></a>
                                 </li>

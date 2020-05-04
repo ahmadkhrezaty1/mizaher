@@ -77,6 +77,7 @@
           </div>
           <div class="card-footer bg-whitesmoke">
               <form class="from-show"  action="<?php echo base_url('simplesupport/reply_action/'); ?>" method="POST" enctype="multipart/form-data" novalidate>
+                  <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
                   <input type="hidden" name="id" value="<?php echo $ticket_info[0]['id']; ?>">
                   <div class="form-group">
                       <label><?php echo $this->lang->line('Reply Ticket'); ?></label>

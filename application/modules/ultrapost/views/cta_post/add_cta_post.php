@@ -205,6 +205,9 @@
 				<div class="card main_card">
 					<div class="card-header"><h4><i class="fab fa-facebook"></i> <?php echo $this->lang->line('Preview'); ?></h4></div>
 		          	<div class="card-body">
+		          		<div class="section-title text-info" style="margin: -30px 0px 10px 0px; font-weight: normal;">
+		          			<?php echo $this->lang->line('This preview may differ with actual post.'); ?>
+		          		</div>
 			          	<?php $profile_picture="https://graph.facebook.com/me/picture?access_token={$facebook_rx_fb_user_info_access_token}&width=150&height=150";?>
 						<ul class="list-unstyled list-unstyled-border">
 							<li class="media">

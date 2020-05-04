@@ -157,7 +157,7 @@ class Link_post_handler
 				$time_interval = $processed_input_data['time_interval'];
 
 				/* insert parent campaign */
-				if ($processed_input_data['repeat_times'] >= 0) {
+				if ($processed_input_data['repeat_times'] > 0) {
 					$processed_input_data['parent_campaign_id'] = 0;
 				}
 				$this->comboposter->basic->insert_data('comboposter_campaigns', $processed_input_data);

@@ -32,6 +32,7 @@ class Autoposting extends Home
 
     public function settings()
     {
+        $this->is_ultrapost_exist=$this->ultrapost_exist();
         $page_info=array();
         if($this->is_ultrapost_exist)
         {
@@ -125,6 +126,7 @@ class Autoposting extends Home
     public function campaign_settings()
     {
         $this->ajax_check();
+        $this->is_ultrapost_exist=$this->ultrapost_exist();
         $id=$this->input->post('id',true);
 
         if(!$this->is_ultrapost_exist && !$this->is_broadcaster_exist_deprecated)
@@ -502,6 +504,7 @@ class Autoposting extends Home
     {
         $this->ajax_check();
         if(!$_POST) exit();
+        $this->is_ultrapost_exist=$this->ultrapost_exist();
         $campaign_id=$this->input->post("campaign_id",true);
         $xdata=$this->basic->get_data("autoposting",array("where"=>array("id"=>$campaign_id,"user_id"=>$this->user_id)));
 
@@ -688,6 +691,21 @@ class Autoposting extends Home
         $id=$this->input->post('id',true);
 
         if($this->basic->update_data("autoposting",array("id"=>$id,"user_id"=>$this->user_id),array("status"=>"0")))
+        {
+            $this->session->set_flashdata('auto_success',1);
+        }
+        else
+        {
+            $this->session->set_flashdata('auto_success',0);
+        }
+    }
+
+    public function force_process()
+    {
+        if(!$_POST) exit();
+        $id=$this->input->post('id',true);
+
+        if($this->basic->update_data("autoposting",array("id"=>$id,"user_id"=>$this->user_id),array("cron_status"=>"0")))
         {
             $this->session->set_flashdata('auto_success',1);
         }

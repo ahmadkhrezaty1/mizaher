@@ -24,7 +24,7 @@
   <?php $status_options = array(""=>$this->lang->line("Status"),"0"=>$this->lang->line("Pending"),"1"=>$this->lang->line("Processing"),"2"=>$this->lang->line("Completed")) ?>
 
   <div class='text-center text-danger' style='padding:12px;border:.5px solid #dee2e6; color:#6777ef;background: #fff;font-size: 20px;'>
-    <?php  echo $this->lang->line("سيتم حذف حملة مسنجر بوت ميلانا في 30-06-2020 , يمكنكم الان استخدامها حتى ذلك التاريخ , بعدها سيتم عمل تحديث للمنصة وإلغائها بشكل كامل , ويمكنكم استعمال فقط بث رسائل مشتركي البوت ."); ?>
+    <?php  echo $this->lang->line("Conversation broadcast feature is going to be deprecated after 30th June,2020 for all old Facebook APPs. For new Facebook APP v6.0, conversation broadcasting feature will not work anymore."); ?>
   </div>
 
   <div class="section-body">

@@ -365,17 +365,17 @@ else
                                         <?php echo $this->lang->line("Select Sendinblue List"); ?>
                                         <a href="" class="text-danger float-right error_log_report2" data-type="Email Autoresponder" data-service="Sendinblue"><i class="fas fa-history"></i> <?php echo $this->lang->line('API Log'); ?></a>                                        
                                       </label>
-                                      <select class="form-control select2" id="sendinblue_list_id" name="sendinblue_list_id[]" multiple="" style="width: 100%;">
+                                      <select class="form-control select2" id="sendinblue_list_id2" name="sendinblue_list_id2[]" multiple="">
                                         <?php 
                                         // echo "<option value='0'>".$this->lang->line('Choose a List')."</option>";
-                                        foreach ($sendinblue_list as $key => $value) 
+                                        foreach ($sendinblue_list as $first_key => $first_value) 
                                         {
-                                          echo '<optgroup label="'.addslashes($value['tracking_name']).'">';
-                                          foreach ($value['data'] as $key2 => $value2) 
+                                          echo '<optgroup label="'.addslashes($first_value['tracking_name']).'">';
+                                          foreach ($first_value['data'] as $second_key => $second_value) 
                                           {
-                                            if(in_array($value2['table_id'], $selected_sendinblue_list_ids)) $selected = 'selected';
+                                            if(in_array($second_value['table_id'], $selected_sendinblue_list_ids)) $selected = 'selected';
                                             else $selected = '';
-                                            echo "<option value='".$value2['table_id']."' ".$selected.">".$value2['list_name']."</option>";
+                                            echo "<option value='".$second_value['table_id']."' ".$selected.">".$second_value['list_name']."</option>";
                                           }
                                           echo '</optgroup>';
                                         } ?>
@@ -396,7 +396,7 @@ else
                                         <?php echo $this->lang->line("Select Activecampaign List"); ?>
                                         <a href="" class="text-danger float-right error_log_report2" data-type="Email Autoresponder" data-service="Activecampaign"><i class="fas fa-history"></i> <?php echo $this->lang->line('API Log'); ?></a>                                        
                                       </label>
-                                      <select class="form-control select2" id="activecampaign_list_id" name="activecampaign_list_id[]" multiple="" style="width: 100%;">
+                                      <select class="form-control select2" id="activecampaign_list_id2" name="activecampaign_list_id2[]" multiple="">
                                         <?php 
                                         // echo "<option value='0'>".$this->lang->line('Choose a List')."</option>";
                                         foreach ($activecampaign_list as $key => $value) 
@@ -676,7 +676,7 @@ else
 
 
 
-    $("#mailchimp_list_id,#sms_api_id,#email_api_id").select2({ width: "100%" });
+    $("#mailchimp_list_id,#sms_api_id,#email_api_id,#sendinblue_list_id2,#activecampaign_list_id2").select2({ width: "100%" });
 
     $(".page_list_item").click(function(e) {
       e.preventDefault();
@@ -709,6 +709,9 @@ else
         dataType:'JSON',
         success:function(response){
           $("#mailchimp_list_id").val(response.selected_mailchimp_list_ids).trigger('change');
+          $("#sendinblue_list_id2").val(response.selected_sendinblue_list_ids).trigger('change');
+          $("#activecampaign_list_id2").val(response.selected_activecampaign_list_ids).trigger('change');
+
           $("#sms_api_id").val(response.sms_api_id).trigger('change');
           $("#sms_reply_message").val(response.sms_reply_message);
 
@@ -1031,8 +1034,8 @@ else
       var chat_human_email = $("#chat_human_email").val();
       var no_match_found_reply = $("#no_match_found_reply").val();
       var mailchimp_list_id = $("#mailchimp_list_id").val();
-      var sendinblue_list_id = $("#sendinblue_list_id").val();
-      var activecampaign_list_id = $("#activecampaign_list_id").val();
+      var sendinblue_list_id = $("#sendinblue_list_id2").val();
+      var activecampaign_list_id = $("#activecampaign_list_id2").val();
 
       var sms_api_id = $("#sms_api_id").val();
       var sms_reply_message = $("#sms_reply_message").val();

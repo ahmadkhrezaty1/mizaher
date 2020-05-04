@@ -103,28 +103,27 @@ function ecommerceGoBack() //used to go back to list as crud
 $(document).ready(function($) { 
 
   // var today = new Date();
-    $('.datepicker_x').datetimepicker({
-      theme:'light',
-      format:'Y-m-d H:i:s',
-      formatDate:'Y-m-d H:i:s',
-      // minDate: today
+  $('.datepicker_x').datetimepicker({
+    theme:'light',
+    format:'Y-m-d H:i:s',
+    formatDate:'Y-m-d H:i:s',
+    // minDate: today
+  });
+
+  $('.visual_editor').summernote({
+      height: 230,
+      minHeight: 230,
+      toolbar: [
+          ['style', ['style']],
+          ['font', ['bold', 'underline','italic','clear']],
+          ['fontname', ['fontname']],
+          ['color', ['color']],
+          ['para', ['ul', 'ol', 'paragraph']],
+          ['table', ['table']],
+          ['insert', ['link']],
+          ['view', ['codeview']]
+      ]
     });
-  
-    
-  $('.visualeditor').summernote({
-    minHeight: 250,
-    maxHeight: 500,
-    toolbar: [
-        ['style', ['style']],
-        ['font', ['bold', 'underline']],
-        // ['fontname', ['fontname']],
-        // ['color', ['color']],
-        // ['para', ['ul', 'ol', 'paragraph']],
-        // ['table', ['table']],
-        ['insert', ['link', 'picture']],
-        ['view', ['codeview']]
-    ]
-  });  
 
   $(".xscroll1").mCustomScrollbar({
   autoHideScrollbar:true,

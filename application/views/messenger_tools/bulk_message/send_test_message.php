@@ -95,7 +95,7 @@
 			var lastIndex = textAreaTxt.lastIndexOf("<br>");
 			
 			if(lastIndex!='-1')
-			textAreaTxt = textAreaTxt.substring(0, lastIndex);
+				textAreaTxt = textAreaTxt.substring(0, lastIndex);
 			
 		  var txtToAdd = " #LEAD_USER_FIRST_NAME# ";
 		  $(".emojionearea-editor").html(textAreaTxt + txtToAdd );

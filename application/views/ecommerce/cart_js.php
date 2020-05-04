@@ -54,12 +54,19 @@
           cart_count = response.cart_data.cart_count;
           cart_count = parseInt(cart_count);
         }
-        if(cart_count==0) $("#cart_count_display").hide();
+        if(cart_count==0) 
+        {
+          $("#cart_count_display").hide();
+          $("#single_visit_store").addClass('d-none');
+          if(attribute_ids=='')$("#single_buy_now").removeClass('d-none');
+        }
         else
         {
           $("#cart_count_display").html('<i class="fas fa-shopping-cart"></i> '+cart_count).show();
           $("#cart_count_display").attr('href',response.cart_data.cart_url);
           $("#cart_count_display").show();
+          $("#single_visit_store").attr('href',response.cart_data.cart_url).removeClass('d-none');
+          $("#single_buy_now").addClass('d-none');
         }
         
         if(response.status=='0')

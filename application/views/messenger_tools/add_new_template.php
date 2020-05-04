@@ -160,7 +160,7 @@
                 <div class="form-group">
                   <label><?php echo $this->lang->line("Choose a Page"); ?></label>
                   <?php 
-                    $page_list[''] = $this->lang->line("Please select a page");
+                    $page_list[''] = "Please select a page";
                     echo form_dropdown('page_table_id',$page_list,$default_page,'id="page_table_id" class="form-control select2"'); 
                   ?>
                 </div>       
@@ -195,7 +195,7 @@
                 <div class="form-group" id="postback_section">
                   <label>
                     <?php echo $this->lang->line("PostBack id"); ?>
-                    <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="<?php echo $this->lang->line("It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _") ?>"><i class='fa fa-info-circle'></i> </a>
+                    <a href="#" data-placement="right"  data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Supported Characters") ?>" data-content="It is recommended to use English characters as postback id. You can use a-z, A-Z, 0-9, -, , _"><i class='fa fa-info-circle'></i> </a>
                   </label>
                   <input type="text" name="template_postback_id" id="template_postback_id" class="form-control">
                 </div>       
@@ -217,6 +217,7 @@
                   <div class="form-group">
                     <label style="width:100%" class="show_label hidden">
                     '.$this->lang->line("Choose Labels").' '.$popover.'
+                    <a class="blue float-right pointer" page_id_for_label="" id="create_label_postback"><i class="fas fa-plus-circle"></i> '.$this->lang->line("Create Label").'</a>  
                     </label>
                     <span id="first_dropdown"></span>                                  
                   </div>       
@@ -308,7 +309,7 @@
                       </div> 
                       <br/>
 
-                      <div class="row">
+                      <div class="row" id="delay_and_typing_on_<?php echo $k; ?>">
                         <div class="col-12 col-sm-6">
                           <div class="row">
                             <div class="<?php if($iframe == '1') echo 'col-7'; else echo 'col-5' ?>"><label for="" style="margin-top: 8px; color: #34395e; font-size: 14px;"><?php echo $this->lang->line('Typing on display :'); ?></label></div>
@@ -335,6 +336,25 @@
                       </div>
                       <br/>
 
+                      <div class="row" id="One_Time_Notification_div_<?php echo $k; ?>" style="display: none;"> 
+                        <div class="col-12 col-md-6">              
+                          <div class="form-group">
+                            <label><?php echo $this->lang->line("Title"); ?>
+                            </label>
+                            <input class="form-control" type="text" name="otn_title_<?php echo $k; ?>" id="otn_title_<?php echo $k; ?>">
+                          </div>        
+                        </div> 
+                        <div class="col-12 col-md-6">              
+                          <div class="form-group">
+                            <label><?php echo $this->lang->line("OTN Postback"); ?>
+                            </label>
+                            <select class="form-control push_otn_postback select2" id="otn_postback_<?php echo $k; ?>" name="otn_postback_<?php echo $k; ?>">
+                              <option value=""></option>
+                            </select>
+                          </div>        
+                        </div> 
+                      </div>
+
                       <div class="row" id="text_div_<?php echo $k; ?>"> 
                         <div class="col-12">              
                           <div class="form-group">
@@ -359,7 +379,7 @@
                         <div class="col-12">              
                           <div class="form-group">
                             <label><?php echo $this->lang->line("Please provide your reply image"); ?></label>
-                            <input type="hidden" class="form-control"  name="image_reply_field_<?php echo $k; ?>" id="image_reply_field_<?php echo $k; ?>">
+                            <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="image_reply_field_<?php echo $k; ?>" id="image_reply_field_<?php echo $k; ?>">
                             <div id="image_reply_<?php echo $k; ?>"><?php echo $this->lang->line("upload") ?></div>
                             <img id="image_reply_div_<?php echo $k; ?>" style="display: none;" height="200px;" width="400px;">
                           </div>       
@@ -461,6 +481,9 @@
                                 <select class="form-control push_postback select2"  name="media_post_id_<?php echo $i; ?>_<?php echo $k; ?>" id="media_post_id_<?php echo $i; ?>_<?php echo $k; ?>">
                                   <option value=""></option>
                                 </select>
+
+                                <a href="" class="add_template float-left" page_id_add_postback=""><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                <a href="" class="ref_template float-right" page_id_ref_postback=""><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                                 
                               </div>
                               <div class="form-group" id="media_web_url_div_<?php echo $i; ?>_<?php echo $k; ?>" style="display: none;">
@@ -541,6 +564,9 @@
                                 <select class="form-control push_postback select2"  name="quick_reply_post_id_<?php echo $i; ?>_<?php echo $k; ?>" id="quick_reply_post_id_<?php echo $i; ?>_<?php echo $k; ?>">
                                   <option value=""></option>
                                 </select>
+
+                                <a href="" class="add_template float-left" page_id_add_postback=""><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                <a href="" class="ref_template float-right" page_id_ref_postback=""><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                               
                               </div>
                             </div>
@@ -626,6 +652,9 @@
                                 <select class="form-control push_postback select2"  name="text_with_button_post_id_<?php echo $i; ?>_<?php echo $k; ?>" id="text_with_button_post_id_<?php echo $i; ?>_<?php echo $k; ?>">
                                   <option value=""></option>
                                 </select>
+
+                                <a href="" class="add_template float-left" page_id_add_postback=""><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                <a href="" class="ref_template float-right" page_id_ref_postback=""><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                                 
                               </div>
                               <div class="form-group" id="text_with_button_web_url_div_<?php echo $i; ?>_<?php echo $k; ?>" style="display: none;">
@@ -667,7 +696,7 @@
                                   <div class="col-12 col-sm-6">
                                     <div class="form-group">
                                       <label><?php echo $this->lang->line("Please provide your reply image"); ?> <span style='color:orange !important;'>(<?php echo $this->lang->line("optional"); ?>)</span></label>
-                                      <input type="hidden" class="form-control"  name="generic_template_image_<?php echo $k; ?>" id="generic_template_image_<?php echo $k; ?>" />
+                                      <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="generic_template_image_<?php echo $k; ?>" id="generic_template_image_<?php echo $k; ?>" />
                                       <div id="generic_image_<?php echo $k; ?>"><?php echo $this->lang->line('upload'); ?></div>
                                     </div>                         
                                   </div>
@@ -740,6 +769,9 @@
                                       <select class="form-control push_postback select2"  name="generic_template_button_post_id_<?php echo $i; ?>_<?php echo $k; ?>" id="generic_template_button_post_id_<?php echo $i; ?>_<?php echo $k; ?>">
                                         <option value=""></option>
                                       </select>
+
+                                      <a href="" class="add_template float-left" page_id_add_postback=""><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                      <a href="" class="ref_template float-right" page_id_ref_postback=""><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                                     
                                     </div>
                                     <div class="form-group" id="generic_template_button_web_url_div_<?php echo $i; ?>_<?php echo $k; ?>" style="display: none;">
@@ -777,14 +809,18 @@
                           <div class="col-12" id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" style="display: none;"> 
                             <div class="card card-secondary">
                               <div class="card-header">
-                                <h4><?php echo $this->lang->line('Carousel Template').' '.$j; ?></h4>
+                                <h4 class="full_width"><?php echo $this->lang->line('Carousel Template').' '.$j; ?>
+                                  <?php if($j != 1) : ?>
+                                  <i class="fa fa-times-circle remove_carousel_template float-right red" previous_row_id="carousel_div_<?php echo $j-1; ?>_<?php echo $k; ?>" current_row_id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" counter_variable="carousel_template_counter_<?php echo $k; ?>" template_add_button="carousel_template_add_button_<?php echo $k; ?>" title="<?php echo $this->lang->line('Remove this item'); ?>"></i>
+                                  <?php endif; ?>
+                                </h4>
                               </div>
                               <div class="card-body">
                                 <div class="row">
                                   <div class="col-12 col-sm-6">
                                     <div class="form-group">
                                       <label><?php echo $this->lang->line("Please provide your reply image"); ?> <span style='color:orange !important;'>(<?php echo $this->lang->line("optional"); ?>)</span></label>
-                                      <input type="hidden" class="form-control"  name="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" id="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" />
+                                      <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" id="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" />
                                       <div id="generic_imageupload_<?php echo $j; ?>_<?php echo $k; ?>"><?php echo $this->lang->line('upload'); ?></div>
                                     </div>                         
                                   </div>
@@ -857,6 +893,9 @@
                                         <select class="form-control push_postback select2"  name="carousel_button_post_id_<?php echo $j."_".$i; ?>_<?php echo $k; ?>" id="carousel_button_post_id_<?php echo $j."_".$i; ?>_<?php echo $k; ?>">
                                           <option value=""></option>
                                         </select>
+
+                                        <a href="" class="add_template float-left" page_id_add_postback=""><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                        <a href="" class="ref_template float-right" page_id_ref_postback=""><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                                        
                                       </div>
                                       <div class="form-group" id="carousel_button_web_url_div_<?php echo $j."_".$i; ?>_<?php echo $k; ?>" style="display: none;">
@@ -940,6 +979,9 @@
                                 <select class="form-control push_postback select2"  name="list_with_button_post_id_<?php echo $k; ?>" id="list_with_button_post_id_<?php echo $k; ?>">
                                   <option value=""></option>
                                 </select>
+
+                                <a href="" class="add_template float-left" page_id_add_postback=""><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                <a href="" class="ref_template float-right" page_id_ref_postback=""><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                               </div>
                               <div class="form-group" id="list_with_button_web_url_div_<?php echo $k; ?>" style="display: none;">
                                 <label><?php echo $this->lang->line("Web Url"); ?></label>
@@ -1088,10 +1130,6 @@
 
 
 
-          
-
-
-
 <?php 
   $somethingwentwrong = $this->lang->line("something went wrong.");  
   $doyoureallywanttodeletethisbot = $this->lang->line("do you really want to delete this bot?");
@@ -1102,6 +1140,11 @@
   $(document).ready(function(e){
    
     $(".push_postback").select2({
+      tags: true,
+      width: '100%'
+    });
+
+    $(".push_otn_postback").select2({
       tags: true,
       width: '100%'
     });
@@ -1139,6 +1182,134 @@
     });
 
 
+    // create an new label and put inside label list
+    $(document).on('click','#create_label_postback',function(e){
+      e.preventDefault();
+
+      var page_id=$(this).attr('page_id_for_label');
+
+      swal("<?php echo $this->lang->line('Label Name'); ?>", {
+        content: "input",
+        button: {text: "<?php echo $this->lang->line('New Label'); ?>"},
+      })
+      .then((value) => {
+        var label_name = `${value}`;
+        if(label_name!="" && label_name!='null')
+        {
+          $("#save_changes").addClass("btn-progress");
+          $.ajax({
+            context: this,
+            type:'POST',
+            dataType:'JSON',
+            url:"<?php echo site_url();?>home/common_create_label_and_assign",
+            data:{page_id:page_id,label_name:label_name},
+            success:function(response){
+
+               $("#save_changes").removeClass("btn-progress");
+
+               if(response.error) {
+                  var span = document.createElement("span");
+                  span.innerHTML = response.error;
+
+                  swal({
+                    icon: 'error',
+                    title: '<?php echo $this->lang->line('Error'); ?>',
+                    content:span,
+                  });
+
+               } else {
+                  var newOption = new Option(response.text, response.id, true, true);
+                  $('#label_ids').append(newOption).trigger('change');
+                }
+            }
+          });
+        }
+      });
+
+    });
+
+
+    // getting postback list and making iframe
+    $('#add_template_modal').on('shown.bs.modal',function(){ 
+      var page_id=$(".add_template").attr("page_id_add_postback");
+      var iframe_link="<?php echo base_url('messenger_bot/create_new_template/1/');?>"+page_id;
+      $(this).find('iframe').attr('src',iframe_link); 
+    });   
+
+    if(default_page == '') refresh_template("0");
+
+    $("#loader").addClass('hidden');
+    // getting postback list and making iframe
+    // 
+    $(document).on('click','.add_template',function(e){
+        e.preventDefault();
+        var current_id=$(this).prev().prev().attr("id");
+        var page_id=$(this).attr("page_id_add_postback");
+        if(page_id=="")
+        {
+          swal('<?php echo $this->lang->line("Error"); ?>', "<?php echo $this->lang->line('Please select a page first')?>", 'error');
+          return false;
+        }
+        $("#add_template_modal").attr("current_id",current_id);
+        $("#add_template_modal").modal();
+    });
+
+    $(document).on('click','.ref_template',function(e){
+      e.preventDefault();
+      var current_val=$(this).prev().prev().prev().val();
+      var current_id=$(this).prev().prev().prev().attr("id");
+      var page_id=$(this).attr("page_id_ref_postback");
+       if(page_id=="")
+       {
+         swal('<?php echo $this->lang->line("Error"); ?>', "<?php echo $this->lang->line('Please select a page first')?>", 'error');
+         return false;
+       }
+       $.ajax({
+         type:'POST' ,
+         url: base_url+"messenger_bot/get_postback",
+         data: {page_id:page_id},
+         success:function(response){
+           $("#"+current_id).html(response).val(current_val);
+         }
+       });
+    });
+
+    $('#add_template_modal').on('hidden.bs.modal', function (e) { 
+      var current_id=$("#add_template_modal").attr("current_id");
+      var page_id=$(".add_template").attr("page_id_add_postback");
+       if(page_id=="")
+       {
+         swal('<?php echo $this->lang->line("Error"); ?>', "<?php echo $this->lang->line('Please select a page first')?>", 'error');
+         return false;
+       }
+       $.ajax({
+         type:'POST' ,
+         url: base_url+"messenger_bot/get_postback",
+         data: {page_id:page_id},
+         success:function(response){
+           $("#"+current_id).html(response);
+         }
+       });
+    });
+
+
+    function refresh_template(is_from_add_button='1')
+    {
+       var page_id=$(this).attr("page_id_ref_postback");
+       if(page_id=="")
+       {
+         alertify.alert('<?php echo $this->lang->line("Alert"); ?>',"<?php echo $this->lang->line('Please select a page first')?>",function(){});
+         return false;
+       }
+       $.ajax({
+         type:'POST' ,
+         url: base_url+"messenger_bot/get_postback",
+         data: {page_id:page_id,order_by:"template_name",is_from_add_button:is_from_add_button},
+         success:function(response){
+           $(".push_postback").html(response);
+         }
+       });
+     }
 
   });
 
@@ -1147,6 +1318,9 @@
     var page_id=$('#page_table_id').val();
     if(page_id=='') return;
 
+    $(".add_template").attr("page_id_add_postback",page_id);
+    $(".ref_template").attr("page_id_ref_postback",page_id);
+
     $.ajax({
       type:'POST' ,
       url: base_url+'messenger_bot/get_postback_dropdown_child',
@@ -1154,6 +1328,16 @@
       dataType : 'JSON',
       success:function(response){  
         $(".push_postback").html(response.dropdown);  
+      }
+    });
+
+    $.ajax({
+      type:'POST' ,
+      url: base_url+'messenger_bot/get_otn_postback_dropdown',
+      data: {page_auto_id:page_id},
+      dataType : 'JSON',
+      success:function(response){  
+        $(".push_otn_postback").html(response.dropdown);  
       }
     });
 
@@ -1188,6 +1372,7 @@
       data: {page_id:page_id},
       dataType : 'JSON',
       success:function(response){
+        $(".show_label #create_label_postback").attr("page_id_for_label",page_id); // put page_table_id for create label
         $('.show_label').removeClass('hidden');
         $('#first_dropdown').html(response.first_dropdown);      
       }
@@ -1348,6 +1533,23 @@
       if(temp < 6) $("#multiple_template_add_button").show();
     });
 
+    // remove carousel template 
+    $(document).on('click','.remove_carousel_template',function(){
+      var remove_carousel_counter_variable = $(this).attr('counter_variable');
+      var template_add_button = $(this).attr('template_add_button');
+      var remove_carousel_row_id = $(this).attr('current_row_id');
+      var previous_carousel_row_id = $(this).attr('previous_row_id');
+      $("#"+remove_carousel_row_id).find('textarea,input,select').val('');
+      $("#"+remove_carousel_row_id).hide();
+      eval(remove_carousel_counter_variable+"--");
+      var temp = eval(remove_carousel_counter_variable);
+      if(temp != 1)
+      {
+        $("#"+previous_carousel_row_id).find(".remove_carousel_template").show();
+      }
+      if(temp < 10) $("#"+template_add_button).show();
+    });
+
 
     var keyword_type = $("input[name=keyword_type]:checked").val();
     if(keyword_type == 'post-back')
@@ -1380,13 +1582,14 @@
       var selected_template = $("#template_type_<?php echo $template_type ?>").val();
       selected_template = selected_template.replace(/ /gi, "_");
 
-      var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media'];
+      var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media','One_Time_Notification'];
       template_type_array.forEach(templates_hide_show_function);
       function templates_hide_show_function(item, index)
       {
         var template_type_preview_div_name = "#"+item+"_preview_div";
-
         var template_type_div_name = "#"+item+"_div_<?php echo $template_type; ?>";
+        var delay_and_typing_on_div = "#delay_and_typing_on_<?php echo $template_type; ?>";
+
         if(selected_template == item){
           $(template_type_div_name).show();
           $(template_type_preview_div_name).show();
@@ -1395,7 +1598,7 @@
           $(template_type_div_name).hide();
           $(template_type_preview_div_name).hide();
         }
-    
+        $(delay_and_typing_on_div).show();
 
         if(selected_template=='text'){
           
@@ -1403,6 +1606,10 @@
                 autocomplete: false,
             pickerPosition: "bottom"
              });
+        }
+
+        if(selected_template=='One_Time_Notification'){
+          $(delay_and_typing_on_div).hide();
         }
     
         
@@ -2017,12 +2224,17 @@
       carousel_template_counter_<?php echo $template_type; ?>++;
     
       var x = carousel_template_counter_<?php echo $template_type; ?>;
+      // remove template
+      var previous_template_counter = x-1;
+      $("#carousel_div_"+previous_template_counter+"_<?php echo $template_type; ?>").find(".remove_carousel_template").hide();
     
       $("#carousel_div_"+x+"_<?php echo $template_type; ?>").show();
       $("#carousel_row_"+x+"_1"+"_<?php echo $template_type; ?>").show();
       if( carousel_template_counter_<?php echo $template_type; ?> == 10)
         $("#carousel_template_add_button_<?php echo $template_type; ?>").hide();
     });
+
+    
 
     var list_template_counter_<?php echo $template_type; ?>=2;
   
@@ -2191,9 +2403,6 @@
       }
 
     });
-
-
-
 
 
 
@@ -2628,6 +2837,21 @@
             }
           }
 
+          if(template_type == "One Time Notification")
+          {
+            var otn_title =$("#otn_title_"+m).val();
+            var otn_postback =$("#otn_postback_"+m).val();
+            if(otn_title == ''){
+              swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Provide OTN Title')?>", 'warning');
+              return;
+            }
+            if(otn_postback == ''){
+              swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Select an OTN Postback')?>", 'warning');
+              return;
+            }
+          }
+
+          
           if(template_type == "audio")
           {
             var audio_reply_field = $("#audio_reply_field_"+m).val();
@@ -2705,6 +2929,11 @@
                   return;
                 }
 
+                if(media_post_id_check == template_postback_id){
+                  swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please use different ID for main postback and button type postback.')?>", 'warning');
+                  return;
+                }
+
               }else if(media_type_check == 'web_url' || media_type_check == 'web_url_compact' || media_type_check == 'web_url_tall' || media_type_check == 'web_url_full'){
                 var media_web_url = "#media_web_url_"+n+"_"+m;
                 var media_web_url_check = $(media_web_url).val();
@@ -2749,6 +2978,11 @@
               {        
                 if(quick_reply_post_id_check == ''){
                   swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Provide Your PostBack Id')?>", 'warning');
+                  return;
+                }
+
+                if(quick_reply_post_id_check == template_postback_id){
+                  swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please use different ID for main postback and button type postback.')?>", 'warning');
                   return;
                 }
 
@@ -2801,6 +3035,10 @@
                 var text_with_button_post_id_check = $(text_with_button_post_id).val();
                 if(text_with_button_post_id_check == ''){
                   swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Provide Your PostBack Id')?>", 'warning');
+                  return;
+                }
+                if(text_with_button_post_id_check == template_postback_id){
+                  swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please use different ID for main postback and button type postback.')?>", 'warning');
                   return;
                 }
 
@@ -2857,6 +3095,11 @@
                 var generic_template_button_post_id_check = $(generic_template_button_post_id).val();
                 if(generic_template_button_post_id_check == ''){
                   swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Provide Your PostBack Id')?>", 'warning');
+                  return;
+                }
+
+                if(generic_template_button_post_id_check == template_postback_id){
+                  swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please use different ID for main postback and button type postback.')?>", 'warning');
                   return;
                 }
 
@@ -2932,6 +3175,11 @@
                       swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Provide Your PostBack Id')?>", 'warning');
                       return;
                     }
+                    if(carousel_button_post_id_check == template_postback_id){
+                      swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please use different ID for main postback and button type postback.')?>", 'warning');
+                      return;
+                    }
+                    
                   }else if(carousel_button_type_check == 'web_url' || carousel_button_type_check == 'web_url_compact' || carousel_button_type_check == 'web_url_full' || carousel_button_type_check == 'web_url_tall'){
 
                     var carousel_button_web_url = "#carousel_button_web_url_<?php echo $j;?>_"+n+"_"+m;
@@ -2997,7 +3245,14 @@
             });
 
           } 
+        },
+        error:function(response){
+          var span = document.createElement("span");
+          span.innerHTML = response.responseText;
+          swal({ title:'<?php echo $this->lang->line("Error!"); ?>', content:span,icon:'error'});
         }
+
+
 
       });
 
@@ -3055,6 +3310,23 @@
   }); 
 </script>
 
+
+<div class="modal fade" id="add_template_modal" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line('Add Template'); ?></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      </div>
+      <div class="modal-body"> 
+        <iframe src="" frameborder="0" width="100%" onload="resizeIframe(this)"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button data-dismiss="modal" type="button" class="btn-lg btn btn-dark"><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Close & Refresh List");?></button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <div class="modal fade" id="error_modal" data-backdrop="static" data-keyboard="false">

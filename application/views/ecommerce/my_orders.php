@@ -4,7 +4,7 @@
     <?php $store_unique_id =  isset($store_data['store_unique_id']) ? $store_data['store_unique_id'] : "";?>
     <h1 class="">
       <?php
-      $store_name_logo =  ($store_data['store_logo']!='') ? '<img style="height:50px;" alt="'.$store_data['store_name'].'" class="img-fluid" src="'.base_url("upload/ecommerce/".$store_data['store_logo']).'">' : $store_data['store_name'];
+      $store_name_logo =  ($store_data['store_logo']!='') ? '<img alt="'.$store_data['store_name'].'" class="img-fluid" src="'.base_url("upload/ecommerce/".$store_data['store_logo']).'">' : $store_data['store_name'];
       $currency = isset($ecommerce_config['currency']) ? $ecommerce_config['currency'] : "USD";
       $currency_icon = isset($currency_icons[$currency]) ? $currency_icons[$currency] : "$";
 
@@ -41,7 +41,7 @@
         <div class="card">
           <div class="card-body data-card">
             <div class="row">
-              <div class="col-12 col-md-9">
+              <div class="col-6 col-md-4">
                 <?php
                 $status_list[''] = $this->lang->line("Status");                
                 echo 
@@ -53,14 +53,14 @@
                   <div class="input-group-prepend d-none">
                     '.form_dropdown('search_status',$status_list,'','class="form-control select2" id="search_status"').'
                   </div>
-                  <input type="text" class="form-control" id="search_value" autofocus name="search_value" placeholder="'.$this->lang->line("Search...").'" style="max-width:25%;">
+                  <input type="text" class="form-control" id="search_value" autofocus name="search_value" placeholder="'.$this->lang->line("Search...").'">
                   <div class="input-group-append">
                     <button class="btn btn-primary" type="button" id="search_action"><i class="fas fa-search"></i> <span class="d-none d-sm-inline">'.$this->lang->line("Search").'</span></button>
                   </div>
                 </div>'; ?>                                          
               </div>
 
-              <div class="col-12 col-md-3">
+              <div class="col-6 col-md-8">
 
             	<?php
 			          echo $drop_menu ='<a href="javascript:;" id="search_date_range" class="btn btn-primary btn-lg float-right icon-left btn-icon"><i class="fas fa-calendar"></i> '.$this->lang->line("Choose Date").'</a><input type="hidden" id="search_date_range_val">';
@@ -81,9 +81,10 @@
                       </th>
                       <th><?php echo $this->lang->line("Subscriber ID")?></th>              
                       <th><?php echo $this->lang->line("Store")?></th>              
-                      <th><?php echo $this->lang->line("Status")?></th>              
+                      <th style="max-width: 130px"><?php echo $this->lang->line("Status")?></th>              
                       <th><?php echo $this->lang->line("Coupon")?></th>                   
                       <th><?php echo $this->lang->line("Amount")?></th>                   
+                      <th><?php echo $this->lang->line("Currency")?></th>                   
                       <th><?php echo $this->lang->line("Method")?></th>                   
                       <th><?php echo $this->lang->line("Transaction ID")?></th>                   
                       <th><?php echo $this->lang->line("Invoice")?></th>                              
@@ -103,6 +104,18 @@
 
 </section>
 
+<?php
+$store_mapping = base_url("ecommerce/store/".$store_data['store_unique_id']);
+if($subscriber_id!="") $store_mapping .= "?subscriber_id=".$subscriber_id;
+$footer_copyright = "<a href='".$store_mapping."'>".$store_data['store_name']."</a>";
+$footer_terms_use_link = $store_data['terms_use_link'];
+$footer_refund_link = $store_data['refund_policy_link'];
+?>
+<div class="mt-3 mb-3 text-center">
+  <?php echo "&copy".date("Y")." ".$footer_copyright;?><br>
+    <?php if(isset($footer_terms_use_link) && !empty($footer_terms_use_link))echo "<a href='".base_url("ecommerce/terms_of_service/".$store_data['store_unique_id']."/".$subscriber_id)."'>".$this->lang->line('Terms of service')."</a>"; ?>
+    <?php if(isset($footer_refund_link) && !empty($footer_refund_link)) echo "&nbsp;&nbsp;<a href='".base_url("ecommerce/refund_policy/".$store_data['store_unique_id']."/".$subscriber_id)."'>".$this->lang->line('Refund policy')."</a>"; ?>
+</div>
 
 
 <script>
@@ -127,7 +140,7 @@
 	  serverSide: true,
 	  processing:true,
 	  bFilter: false,
-	  order: [[ 11, "desc" ]],
+	  order: [[ 12, "desc" ]],
 	  pageLength: 10,
 	  ajax: {
 	      url: base_url+'ecommerce/my_orders_data',
@@ -148,11 +161,11 @@
 	  dom: '<"top"f>rt<"bottom"lip><"clear">',
 	  columnDefs: [
 	    {
-	        targets: [1,2,3,5,7,8,12],
+	        targets: [1,2,3,5,8,9,13],
 	        visible: false
 	    },
 	    {
-	        targets: [2,4,7,8,9,10,11,12],
+	        targets: [2,7,9,10,11,12,13],
 	        className: 'text-center'
 	    },
       {
@@ -160,7 +173,7 @@
           className: 'text-right'
       },
 	    {
-	        targets: [4,9,10],
+	        targets: [4,10,11],
 	        sortable: false
 	    }
 	  ],
@@ -298,3 +311,4 @@
     </div>
   </div>
 </div>
+<?php include(APPPATH."views/ecommerce/common_style.php"); ?>

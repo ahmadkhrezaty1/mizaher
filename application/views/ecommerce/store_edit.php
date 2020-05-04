@@ -18,7 +18,7 @@
 		<form action="#" enctype="multipart/form-data" id="plugin_form">
 			<input type="hidden" name="hidden_id" value="<?php echo $xdata['id']; ?>">
 			<div class="row">
-				<div class="col-12 col-lg-6">
+				<div class="col-12">
 					<div class="card main_card no_shadow">
 						<div class="card-header p-0 mb-3" style="border:none;min-height: 0;"><h4><i class="fas fa-store"></i> <?php echo $this->lang->line("Store Information"); ?></h4></div>	
 						<div class="card-body p-0">
@@ -205,7 +205,7 @@
 							  <div class="col-12 col-md-6">
 							    <div class="form-group">
 							      <label class="full_width"><?php echo $this->lang->line('Logo'); ?> 
-							       <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Logo"); ?>" data-content="<?php echo $this->lang->line("Maximum: 1MB, Format: JPG/PNG, Preferred ratio: 16:9"); ?>"><i class='fa fa-info-circle'></i> </a>
+							       <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Logo"); ?>" data-content="<?php echo $this->lang->line("Maximum: 1MB, Format: JPG/PNG, Recommended dimension : 200x50"); ?> / 120x120"><i class='fa fa-info-circle'></i> </a>
 							       <?php if($xdata['store_logo']!='') { ?>
 							         <span class="img_preview float-right pointer text-primary" data-src="<?php echo $xdata['store_logo'];?>"><i title='<?php echo $this->lang->line("Preview"); ?>' data-toggle="tooltip" class="fas fa-eye"></i></span>
 							       <?php } ?>
@@ -223,7 +223,7 @@
 							  <div class="col-12 col-md-6">
 							    <div class="form-group">
 							      <label class="full_width"><?php echo $this->lang->line('Favicon'); ?> 
-							       <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Favicon"); ?>" data-content="<?php echo $this->lang->line("Maximum: 1MB, Format: JPG/PNG, Preference: Square image / 100x100 px"); ?>"><i class='fa fa-info-circle'></i> </a>
+							       <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Favicon"); ?>" data-content="<?php echo $this->lang->line("Maximum: 1MB, Format: JPG/PNG, Recommended dimension : 100x100"); ?>"><i class='fa fa-info-circle'></i> </a>
 							       <?php if($xdata['store_favicon']!='') { ?>
 							      	  <span class="img_preview float-right pointer text-primary" data-src="<?php echo $xdata['store_favicon'];?>"><i title='<?php echo $this->lang->line("Preview"); ?>' data-toggle="tooltip" class="fas fa-eye"></i></span>
 							       <?php } ?>
@@ -236,6 +236,21 @@
 							      </div>
 							      <span class="red"></span>
 							    </div>
+							  </div>
+							  			 
+							  <br><br>
+							  <div class="form-group col-12 mt-2">
+							    <label>
+							      <?php echo $this->lang->line("Terms of service"); ?>
+							    </label>
+							    <textarea name="terms_use_link"  class="form-control visual_editor"><?php echo $xdata['terms_use_link']; ?></textarea>                    
+							  </div>
+
+							  <div class="form-group col-12">
+							    <label>
+							      <?php echo $this->lang->line("Refund policy"); ?>
+							    </label>
+								<textarea name="refund_policy_link"  class="form-control visual_editor"><?php echo $xdata['refund_policy_link']; ?></textarea>     
 							  </div>
 
 
@@ -265,7 +280,7 @@
 					</div>
 				</div>
 
-				<div class="col-12 col-lg-6">
+				<div class="col-12">
 					<div class="card main_card no_shadow">
 						<div class="card-header p-0 p-0 mb-3" style="border: none;min-height: 0;"><h4 class="full_width"><i class="fas fa-check-circle"></i> <?php echo $this->lang->line("Confirmation Message"); ?> <a id="variables" class="float-right text-warning pointer"><i class="fas fa-circle"></i> <?php echo  $this->lang->line("Variables"); ?></a></h4> </div>				
 							<div class="card-body p-0">
@@ -340,35 +355,35 @@
 						                         	<span class="block5">
 
 						                         		<ul class="list-group list-group-flush">
-														  <li class="list-group-item"><span class="text-muted"><?php echo $this->lang->line('Order confirmation'); ?></span></li>
+														  <li class="list-group-item"><span class="text-muted">Order confirmation</span></li>
 
 														  <li class="list-group-item">
 														  	<div class="media">
 														  	  <img class="align-self-start mr-3" src="<?php echo base_url('assets/img/products/product-6.jpg') ?>">
 														  	  <div class="media-body">
-														  	    <h6 class="mt-0"><?php echo $this->lang->line('Cart item title'); ?></h6>
-														  	    <p class="text-muted"><?php echo $this->lang->line('Price'); ?> : XX</p>
-														  	    <p class="text-muted"><?php echo $this->lang->line('Qty'); ?> : XX</p>
+														  	    <h6 class="mt-0">Cart item title</h6>
+														  	    <p class="text-muted">Price : XX</p>
+														  	    <p class="text-muted">Qty : XX</p>
 														  	  </div>
 														  	</div>
 														  </li>
 
 														  <li class="list-group-item payment_info">
-														  	<p class="text-muted"><?php echo $this->lang->line('Paid with'); ?></p>
-														  	<h6><?php echo $this->lang->line('Payment method'); ?></h6>
+														  	<p class="text-muted">Paid with</p>
+														  	<h6>Payment method</h6>
 														  	<br>
-														  	<p class="text-muted"><?php echo $this->lang->line('Deliver to'); ?></p>
-														  	<h6><?php echo $this->lang->line('Delivery address...'); ?></h6>
+														  	<p class="text-muted">Deliver to</p>
+														  	<h6>Delivery address...</h6>
 														  </li>
 
 														  <li class="list-group-item">
-														  	<span class="text-muted float-left"><?php echo $this->lang->line('Total'); ?></span>
+														  	<span class="text-muted float-left">Total</span>
 														  	<b class="float-right">$xx.xx</b>
 														  </li>
 														</ul>
 						                         	</span>
 						                         	<span class="block4">
-						                         		<textarea data-toggle="tooltip" title="<?php echo $this->lang->line('Additonal information about next purchase like coupon can be displayed here, click to edit text.'); ?>" name="msg_reminder_text_checkout_next" id="msg_reminder_text_checkout_next"><?php echo isset($messenger_content['checkout']['checkout_text_next']) ? $messenger_content['checkout']['checkout_text_next'] : $this->lang->line("You can see your order history and status here");?></textarea>		                         	
+						                         		<textarea data-toggle="tooltip" title="<?php echo $this->lang->line('Additonal information about next purchase like coupon can be displayed here, click to edit text.'); ?>" name="msg_reminder_text_checkout_next" id="msg_reminder_text_checkout_next"><?php echo isset($messenger_content['checkout']['checkout_text_next']) ? $messenger_content['checkout']['checkout_text_next'] : "You can see your order history and status here.";?></textarea>		                         	
 						                         		<p>
 						                         		<input data-toggle="tooltip" title="<?php echo $this->lang->line('Buyer order page link will be embedded here, click to edit button name. Clean text if you do not want this.'); ?>" value="<?php echo isset($messenger_content['checkout']['checkout_btn_next']) ? $messenger_content['checkout']['checkout_btn_next'] : 'Visit Shop';?>" class="btn btn-block bg-white" name="msg_checkout_btn_website" id="msg_checkout_btn_website"/>
 						                         		</p>
@@ -488,7 +503,7 @@
 								             	 { ?>
 								                   <div class="reminder_badge_warpper tab-pane fade d-none <?php if($i==1) echo 'active show';?> " style="border:none;padding: 0" id="email_reminder<?php echo $i;?>" role="tabpanel" aria-labelledby="email_reminder_link>">
 								                       <span class="reminder_badge" data-toggle="tooltip" title="<?php echo $this->lang->line('Email Reminder').' #'.$i; ?>"><i class="fas fa-bell"></i> <?php echo $i;?></span>
-								                       <textarea class="visualeditor" data-toggle="tooltip" title="<?php echo $this->lang->line('Email content goes here.');?>" name="email_reminder_text_checkout[]" id="email_reminder_text_checkout<?php echo $i;?>"><?php echo isset($email_content['reminder'][$i]['reminder_text']) ? $email_content['reminder'][$i]['reminder_text'] : 'Hi {{last_name}},<br>Have you forgot something special? Stock limited, complete your order before it is out of stock : <a href="{{order_url}}" target="_blank">Checkout here</a></a><br>Happy shopping :)';?></textarea>							                       	
+								                       <textarea class="visual_editor" data-toggle="tooltip" title="<?php echo $this->lang->line('Email content goes here.');?>" name="email_reminder_text_checkout[]" id="email_reminder_text_checkout<?php echo $i;?>"><?php echo isset($email_content['reminder'][$i]['reminder_text']) ? $email_content['reminder'][$i]['reminder_text'] : 'Hi {{last_name}},<br>Have you forgot something special? Stock limited, complete your order before it is out of stock : <a href="{{order_url}}" target="_blank">Checkout here</a></a><br>Happy shopping :)';?></textarea>							                       	
 								                   </div>
 								               	 <?php 
 								             	 } 
@@ -496,7 +511,7 @@
 								             	 
 								             	<div class="reminder_badge_warpper tab-pane fade active show" style="border:none;padding: 0" id="email_checkout" role="tabpanel" aria-labelledby="email_checkout_link>">	
 								             	 	<span class="reminder_badge" data-toggle="tooltip" title="<?php echo $this->lang->line('Email Checkout'); ?>"><i class="fas fa-shopping-bag"></i></span>										
-								                	<textarea class="visualeditor"  data-toggle="tooltip" title="<?php echo $this->lang->line('Email content goes here.'); ?>" name="email_reminder_text_checkout_next" id="email_reminder_text_checkout_next"><?php echo isset($email_content['checkout']['checkout_text']) ? $email_content['checkout']['checkout_text'] : '';?></textarea>
+								                	<textarea class="visual_editor"  data-toggle="tooltip" title="<?php echo $this->lang->line('Email content goes here.'); ?>" name="email_reminder_text_checkout_next" id="email_reminder_text_checkout_next"><?php echo isset($email_content['checkout']['checkout_text']) ? $email_content['checkout']['checkout_text'] : '';?></textarea>
 								                </div>
 
 								          </div>
@@ -535,7 +550,7 @@
 						                	 } 
 						                	 ?>
 						                  <li class="nav-item">		                         			
-						                  	<a href="#email_checkout"  id="email_checkout_link" class="nav-link nav_cart active" data-toggle="pill" role="tab" aria-controls="msg_checkout" aria-selected="true"><i class="fas fa-shopping-bag"></i> <?php echo $this->lang->line("Email Confirmation");?></a> 
+						                  	<a href="#email_checkout"  id="email_checkout_link" class="nav-link nav_cart active" data-toggle="pill" role="tab" aria-controls="msg_checkout" aria-selected="true"><i class="fas fa-shopping-bag"></i> <?php echo $this->lang->line("Checkout Email");?></a> 
 						                  </li>
 						                </ul>
 						              </div>
@@ -616,6 +631,7 @@
 
 <?php include(APPPATH.'views/ecommerce/store_style.php'); ?>
 <?php include(APPPATH.'views/ecommerce/store_js.php'); ?>
+<?php include(APPPATH.'views/ecommerce/editor_js.php'); ?>
 
 
 <div class="modal fade" id="preview_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">

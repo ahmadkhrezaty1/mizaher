@@ -199,17 +199,19 @@ class Simplesupport extends Home
     {
         if($_POST)
         {
+            
+            $this->csrf_token_check();
             $post=$_POST;
             foreach ($post as $key => $value) 
             {
-                $$key=$value;
+                $$key=$this->input->post($key,true);
             }
         }if($this->session->userdata('license_type') != 'double') exit;
 
-        $data['ticket_title'] = $ticket_title;
-        $data['ticket_text'] = trim($ticket_text);
+        $data['ticket_title'] = strip_tags($ticket_title);
+        $data['ticket_text'] = $ticket_text;
         $data['user_id'] = $this->user_id;
-        $data['support_category']= trim($support_category);
+        $data['support_category']= $support_category;
         $data['ticket_open_time']= date("Y-m-d H:i:s");
         if($this->basic->insert_data('fb_simple_support_desk',$data))
         {
@@ -319,7 +321,8 @@ class Simplesupport extends Home
     public function reply($id=0)
     {
    
-        if($id==0) exit();if($this->session->userdata('license_type') != 'double') exit;
+        if($id==0) exit();
+        if($this->session->userdata('license_type') != 'double') exit;
         $data['body'] = 'ticket_reply';
         $join = array(
             'fb_support_category' => 'fb_simple_support_desk.support_category=fb_support_category.id,left'
@@ -352,10 +355,12 @@ class Simplesupport extends Home
     {
        if($_POST)
        {
+           
+           $this->csrf_token_check();
            $post=$_POST;
            foreach ($post as $key => $value) 
            {
-               $$key=$value;
+               $$key=$this->input->post($key,true);
            }
        }
        

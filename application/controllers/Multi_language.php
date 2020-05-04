@@ -1144,7 +1144,7 @@ class Multi_language extends Home
                     $languages .= 'array('."\n";
                     foreach ($combined_arr as $key => $value) 
                     {
-                        $value = str_replace(array("'",'"'), array('`','`'), $value);
+                        $value = str_replace(array("'",'"'), array('`','`'), trim($value));
                         $languages .='    '.'"' . $key. '"' . ' ' . '=>' . ' ' . '"' . addslashes($value). '",' . "\n";
                     }
                     $languages .= ')';

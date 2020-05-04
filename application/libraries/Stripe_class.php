@@ -1,7 +1,5 @@
-<?php 
-
+<?php
 require_once('Stripe/lib/Stripe.php');
-
 class Stripe_class{
 
 	public $secret_key="";
@@ -94,32 +92,32 @@ public function stripe_payment_action(){
 	
 	catch(Stripe_CardError $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_CardError";
+		$response['message'] ="Stripe_CardError"." : ".$e->getMessage();
 		return $response;
 	}
 	
 	 catch (Stripe_InvalidRequestError $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_InvalidRequestError";
+		$response['message'] ="Stripe_InvalidRequestError"." : ".$e->getMessage();
 		return $response;
 	
 	} catch (Stripe_AuthenticationError $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_AuthenticationError";
+		$response['message'] ="Stripe_AuthenticationError"." : ".$e->getMessage();
 		return $response;
 	
 	} catch (Stripe_ApiConnectionError $e) {
 	 	$response['status'] ="Error";
-		$response['message'] ="Stripe_ApiConnectionError";
+		$response['message'] ="Stripe_ApiConnectionError"." : ".$e->getMessage();
 		return $response;
 	} catch (Stripe_Error $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_Error";
+		$response['message'] ="Stripe_Error"." : ".$e->getMessage();
 		return $response;
 	  
 	} catch (Exception $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_Error";
+		$response['message'] ="Stripe_Error"." : ".$e->getMessage();
 		return $response;
 	}
 		

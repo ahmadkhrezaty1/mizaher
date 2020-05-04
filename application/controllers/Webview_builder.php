@@ -215,7 +215,9 @@ class Webview_builder extends Home
 		    }
 		}
 
-		if($this->basic->is_exist("add_ons",array("project_id"=>31)))
+		$this->user_id=$user_id;
+
+		 if($this->addon_exist("messenger_bot_connectivity")) 
 		$this->thirdparty_webhook_trigger($page_id,$subscriber_id,"trigger_birthdate");
 
 		$response['error']='0';
@@ -343,7 +345,9 @@ class Webview_builder extends Home
 		    }
 		}
 
-		if($this->basic->is_exist("add_ons",array("project_id"=>31)))
+		$this->user_id=$user_id;
+
+		if($this->addon_exist("messenger_bot_connectivity")) 
 		$this->thirdparty_webhook_trigger($page_id,$subscriber_id,"trigger_email");
 
 
@@ -497,7 +501,9 @@ class Webview_builder extends Home
 		    }
 		}
 
-		if($this->basic->is_exist("add_ons",array("project_id"=>31)))
+		$this->user_id=$user_id;
+
+		if($this->addon_exist("messenger_bot_connectivity")) 
 		$this->thirdparty_webhook_trigger($page_id,$subscriber_id,"trigger_phone_number");
 
 
@@ -651,7 +657,9 @@ class Webview_builder extends Home
 		    }
 		}
 
-		if($this->basic->is_exist("add_ons",array("project_id"=>31)))
+		$this->user_id=$user_id;
+
+		if($this->addon_exist("messenger_bot_connectivity")) 
 		$this->thirdparty_webhook_trigger($page_id,$subscriber_id,"trigger_location");
 
 		$response['error']='0';

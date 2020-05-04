@@ -40,7 +40,7 @@
         <div class="card">
           <div class="card-body data-card">
             <div class="row">
-              <div class="col-12 col-md-9">
+              <div class="col-12 col-md-10">
                 <?php 
 
                 echo 
@@ -51,6 +51,20 @@
                   <div class="input-group-prepend" id="label_dropdown">
                   </div>
 
+                  <div class="input-group-prepend">
+                    <select class="form-control select2" id="gender" name="gender">
+                      <option value="">'.$this->lang->line("Gender").'</option>
+                      <option value="male">'.$this->lang->line("Male").'</option>
+                      <option value="female">'.$this->lang->line("Female").'</option>
+                    </select>
+                  </div>
+
+                  <select class="form-control select2" id="email_phone_birth" name="email_phone_birth[]" multiple="multiple" style="max-width:40%;">
+                    <option value="has_phone">'.$this->lang->line("Has Phone").'</option>
+                    <option value="has_email">'.$this->lang->line("Has Email").'</option>
+                    <option value="has_birthdate">'.$this->lang->line("Has Birth Date").'</option>
+                  </select>
+
                   <input type="text" class="form-control" autofocus id="search_value" name="search_value" placeholder="'.$this->lang->line("Search...").'" style="max-width:30%;">
                   <div class="input-group-append">
                     <button class="btn btn-primary" type="button" id="search_subscriber"><i class="fas fa-search"></i> <span class="d-none d-sm-inline">'.$this->lang->line("Search").'</span></button>
@@ -58,7 +72,7 @@
                 </div>'; ?>                                          
               </div>
 
-              <div class="col-12 col-md-3">
+              <div class="col-12 col-md-2">
 
                 <div class="btn-group dropleft float-right">
                   <button type="button" class="btn btn-primary btn-lg dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -142,6 +156,21 @@
     var auto_selected_page = "<?php echo $auto_selected_page; ?>";
     var auto_selected_subscriber = "<?php echo $auto_selected_subscriber; ?>";
 
+    setTimeout(function(){ 
+      $('#search_date_range').daterangepicker({
+        ranges: {
+          '<?php echo $this->lang->line("Last 30 Days");?>': [moment().subtract(29, 'days'), moment()],
+          '<?php echo $this->lang->line("This Month");?>'  : [moment().startOf('month'), moment().endOf('month')],
+          '<?php echo $this->lang->line("Last Month");?>'  : [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        },
+        startDate: moment().subtract(29, 'days'),
+        endDate  : moment()
+      }, function (start, end) {
+        $('#search_date_range_val').val(start.format('YYYY-M-D') + '|' + end.format('YYYY-M-D')).change();
+      });
+    }, 3000);
+    
+
     $("document").ready(function(){
       var perscroll;
       var table1 = '';
@@ -161,6 +190,8 @@
                 d.page_id = $('#page_id').val();
                 d.search_value = $('#search_value').val();
                 d.label_id = $('#label_id').val();
+                d.email_phone_birth = $('#email_phone_birth').val();
+                d.gender = $('#gender').val();
             }
         },
         language: 
@@ -200,7 +231,7 @@
       });
 
       $(document).on('change', '#page_id', function(e) {
-      var page_id =$(this).val();        
+          var page_id =$(this).val();   
           $.ajax({
             context: this,
             type:'POST',
@@ -225,6 +256,14 @@
       });
 
       $(document).on('change', '#label_id', function(e) {
+          table1.draw(false);
+      });
+
+      $(document).on('change', '#gender', function(e) {
+          table1.draw(false);
+      });
+
+      $(document).on('change', '#email_phone_birth', function(e) {
           table1.draw(false);
       });
 
@@ -383,11 +422,12 @@
           var id=$(this).attr('data-id');
           var subscribe_id=$(this).attr('data-subscribe-id');
           var page_id=$(this).attr('data-page-id'); // auto id
+          $("#search_subscriber_id").val(subscribe_id);
 
           $("#subscriber_actions_modal").modal();
           get_subscriber_action_content(id,subscribe_id,page_id); 
-          if(is_webview_exist)
-          get_subscriber_formdata(id,subscribe_id,page_id);  
+          if(is_webview_exist) get_subscriber_formdata(id,subscribe_id,page_id);
+          $("#default-tab").click();
       });
 
       $(document).on('click','.client_thread_subscribe_unsubscribe',function(e){
@@ -614,12 +654,106 @@
         }); 
       }
 
+      var table2 = '';
+
+      $(document).on('change', '#search_status', function(e) {
+          table2.draw();
+      });
+
+      $(document).on('change', '#search_date_range_val', function(e) {
+          e.preventDefault();
+          table2.draw();
+      });
+
+      $(document).on('keypress', '#search_value2', function(e) {
+        if(e.which == 13) $("#search_action").click();
+      });
+
+      $(document).on('click', '#search_action', function(event) {
+        event.preventDefault(); 
+        table2.draw();
+      });
+
+      $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        var id = $(this).attr('id');
+        if(id=='purchase-tab' ) setTimeout(function(){ get_purchase_data(); }, 1000);
+      });
+
+
+      function get_purchase_data()
+      {
+        var perscroll2;
+        if (table2 == '')
+        {
+          table2 = $("#mytable2").DataTable({
+            serverSide: true,
+            processing:true,
+            bFilter: false,
+            order: [[ 10, "desc" ]],
+            pageLength: 10,
+            ajax: {
+                url: base_url+'subscriber_manager/my_orders_data',
+                type: 'POST',
+                data: function ( d )
+                {
+                    d.search_subscriber_id = $('#search_subscriber_id').val();
+                    d.search_status = $('#search_status').val();
+                    d.search_value = $('#search_value2').val();
+                    d.search_date_range = $('#search_date_range_val').val();
+                }
+            },
+            language: 
+            {
+              url: "<?php echo base_url('assets/modules/datatables/language/'.$this->language.'.json'); ?>"
+            },
+            dom: '<"top"f>rt<"bottom"lip><"clear">',
+            columnDefs: [
+              {
+                  targets: [1,3,6,7,11],
+                  visible: false
+              },
+              {
+                  targets: [5,7,8,9,10,11],
+                  className: 'text-center'
+              },
+              {
+                  targets: [3,4],
+                  className: 'text-right'
+              },
+              {
+                  targets: [2,8,9],
+                  sortable: false
+              }
+            ],
+            fnInitComplete:function(){  // when initialization is completed then apply scroll plugin
+                   if(areWeUsingScroll)
+                   {
+                     if (perscroll2) perscroll2.destroy();
+                     perscroll2 = new PerfectScrollbar('#mytable2_wrapper .dataTables_scrollBody');
+                   }
+               },
+               scrollX: 'auto',
+               fnDrawCallback: function( oSettings ) { //on paginition page 2,3.. often scroll shown, so reset it and assign it again 
+                   if(areWeUsingScroll)
+                   { 
+                     if (perscroll2) perscroll2.destroy();
+                     perscroll2 = new PerfectScrollbar('#mytable2_wrapper .dataTables_scrollBody');
+                   }
+               }
+          });
+        } 
+        else table2.draw();
+      }
+
     $('#subscriber_actions_modal').on('hidden.bs.modal', function () { 
       table1.draw(false);
     });
     $('#subscriber_actions_modal').on('shown.bs.modal', function() {
         $(document).off('focusin.modal');
-    });
+    }); 
+
+    
+
   });
 
 </script>
@@ -694,21 +828,87 @@
                   <a class="nav-link" id="formdata-tab" data-toggle="tab" href="#formdata" role="tab" aria-controls="formdata" aria-selected="false"><?php echo $this->lang->line("Custom Form Data"); ?></a>
                 </li>
                 <?php endif; ?>
+                <?php if($ecommerce_exist == 'yes') : ?>
+                <li class="nav-item">
+                  <a class="nav-link" id="purchase-tab" data-toggle="tab" href="#purchase" role="tab" aria-controls="purchase" aria-selected="false"><?php echo $this->lang->line("Purchase History"); ?></a>
+                </li>
+                <?php endif; ?>
               </ul>
               <div class="tab-content" id="myTabContent">
+                
                 <div class="tab-pane fade active show" id="default" role="tabpanel" aria-labelledby="default-tab">
                   <div class="row multi_layout">
                   </div> 
                 </div>
+
                 <div class="tab-pane fade" id="formdata" role="tabpanel" aria-labelledby="formdata-tab">
-                  
                   <div class="card no_shadow" style="border:1px solid #dee2e6;border-top:none;border-radius:0">
                     <div class="card-body">
                       <div class="row formdata_div" style="padding-top:20px;"></div>                  
                     </div>
                   </div>
-
                 </div>
+
+                <div class="tab-pane fade" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
+                  <div class="card no_shadow data-card" style="border:1px solid #dee2e6;border-top:none;border-radius:0">
+                    <div class="card-body">
+                      <div class="row purchase_div" style="padding-top:20px;"></div>
+                      <div class="row">
+                        <div class="col-12 col-md-9">
+                          <?php
+                          $status_list[''] = $this->lang->line("Status");                
+                          echo 
+                          '<div class="input-group mb-3" id="searchbox">
+                            <div class="input-group-prepend d-none">
+                              <input type="text" value="" name="search_subscriber_id" id="search_subscriber_id">
+                            </div>
+                            <div class="input-group-prepend d-none">
+                              '.form_dropdown('search_status',$status_list,'','class="form-control select2" id="search_status"').'
+                            </div>
+                            <input type="text" class="form-control" id="search_value2" autofocus name="search_value2" placeholder="'.$this->lang->line("Search...").'" style="max-width:25%;">
+                            <div class="input-group-append">
+                              <button class="btn btn-primary" type="button" id="search_action"><i class="fas fa-search"></i> <span class="d-none d-sm-inline">'.$this->lang->line("Search").'</span></button>
+                            </div>
+                          </div>'; ?>                                          
+                        </div>
+
+                        <div class="col-12 col-md-3">
+
+                        <?php
+                          echo $drop_menu ='<a href="javascript:;" id="search_date_range" class="btn btn-primary btn-lg float-right icon-left btn-icon"><i class="fas fa-calendar"></i> '.$this->lang->line("Choose Date").'</a><input type="hidden" id="search_date_range_val">';
+                        ?>
+
+                                                   
+                        </div>
+                      </div>
+
+                      <div class="table-responsive2">
+                          <table class="table table-bordered" id="mytable2">
+                            <thead>
+                              <tr>
+                                <th>#</th>      
+                                <th style="vertical-align:middle;width:20px">
+                                    <input class="regular-checkbox" id="datatableSelectAllRows" type="checkbox"/><label for="datatableSelectAllRows"></label>        
+                                </th>         
+                                <th style="max-width: 130px"><?php echo $this->lang->line("Status")?></th>              
+                                <th><?php echo $this->lang->line("Coupon")?></th>                   
+                                <th><?php echo $this->lang->line("Amount")?></th>                   
+                                <th><?php echo $this->lang->line("Currency")?></th>                   
+                                <th><?php echo $this->lang->line("Method")?></th>                   
+                                <th><?php echo $this->lang->line("Transaction ID")?></th>                   
+                                <th><?php echo $this->lang->line("Invoice")?></th>                              
+                                <th><?php echo $this->lang->line("Docs")?></th>                              
+                                <th><?php echo $this->lang->line("Ordered at")?></th>                   
+                                <th><?php echo $this->lang->line("Paid at")?></th>                  
+                              </tr>
+                            </thead>
+                          </table>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
                          

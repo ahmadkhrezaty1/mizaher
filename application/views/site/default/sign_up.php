@@ -39,6 +39,7 @@
 
 
           <form method="POST" action="<?php echo site_url('home/sign_up_action');?>">
+            <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
             <div class="row">
               <div class="form-group col-6">
                 <label for="frist_name"><?php echo $this->lang->line("Name"); ?> *</label>
@@ -81,11 +82,9 @@
             </div>
 
             <div class="form-group">
-              <button type="submit" class="btn btn-primary btn-lg btn-block" id="MME_LINK_LOADER_01">
+              <button type="submit" class="btn btn-primary btn-lg btn-block">
                 <i class="fa fa-user-circle"></i> <?php echo $this->lang->line("sign up"); ?>
               </button>
-             <!-- <script type="text/javascript" src="https://milanaproject.org/bot/messenger_bot_enhancers/mme_link.js?code=21046342"></script>-->
-
             </div>
           </form>
         </div>

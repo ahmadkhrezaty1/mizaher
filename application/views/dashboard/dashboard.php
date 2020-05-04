@@ -260,7 +260,7 @@ $month_name_array = array(
               <div>
                 <div class="product-item pb-3">
                   <div class="product-image">
-                    <img alt="image" src="<?php echo $value['image_path']; ?>" class="rounded-circle">
+                    <img alt="image" src="<?php echo $value['image_path']; ?>" class="rounded-circle" style="width:80px;height: 80px;">
                   </div>
                   <div class="product-details">
                     <div class="product-name"><?php if($value['full_name'] != '') echo $value['full_name']; else echo $value['first_name'].' '.$value['last_name']; ?></div>
@@ -269,7 +269,7 @@ $month_name_array = array(
                     </div>
                     <div class="text-muted text-small"><?php echo $value['subscribed_at']; ?></div>
                     <div class="product-cta">
-                      <a href="https://facebook.com<?php echo $value['link']; ?>" target="_BLANK" class="btn <?php if($value['link'] == 'disabled') echo 'btn-secondary'; else echo 'btn-primary'; ?>" <?php if($value['link'] == 'disabled') echo 'title="'.$this->lang->line('Please go to subscriber manager menu and then sync leads to get this link.').'"'; ?> <?php if($value['link'] == 'disabled') echo 'onclick="return false"'; ?> ><i class="far fa-hand-point-right"></i> <?php echo $this->lang->line('Go to Inbox'); ?></a>
+                      <a href="https://facebook.com<?php echo $value['link']; ?>" target="_BLANK" class="btn <?php if($value['link'] == 'disabled') echo 'btn-outline-secondary'; else echo 'btn-primary'; ?>" <?php if($value['link'] == 'disabled') echo 'title="'.$this->lang->line('Please go to subscriber manager menu and then sync leads to get this link.').'"'; ?> <?php if($value['link'] == 'disabled') echo 'onclick="return false"'; ?> ><i class="far fa-hand-point-right"></i> <?php echo $this->lang->line('Go to Inbox'); ?></a>
                     </div>
                   </div>
                 </div>

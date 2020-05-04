@@ -14,14 +14,14 @@
     <div class="row">
 
       <?php if($this->session->userdata('user_type') == 'Admin' || in_array(223,$this->module_access)) : ?>
-        <div class="col-lg-6">
+        <div class="col-lg-4">
           <div class="card card-large-icons">
             <div class="card-icon text-primary">
-              <i class="fas fa-list"></i>
+              <i class="fas fa-paper-plane"></i>
             </div>
             <div class="card-body">
-              <h4><?php echo $this->lang->line("Text/Link/Image/Video Post"); ?></h4>
-              <p><?php echo $this->lang->line("Text, Link, Image, Video Poster..."); ?></p>
+              <h4><?php echo $this->lang->line("Multimedia Post"); ?></h4>
+              <p><?php echo $this->lang->line("Text, Link, Image, Video"); ?></p>
               <a href="<?php echo base_url("ultrapost/text_image_link_video"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
             </div>
           </div>
@@ -30,14 +30,14 @@
 
 
       <?php if($this->session->userdata('user_type') == 'Admin' || in_array(220,$this->module_access)) : ?>
-        <div class="col-lg-6">
+        <div class="col-lg-4">
           <div class="card card-large-icons">
             <div class="card-icon text-primary">
               <i class="fas fa-hand-point-up"></i>
             </div>
             <div class="card-body">
               <h4><?php echo $this->lang->line("CTA Post"); ?></h4>
-              <p><?php echo $this->lang->line("Call to Action Poster"); ?></p>
+              <p><?php echo $this->lang->line("Call to Action"); ?></p>
               <a href="<?php echo base_url("ultrapost/cta_post"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
             </div>
           </div>
@@ -46,35 +46,20 @@
 
       
       <?php if($this->session->userdata('user_type') == 'Admin' || in_array(222,$this->module_access)) : ?>
-        <div class="col-lg-6">
+        <div class="col-lg-4">
           <div class="card card-large-icons">
             <div class="card-icon text-primary">
               <i class="fas fa-video"></i>
             </div>
             <div class="card-body">
               <h4><?php echo $this->lang->line("Carousel/Video Post"); ?></h4>
-              <p><?php echo $this->lang->line("Carousel, Video Poster..."); ?></p>
+              <p><?php echo $this->lang->line("Carousel, Slideshow"); ?></p>
               <a href="<?php echo base_url("ultrapost/carousel_slider_post"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
             </div>
           </div>
         </div>
       <?php endif; ?>
 
-
-      <?php if($this->session->userdata('user_type') == 'Admin' || in_array(256,$this->module_access)) : ?>
-        <div class="col-lg-6">
-          <div class="card card-large-icons">
-            <div class="card-icon text-primary">
-              <i class="fas fa-rss"></i>
-            </div>
-            <div class="card-body">
-              <h4><?php echo $this->lang->line("RSS Auto Post"); ?></h4>
-              <p><?php echo $this->lang->line("RSS Auto Poster"); ?></p>
-              <a href="<?php echo base_url("autoposting/settings"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
-            </div>
-          </div>
-        </div>
-      <?php endif; ?>
 
     </div>
   </div>
@@ -99,14 +84,14 @@
       <div class="row">
 
         <?php if($this->session->userdata('user_type') == 'Admin' || in_array(110,$this->module_access)) : ?>
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card card-large-icons">
               <div class="card-icon text-primary">
                 <i class="fa fa-file-text fa-4x"></i>
               </div>
               <div class="card-body">
                 <h4><?php echo $this->lang->line("Text Post"); ?></h4>
-                <p><?php echo $this->lang->line("Text Poster"); ?></p>
+                <!-- <p><?php echo $this->lang->line("Text Poster"); ?></p> -->
                 <a href="<?php echo base_url("comboposter/text_post/campaigns"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
               </div>
             </div>
@@ -115,14 +100,14 @@
 
 
         <?php if($this->session->userdata('user_type') == 'Admin' || in_array(111,$this->module_access)) : ?>
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card card-large-icons">
               <div class="card-icon text-primary">
                 <i class="fa fa-picture-o fa-4x"></i>
               </div>
               <div class="card-body">
                 <h4><?php echo $this->lang->line("Image Post"); ?></h4>
-                <p><?php echo $this->lang->line("Image Poster"); ?></p>
+                <!-- <p><?php echo $this->lang->line("Image Poster"); ?></p> -->
                 <a href="<?php echo base_url("comboposter/image_post/campaigns"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
               </div>
             </div>
@@ -131,14 +116,14 @@
 
         
         <?php if($this->session->userdata('user_type') == 'Admin' || in_array(112,$this->module_access)) : ?>
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card card-large-icons">
               <div class="card-icon text-primary">
                 <i class="fas fa-video fa-4x"></i>
               </div>
               <div class="card-body">
                 <h4><?php echo $this->lang->line("Video Post"); ?></h4>
-                <p><?php echo $this->lang->line("Video Poster"); ?></p>
+                <!-- <p><?php echo $this->lang->line("Video Poster"); ?></p> -->
                 <a href="<?php echo base_url("comboposter/video_post/campaigns"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
               </div>
             </div>
@@ -147,14 +132,14 @@
 
 
         <?php if($this->session->userdata('user_type') == 'Admin' || in_array(113,$this->module_access)) : ?>
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card card-large-icons">
               <div class="card-icon text-primary">
                 <i class="fa fa-link fa-4x"></i>
               </div>
               <div class="card-body">
                 <h4><?php echo $this->lang->line("Link Post"); ?></h4>
-                <p><?php echo $this->lang->line("Link Poster"); ?></p>
+                <!-- <p><?php echo $this->lang->line("Link Poster"); ?></p> -->
                 <a href="<?php echo base_url("comboposter/link_post/campaigns"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
               </div>
             </div>
@@ -163,19 +148,37 @@
 
 
         <?php if($this->session->userdata('user_type') == 'Admin' || in_array(114,$this->module_access)) : ?>
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card card-large-icons">
               <div class="card-icon text-primary">
                 <i class="fa fa-html5 fa-4x"></i>
               </div>
               <div class="card-body">
                 <h4><?php echo $this->lang->line("HTML Post"); ?></h4>
-                <p><?php echo $this->lang->line("HTML Poster"); ?></p>
+                <!-- <p><?php echo $this->lang->line("HTML Poster"); ?></p> -->
                 <a href="<?php echo base_url("comboposter/html_post/campaigns"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
               </div>
             </div>
           </div>
         <?php endif; ?>
+
+
+
+        <?php if($this->session->userdata('user_type') == 'Admin' || in_array(256,$this->module_access)) : ?>
+          <div class="col-lg-4">
+            <div class="card card-large-icons">
+              <div class="card-icon text-primary">
+                <i class="fas fa-rss text-warning"></i>
+              </div>
+              <div class="card-body">
+                <h4><?php echo $this->lang->line("RSS Feed Post"); ?></h4>
+                <!-- <p><?php echo $this->lang->line("Really Simple Syndication"); ?></p> -->
+                <a href="<?php echo base_url("autoposting/settings"); ?>" class="card-cta"><?php echo $this->lang->line("Campaign List"); ?> <i class="fas fa-chevron-right"></i></a>
+              </div>
+            </div>
+          </div>
+        <?php endif; ?>
+
 
       </div>
     </div>

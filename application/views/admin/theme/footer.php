@@ -18,6 +18,6 @@
       ?>
     </ul>
 
-    v<?php echo $this->APP_VERSION;?>
+    <!-- v<?php echo $this->APP_VERSION;?> -->
   </div>
 </footer>

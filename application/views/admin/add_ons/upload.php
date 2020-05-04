@@ -42,9 +42,9 @@
                 $list1=$list2="";
                 if(function_exists('ini_get'))
                 {
-                  $make_dir = (!function_exists('mkdir')) ? $this->lang->line("Not working"):$this->lang->line("Working");
+                  $make_dir = (!function_exists('mkdir')) ? $this->lang->line("Not Enabled"):$this->lang->line("Enabled");
                   $zip_archive = (!class_exists('ZipArchive')) ? $this->lang->line("Not Enabled"):$this->lang->line("Enabled");
-                  $list1 .= "<li class='list-group-item'><b>mkdir()</b> : ".$make_dir."</li>"; 
+                  $list1 .= "<li class='list-group-item'><b>mkdir</b> : ".$make_dir."</li>"; 
                     $list1 .= "<li class='list-group-item'><b>upload_max_filesize</b> : ".ini_get('upload_max_filesize')."</li>";   
                   $list1 .= "<li class='list-group-item'><b>max_input_time</b> : ".ini_get('max_input_time')."</li>";
                   $list2 .= "<li class='list-group-item'><b>ZipArchive</b> : ".$zip_archive."</li>";  

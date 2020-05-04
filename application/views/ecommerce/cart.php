@@ -5,6 +5,11 @@
   }
 </style>
 <?php
+$currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+$decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+$thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
+
+
 $order_title = $this->lang->line("Checkout");
 $order_date = date("jS M,Y",strtotime($webhook_data_final['updated_at']));      
 $wc_first_name = $webhook_data_final['first_name'];
@@ -23,6 +28,9 @@ $coupon_code = $webhook_data_final['coupon_code'];
 $coupon_type = $webhook_data_final['coupon_type'];
 $coupon_amount =  $webhook_data_final['discount'];
 $subtotal =  $webhook_data_final['subtotal'];
+$currency_left = $currency_right = "";
+if($currency_position=='left') $currency_left = $currency_icon;
+if($currency_position=='right') $currency_right = $currency_icon;
 
 $payment_method =  $webhook_data_final['payment_method'];
 if($payment_method=='') $payment_method =  '<span class="badge badge-danger">'.$this->lang->line("Incomplete").'</span>';      
@@ -63,8 +71,8 @@ foreach ($product_list as $key => $value)
   $price = isset($value['unit_price']) ? $value['unit_price'] : 0;
   $item_total = $price*$quantity;
   // $subtotal_count+=$item_total;
-  $item_total = number_format((float)$item_total, 2, '.', '');
-  $price = number_format((float)$price, 2, '.', '');
+  $item_total = mec_number_format($item_total,$decimal_point,$thousand_comma);
+  $price = mec_number_format($price,$decimal_point,$thousand_comma);
   $image_url = (isset($value['thumbnail']) && !empty($value['thumbnail'])) ? base_url('upload/ecommerce/'.$value['thumbnail']) : base_url('assets/img/example-image.jpg');        
   $permalink = base_url("ecommerce/product/".$value['product_id']);
   $attribute_info = (is_array(json_decode($value["attribute_info"],true))) ? json_decode($value["attribute_info"],true) : array();
@@ -90,9 +98,9 @@ foreach ($product_list as $key => $value)
     <td data-width="40">'.$i.'</td>
     <td class="text-center" width="140px;"><a href="'.$permalink.'"><img src="'.$image_url.'" style="width:120px; height:120px;" class="rounded"></a></td>
     <td><a href="'.$permalink.'">'.$title.'</a> <span class="text-warning"> '.$off."</span>".$attribute_print.'<br><br><a class="pointer text-danger delete_item" href="#" data-id="'.$value['id'].'">'.$this->lang->line("Remove").'</a></td>
-    <td class="text-center">'.$currency_icon.$price.'</td>
+    <td class="text-center">'.$currency_left.$price.$currency_right.'</td>
     <td class="text-center">'.$quantity.'</td>
-    <td class="text-right">'.$currency_icon.$item_total.'</td>
+    <td class="text-right">'.$currency_left.$item_total.$currency_right.'</td>
   </tr>';
 }
 $table_data .= '</tbody></table></div>';        
@@ -102,7 +110,7 @@ if($coupon_code!='' && $coupon_type=="fixed cart")
 $coupon_info2 = 
 '<div class="invoice-detail-item">
   <div class="invoice-detail-name">'.$this->lang->line("Discount").'</div>
-  <div class="invoice-detail-value">-'.$currency_icon.number_format((float)$coupon_amount, 2, '.', '').'</div>
+  <div class="invoice-detail-value">-'.$currency_left.mec_number_format($coupon_amount,$decimal_point,$thousand_comma).$currency_right.'</div>
 </div>';
 
 $tax_info = "";
@@ -110,7 +118,7 @@ if($total_tax>0)
 $tax_info = 
 '<div class="invoice-detail-item">
     <div class="invoice-detail-name">'.$this->lang->line("Tax").'</div>
-    <div class="invoice-detail-value">'.$currency_icon.number_format((float)$total_tax, 2, '.', '').'</div>
+    <div class="invoice-detail-value">'.$currency_left.mec_number_format($total_tax,$decimal_point,$thousand_comma).$currency_right.'</div>
 </div>';
 
 $shipping_info = "";
@@ -118,25 +126,25 @@ if($shipping_cost>0)
 $shipping_info = 
 '<div class="invoice-detail-item">
     <div class="invoice-detail-name">'.$this->lang->line("Shipping").'</div>
-    <div class="invoice-detail-value">'.$currency_icon.number_format((float)$shipping_cost, 2, '.', '').'</div>
+    <div class="invoice-detail-value">'.$currency_left.mec_number_format($shipping_cost,$decimal_point,$thousand_comma).$currency_right.'</div>
 </div>';
 
 // $coupon_code." (".$currency_icon.$coupon_amount.")";      
 
 //if($webhook_data_final['action_type']!='checkout') $subtotal = $subtotal_count;
-$subtotal = number_format((float)$subtotal, 2, '.', '');
-$checkout_amount = number_format((float)$checkout_amount, 2, '.', '');
-$coupon_amount = number_format((float)$coupon_amount, 2, '.', '');
+$subtotal = mec_number_format($subtotal,$decimal_point,$thousand_comma);
+$checkout_amount = mec_number_format($checkout_amount,$decimal_point,$thousand_comma);
+$coupon_amount = mec_number_format($coupon_amount,$decimal_point,$thousand_comma);
 
 $store_name_formatted = '<a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'">'.$store_name.'</a>';
- $store_image = ($webhook_data_final['store_logo']!='') ? '<div class="col-lg-12 text-center"><a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'"><img src="'.base_url("upload/ecommerce/".$webhook_data_final['store_logo']).'" style="height:50px"></a><hr></div>':'';
+ $store_image = ($webhook_data_final['store_logo']!='') ? '<div class="col-lg-12 text-center"><a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'"><img src="'.base_url("upload/ecommerce/".$webhook_data_final['store_logo']).'"></a><hr></div>':'';
 
 $output = "";
 $after_checkout_details = 
 $coupon_info2.$shipping_info.$tax_info.'  
 <div class="invoice-detail-item">
   <div class="invoice-detail-name">'.$this->lang->line("Total").'</div>
-  <div class="invoice-detail-value invoice-detail-value-lg">'.$currency_icon.$checkout_amount.'</div>
+  <div class="invoice-detail-value invoice-detail-value-lg">'.$currency_left.$checkout_amount.$currency_right.'</div>
 </div>';
 
 $apply_coupon = 
@@ -184,7 +192,7 @@ $coupon_details =
               <div class="col-4 col-md-7 text-right">
                 <div class="invoice-detail-item" style="margin-top: 20px;">
                   <div class="invoice-detail-name"><?php echo $this->lang->line("Subtotal");?></div>
-                  <div class="invoice-detail-value"><?php echo $currency_icon.$subtotal;?></div>
+                  <div class="invoice-detail-value"><?php echo $currency_left.$subtotal.$currency_right;?></div>
                 </div>
                 <?php echo $after_checkout_details;?>
               </div>
@@ -352,6 +360,20 @@ $coupon_details =
 </section>
 
 
+<?php
+$store_mapping = base_url("ecommerce/store/".$webhook_data_final['store_unique_id']);
+if($subscriber_id!="") $store_mapping .= "?subscriber_id=".$subscriber_id;
+$footer_copyright = "<a href='".$store_mapping."'>".$webhook_data_final['store_name']."</a>";
+$footer_terms_use_link = $webhook_data_final['terms_use_link'];
+$footer_refund_link = $webhook_data_final['refund_policy_link'];
+?>
+<div class="mt-3 mb-3 text-center">
+  <?php echo "&copy".date("Y")." ".$footer_copyright;?><br>
+    <?php if(isset($footer_terms_use_link) && !empty($footer_terms_use_link))echo "<a href='".base_url("ecommerce/terms_of_service/".$webhook_data_final['store_unique_id']."/".$subscriber_id)."'>".$this->lang->line('Terms of service')."</a>"; ?>
+    <?php if(isset($footer_refund_link) && !empty($footer_refund_link)) echo "&nbsp;&nbsp;<a href='".base_url("ecommerce/refund_policy/".$webhook_data_final['store_unique_id']."/".$subscriber_id)."'>".$this->lang->line('Refund policy')."</a>"; ?>
+</div>
+
+
 <script>
   var base_url="<?php echo site_url(); ?>";
  
@@ -490,12 +512,7 @@ $coupon_details =
       
       // Reference to the current el
       var that = this;
-
-      var file = $("#manual-payment-file").val();
-      if(file == "" || file == null) {
-        swal('<?php echo $this->lang->line('Error') ?>','<?php echo $this->lang->line('Payment File is Required.') ?>','error');
-      }
-
+      
       // Shows spinner
       $(that).addClass('btn-progress');
       var formData = new FormData($("#manaul_payment_data")[0]);

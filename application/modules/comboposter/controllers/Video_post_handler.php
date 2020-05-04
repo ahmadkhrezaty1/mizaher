@@ -47,6 +47,7 @@ class Video_post_handler
 		}
 
 		$data['campaigns_social_media'] = json_decode($campaign_info[0]['posting_medium'], true);
+		$data['wpsh_selected_category'] = json_decode($campaign_info[0]['wpsh_selected_category'], true);
 		unset($campaign_info[0]['posting_medium']);
 		$data['campaign_form_info'] = $campaign_info[0];
 
@@ -84,6 +85,7 @@ class Video_post_handler
 		}
 
 		$data['campaigns_social_media'] = json_decode($campaign_info[0]['posting_medium'], true);
+		$data['wpsh_selected_category'] = json_decode($campaign_info[0]['wpsh_selected_category'], true);
 		unset($campaign_info[0]['posting_medium']);
 		$data['campaign_form_info'] = $campaign_info[0];
 
@@ -150,7 +152,7 @@ class Video_post_handler
 				$time_interval = $processed_input_data['time_interval'];
 
 				/* insert parent campaign */
-				if ($processed_input_data['repeat_times'] >= 0) {
+				if ($processed_input_data['repeat_times'] > 0) {
 					$processed_input_data['parent_campaign_id'] = 0;
 				}
 				$this->comboposter->basic->insert_data('comboposter_campaigns', $processed_input_data);
@@ -307,6 +309,7 @@ class Video_post_handler
 		$twitter_accounts = $this->comboposter->input->post('twitter_accounts', true);
 		$youtube_channel_list = $this->comboposter->input->post('youtube_channel_list', true);
 		$wordpress_accounts_self_hosted = $this->comboposter->input->post('wordpress_accounts_self_hosted', true);
+		$wpsh_selected_category = $this->comboposter->input->post('wpsh_selected_category', true);
 
 		/* ensure that they are array */
 		if (!is_array($facebook_pages)) {
@@ -320,6 +323,7 @@ class Video_post_handler
 		}
 		if (!is_array($wordpress_accounts_self_hosted)) {
 			$wordpress_accounts_self_hosted = array();
+			$wpsh_selected_category = array();
 		}
 
 
@@ -335,6 +339,12 @@ class Video_post_handler
 			return json_encode($response);
 		}
 
+		if (count($wordpress_accounts_self_hosted) > 0 && ! count($wpsh_selected_category) > 0) {
+			$response['status'] = 'error';
+			$response['message'] = $this->comboposter->lang->line("Please make sure that at least one blog category is selected.");
+
+			return json_encode($response);			
+		}
 
 		/* get all social media in an array and process it */
 		$posting_mediums = array();
@@ -349,6 +359,7 @@ class Video_post_handler
 		});
 
 		$posting_mediums = $this->comboposter->mutiArrToSingleArr($posting_mediums);
+		$data['wpsh_selected_category'] = json_encode($wpsh_selected_category);
 		$data['posting_mediums_count'] = count($posting_mediums);
 		$data['posting_medium'] = json_encode($posting_mediums);
 

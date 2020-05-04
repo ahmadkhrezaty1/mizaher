@@ -151,7 +151,7 @@
     $('[data-toggle="popover"]').on('click', function(e) {e.preventDefault(); return true;});
 
 
-    $(document.body).on('click','.are_you_sure',function(e){
+    $(document).on('click','.are_you_sure',function(e){
       e.preventDefault();
       var link = $(this).attr("href");
       var mes='<?php echo $this->lang->line("Do you really want to delete it?");?>';  
@@ -171,10 +171,12 @@
       });
     });
 
-    $(document.body).on('click','.are_you_sure_datatable',function(e){
+    $(document).on('click','.are_you_sure_datatable',function(e){
       e.preventDefault();
       var link = $(this).attr("href");
-      var refresh = $(this).attr("data-refresh");      ;
+      var refresh = $(this).attr("data-refresh");
+      var csrf_token = $(this).attr('csrf_token');
+      if (typeof(csrf_token)==='undefined') csrf_token = '';
       var mes='<?php echo $this->lang->line("Do you really want to delete it?");?>';  
       swal({
         title: "<?php echo $this->lang->line("Are you sure?");?>",
@@ -193,7 +195,7 @@
               url: link,
               type: 'POST',
               dataType: 'JSON',
-              data: {},
+              data: {csrf_token:csrf_token},
                 success:function(response)
                 {
                   $(this).removeClass('btn-progress btn-danger').addClass('btn-outline-danger');

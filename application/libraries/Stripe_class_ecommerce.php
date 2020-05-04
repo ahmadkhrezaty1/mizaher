@@ -23,6 +23,7 @@ class Stripe_class_ecommerce{
 		else $amount=$this->amount*100;
 		
 		$button="";
+		$stripe_lang = $this->CI->lang->line("Pay with Card");
 		
 		$button.="<form action='{$this->action_url}' method='POST'>
 			<script
@@ -32,7 +33,8 @@ class Stripe_class_ecommerce{
 		    data-name='{$this->title}'
 		    data-currency='{$this->currency}'
 		    data-description='{$this->description}'
-		    data-amount='{$amount}'>
+		    data-amount='{$amount}'
+		    data-label='{$stripe_lang}'>
 		  	</script>
 		</form>";
 
@@ -77,32 +79,32 @@ public function stripe_payment_action()
 	
 	catch(Stripe_CardError $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_CardError";
+		$response['message'] ="Stripe_CardError"." : ".$e->getMessage();
 		return $response;
 	}
 	
 	 catch (Stripe_InvalidRequestError $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_InvalidRequestError";
+		$response['message'] ="Stripe_InvalidRequestError"." : ".$e->getMessage();
 		return $response;
 	
 	} catch (Stripe_AuthenticationError $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_AuthenticationError";
+		$response['message'] ="Stripe_AuthenticationError"." : ".$e->getMessage();
 		return $response;
 	
 	} catch (Stripe_ApiConnectionError $e) {
 	 	$response['status'] ="Error";
-		$response['message'] ="Stripe_ApiConnectionError";
+		$response['message'] ="Stripe_ApiConnectionError"." : ".$e->getMessage();
 		return $response;
 	} catch (Stripe_Error $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_Error";
+		$response['message'] ="Stripe_Error"." : ".$e->getMessage();
 		return $response;
 	  
 	} catch (Exception $e) {
 		$response['status'] ="Error";
-		$response['message'] ="Stripe_Error";
+		$response['message'] ="Stripe_Error"." : ".$e->getMessage();
 		return $response;
 	}
 		

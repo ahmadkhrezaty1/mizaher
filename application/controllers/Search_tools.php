@@ -375,8 +375,7 @@ class Search_tools extends Home
       
 
       $search_results = $this->fb_rx_login->location_search($access_token,$keyword,$latitude,$longitude,$distance,$search_limit);
-     // echo "<pre>";print_r($search_results);exit;
-
+ 
      
       if(isset($search_results['error_message']))
       { 

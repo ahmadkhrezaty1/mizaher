@@ -30,13 +30,6 @@
     cursor: pointer !important;
     font-weight: 200 !important;
   }
-  /*.remove_reply
-  {
-    margin:10px 10px 5px 0;
-    font-size: 25px !important;
-    cursor: pointer !important;
-    font-weight: 200 !important;
-  }*/
   .add_template,.ref_template{font-size: 10px;}
   .emojionearea.form-control{padding-top:12px !important;}
   .img_holder div:not(:first-child){display: none;position:fixed;bottom:187px;right:40px;}
@@ -217,7 +210,7 @@
                         </div> 
                         <br/>
 
-                        <div class="row">
+                        <div class="row" id="delay_and_typing_on_<?php echo $k; ?>">
                           <div class="col-12 col-sm-6">
                             <div class="row">
                               <div class="col-6"><label for="" style="margin-top: 8px; color: #34395e; font-size: 14px;"><?php echo $this->lang->line('Typing on display :'); ?></label></div>
@@ -244,6 +237,25 @@
                         </div>
                         <br/>
 
+                        <div class="row" id="One_Time_Notification_div_<?php echo $k; ?>" style="display: none;"> 
+                          <div class="col-12 col-md-6">              
+                            <div class="form-group">
+                              <label><?php echo $this->lang->line("Title"); ?>
+                              </label>
+                              <input class="form-control" type="text" name="otn_title_<?php echo $k; ?>" id="otn_title_<?php echo $k; ?>">
+                            </div>        
+                          </div> 
+                          <div class="col-12 col-md-6">              
+                            <div class="form-group">
+                              <label><?php echo $this->lang->line("OTN Postback"); ?>
+                              </label>
+                              <?php 
+                                $name_id = "otn_postback_".$k;
+                                echo form_dropdown($name_id,$otn_postback_list,'','id="'.$name_id.'" class="form-control push_otn_postback select2"'); 
+                              ?>
+                            </div>        
+                          </div> 
+                        </div>
 
                         <div class="row" id="text_div_<?php echo $k; ?>"> 
                           <div class="col-12">              
@@ -269,7 +281,7 @@
                           <div class="col-12">              
                             <div class="form-group">
                               <label><?php echo $this->lang->line("Please provide your reply image"); ?></label>
-                              <input type="hidden" class="form-control"  name="image_reply_field_<?php echo $k; ?>" id="image_reply_field_<?php echo $k; ?>">
+                              <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="image_reply_field_<?php echo $k; ?>" id="image_reply_field_<?php echo $k; ?>">
                               <div id="image_reply_<?php echo $k; ?>"><?php echo $this->lang->line("upload") ?></div>
                               <img id="image_reply_div_<?php echo $k; ?>" style="display: none;" height="200px;" width="400px;">
                             </div>       
@@ -569,7 +581,7 @@
                                   <div class="col-12 col-sm-6">
                                     <div class="form-group">
                                       <label><?php echo $this->lang->line("Please provide your reply image"); ?> <span style='color:orange !important;'>(<?php echo $this->lang->line("optional"); ?>)</span></label>
-                                      <input type="hidden" class="form-control"  name="generic_template_image_<?php echo $k; ?>" id="generic_template_image_<?php echo $k; ?>" />
+                                      <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="generic_template_image_<?php echo $k; ?>" id="generic_template_image_<?php echo $k; ?>" />
                                       <div id="generic_image_<?php echo $k; ?>"><?php echo $this->lang->line('upload'); ?></div>
                                     </div>                         
                                   </div>
@@ -675,7 +687,11 @@
 
                             <div class="card card-secondary">
                               <div class="card-header">
-                                <h4><?php echo $this->lang->line('Carousel Template').' '.$j; ?></h4>
+                                <h4 class="full_width"><?php echo $this->lang->line('Carousel Template').' '.$j; ?>
+                                  <?php if($j != 1) : ?>
+                                  <i class="fa fa-times-circle remove_carousel_template float-right red" previous_row_id="carousel_div_<?php echo $j-1; ?>_<?php echo $k; ?>" current_row_id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" counter_variable="carousel_template_counter_<?php echo $k; ?>" template_add_button="carousel_template_add_button_<?php echo $k; ?>" title="<?php echo $this->lang->line('Remove this item'); ?>"></i>
+                                  <?php endif; ?>
+                                </h4>
                               </div>
                               <div class="card-body">
 
@@ -683,7 +699,7 @@
                                   <div class="col-12 col-sm-6">
                                     <div class="form-group">
                                       <label><?php echo $this->lang->line("Please provide your reply image"); ?> <span style='color:orange !important;'>(<?php echo $this->lang->line("optional"); ?>)</span></label>
-                                      <input type="hidden" class="form-control"  name="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" id="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" />
+                                      <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" id="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" />
                                       <div id="generic_imageupload_<?php echo $j; ?>_<?php echo $k; ?>"><?php echo $this->lang->line('upload'); ?></div>
                                     </div>                         
                                   </div>
@@ -1048,7 +1064,7 @@
             echo '<a href="#" data-toggle="dropdown" class="btn btn-outline-primary btn-circle dropdown-toggle bot_actions no_caret"><i class="fas fa-briefcase"></i></a> 
             
             <ul class="dropdown-menu dropdown-menu-sm dropdown-menu-right">
-             <div class="dropdown-title">الأجراءات</div>
+             <div class="dropdown-title">Actions</div>
              <li><a class="dropdown-item has-icon bot_status_btn" href="#" table_id="'.$value['id'].'">'.$state_icon.' '.$state_text.'</a></li>
              <li><a class="dropdown-item has-icon" href="'.$editurl.'"><i class="fas fa-edit"></i> '.$this->lang->line("Edit Bot Reply").'</a></li>
              <div class="dropdown-divider"></div>
@@ -1208,6 +1224,23 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
       if(temp < 6) $("#multiple_template_add_button").show();
     });
 
+    // remove carousel template 
+    $(document).on('click','.remove_carousel_template',function(){
+      var remove_carousel_counter_variable = $(this).attr('counter_variable');
+      var template_add_button = $(this).attr('template_add_button');
+      var remove_carousel_row_id = $(this).attr('current_row_id');
+      var previous_carousel_row_id = $(this).attr('previous_row_id');
+      $("#"+remove_carousel_row_id).find('textarea,input,select').val('');
+      $("#"+remove_carousel_row_id).hide();
+      eval(remove_carousel_counter_variable+"--");
+      var temp = eval(remove_carousel_counter_variable);
+      if(temp != 1)
+      {
+        $("#"+previous_carousel_row_id).find(".remove_carousel_template").show();
+      }
+      if(temp < 10) $("#"+template_add_button).show();
+    });
+
 
     var keyword_type = $("input[name=keyword_type]").val();
     if(keyword_type == 'post-back')
@@ -1240,13 +1273,14 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
       var selected_template = $("#template_type_<?php echo $template_type ?>").val();
       selected_template = selected_template.replace(/ /gi, "_");
 
-      var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media'];
+      var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media','One_Time_Notification'];
       template_type_array.forEach(templates_hide_show_function);
       function templates_hide_show_function(item, index)
       {
         var template_type_preview_div_name = "#"+item+"_preview_div";
-
         var template_type_div_name = "#"+item+"_div_<?php echo $template_type; ?>";
+        var delay_and_typing_on_div = "#delay_and_typing_on_<?php echo $template_type; ?>";
+
         if(selected_template == item){
           $(template_type_div_name).show();
           $(template_type_preview_div_name).show();
@@ -1255,6 +1289,7 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
           $(template_type_div_name).hide();
           $(template_type_preview_div_name).hide();
         }
+        $(delay_and_typing_on_div).show();
 		
     		if(selected_template=='text'){
     			
@@ -1264,6 +1299,9 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
     	     	 });
     		}
 
+        if(selected_template=='One_Time_Notification'){
+          $(delay_and_typing_on_div).hide();
+        }
 
         if(selected_template == 'media')
         {
@@ -1838,6 +1876,9 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
       carousel_template_counter_<?php echo $template_type; ?>++;
     
       var x = carousel_template_counter_<?php echo $template_type; ?>;
+      // remove template
+      var previous_template_counter = x-1;
+      $("#carousel_div_"+previous_template_counter+"_<?php echo $template_type; ?>").find(".remove_carousel_template").hide();
     
       $("#carousel_div_"+x+"_<?php echo $template_type; ?>").show();
       $("#carousel_row_"+x+"_1"+"_<?php echo $template_type; ?>").show();
@@ -2437,6 +2478,20 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
             }
           }
 
+          if(template_type == "One Time Notification")
+          {
+            var otn_title =$("#otn_title_"+m).val();
+            var otn_postback =$("#otn_postback_"+m).val();
+            if(otn_title == ''){
+              swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Provide OTN Title')?>", 'warning');
+              return;
+            }
+            if(otn_postback == ''){
+              swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Select an OTN Postback')?>", 'warning');
+              return;
+            }
+          }
+
           if(template_type == "audio")
           {
             var audio_reply_field = $("#audio_reply_field_"+m).val();
@@ -2913,7 +2968,7 @@ $drop_menu = '<a id="add_bot_settings" href="" class="float-right btn btn-primar
         let table_id = $(this).attr('table_id');
 
         swal({
-            title: 'تحذير',
+            title: 'Warning',
             text: '<?php echo $this->lang->line("Do you really want to change this state?"); ?>',
             icon: 'warning',
             buttons: true,

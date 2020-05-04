@@ -25,6 +25,33 @@
     <link href="<?php echo base_url();?>assets/site_new/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo base_url();?>assets/site_new/css/font-awesome.min.css" rel="stylesheet">
     <link href="<?php echo base_url();?>assets/site_new/css/material-icons.css" rel="stylesheet">
+         
+
+   <?php if($this->uri->segment('1')=='blog' && $this->uri->segment('2')=='post_details') 
+    {
+        $ogtitle = $this->config->item("product_short_name")." | ".$post[0]['title'];
+        $ogdesc = mb_substr(strip_tags($post[0]["body"]), 0,200);
+        $ogtitle = str_replace(array("'",'"',"\\"), array('`','`','/'), $ogtitle );
+        $ogdesc = str_replace(array("'",'"',"\\"), array('`','`','/'), $ogdesc );
+        ?>
+        <meta name="keywords" content="<?php echo $post[0]["tags"]; ?>">
+        <meta name="author" content="<?php echo $this->config->item("product_short_name");?>">
+        <meta name="copyright" content="<?php echo $this->config->item("product_short_name");?>" />
+        <meta name="application-name" content="<?php echo $this->config->item("product_short_name");?>" />  
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="<?php echo current_url(); ?>"/>
+        <meta name="twitter:card" content="summary" />
+        <meta property="og:title" content='<?php echo $ogtitle; ?>' />
+        <meta name="twitter:title" content='<?php echo $ogtitle; ?>' />
+        <meta property="og:description" content="<?php echo $ogdesc; ?>" />
+        <meta name="twitter:description" content="<?php echo $ogdesc; ?>" />
+        <meta name="description" content="<?php echo $ogdesc; ?>">
+        <?php if($post[0]['thumbnail'] !=''): ?>
+        <meta property="og:image" content="<?php echo base_url('upload/blog/'.$post[0]['thumbnail']); ?>" />
+        <meta name="twitter:image" content="<?php echo base_url('upload/blog/'.$post[0]['thumbnail']); ?>" />
+        <?php endif; ?>
+    <?php 
+    } ?>
 
     <!--====== MAIN STYLESHEETS ======-->
     <!-- <link href="<?php echo base_url();?>assets/site_new/style.css" rel="stylesheet"> -->
@@ -36,7 +63,9 @@
         <script src="//oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
         <script src="//oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
         <![endif]-->
+    
 </head>
+
 
 <body class="home-two" data-spy="scroll" data-target=".mainmenu-area" data-offset="90">
 
@@ -45,9 +74,9 @@
     <![endif]-->
 
     <!--- PRELOADER -->
-    <div class="preeloader">
+    <!-- <div class="preeloader">
         <div class="preloader-spinner"></div>
-    </div>
+    </div> -->
 
     <!--SCROLL TO TOP-->
     <a href="#home" class="scrolltotop"><i class="fa fa-long-arrow-up"></i></a>
@@ -61,7 +90,7 @@
                 <nav class="navbar">
                     <div class="container-fluid">
                         <div class="navbar-header">
-                            <a href="#home" class="navbar-brand"><img style="max-height:45px !important" src="<?php echo base_url();?>assets/img/logo.png" alt="<?php echo $this->config->item('product_name');?>"></a>
+                            <a href="<?php echo base_url();?>" class="navbar-brand"><img style="max-height:45px !important" src="<?php echo base_url();?>assets/img/logo.png" alt="<?php echo $this->config->item('product_name');?>"></a>
                         </div>
                         <div id="main-nav" class="stellarnav">
                             <div class="search-and-signup-button white pull-right hidden-sm hidden-xs">
@@ -80,6 +109,11 @@
                                 <li <?php if($this->config->item('display_video_block') == '0') echo "class='hidden'"; ?>>
                                     <a href="<?php echo base_url('#tutorial');?>"><?php echo $this->lang->line('Tutorial');?></a>
                                 </li>
+                                <?php if ($this->session->userdata('license_type') == 'double')  {?>
+                                <li>
+                                    <a href="<?php echo base_url('blog');?>"><?php echo $this->lang->line('Blog'); ?></a>
+                                </li>
+                                <?php } ?>
                                 <li>
                                     <a href="<?php echo base_url('#contact');?>"><?php echo $this->lang->line('Contact'); ?></a>
                                 </li>
@@ -161,9 +195,10 @@
     <script src="<?php echo base_url();?>assets/site_new/js/main.js"></script>
 
     <!-- cookiealert section -->
-
     <?php $this->load->view("include/fb_px"); ?> 
     <?php $this->load->view("include/google_code"); ?> 
+    <?php include("application/modules/blog/views/blog_js.php"); ?>
+    
     
 </body>
 </html>

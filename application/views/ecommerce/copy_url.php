@@ -27,6 +27,9 @@ foreach ($product_list as $key => $value)
         <li class="nav-item">
           <a class="nav-link" id="contact-tab2" data-toggle="tab" href="#contact2" role="tab" aria-controls="contact" aria-selected="false"><?php echo $this->lang->line("Product URL"); ?></a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" id="legal-tab2" data-toggle="tab" href="#legal2" role="tab" aria-controls="legal" aria-selected="false"><?php echo $this->lang->line("Legal URL"); ?></a>
+        </li>
       </ul>
       <div class="tab-content tab-bordered" id="myTab3Content">
 
@@ -83,6 +86,30 @@ foreach ($product_list as $key => $value)
          <?php
          } 
          ?>
+        </div>
+        <div class="tab-pane fade bg-body" id="legal2" role="tabpanel" aria-labelledby="legal-tab2">         
+           <div class="card">
+            <div class="card-header">
+              <h4><i class="fas fa-circle"></i>
+                <?php $legal_url1 =  base_url("ecommerce/terms_of_service/".$current_store_data['store_unique_id']);?>
+                <a href="<?php echo $legal_url1;?>" target="_BLANK"><?php echo $this->lang->line("Terms of service");?></a>
+              </h4>
+            </div>
+            <div class="card-body">
+              <pre class="language-javascript"><code class="dlanguage-javascript"><span class="token keyword"><?php echo $legal_url1;?></span></code></pre>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h4><i class="fas fa-circle"></i>
+                <?php $legal_url2 =  base_url("ecommerce/refund_policy/".$current_store_data['store_unique_id']);?>
+                <a href="<?php echo $legal_url2;?>" target="_BLANK"><?php echo $this->lang->line("Refund policy");?></a>
+              </h4>
+            </div>
+            <div class="card-body">
+              <pre class="language-javascript"><code class="dlanguage-javascript"><span class="token keyword"><?php echo $legal_url2;?></span></code></pre>
+            </div>
+          </div>
         </div>
       </div>
     </div>

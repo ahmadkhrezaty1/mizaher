@@ -39,6 +39,8 @@ class Change_password extends Home
             redirect('defaults/access_forbidden', 'location');
         }
 
+        $this->csrf_token_check();
+
         $this->form_validation->set_rules('old_password', '<b>'.$this->lang->line("Old Password").'</b>', 'trim|required');
         $this->form_validation->set_rules('new_password', '<b>'.$this->lang->line("New Password").'</b>', 'trim|required');
         $this->form_validation->set_rules('confirm_new_password', '<b>'.$this->lang->line("Confirm Password").'</b>', 'trim|required|matches[new_password]');
@@ -46,8 +48,8 @@ class Change_password extends Home
             $this->reset_password_form();
         } else {
             $user_id = $this->user_id;
-            $password = strip_tags($this->input->post('old_password', true));
-            $new_password = strip_tags($this->input->post('new_password', true));
+            $password = $this->input->post('old_password', true);
+            $new_password = $this->input->post('new_password', true);
             $table = 'users';
             $where['where'] = array(
                 'id' => $user_id,

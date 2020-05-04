@@ -327,7 +327,19 @@ class Comboposter extends Home
         $this->db->where("campaign_type='". $campaign_type."'");
         $total_rows_array=$this->basic->count_row($table, $where, $count=$table.".id", "", $group_by='');
         $total_result=$total_rows_array[0]['total_rows'];
-        
+
+
+
+        /* complete main campaign count */
+        $query = $this->db->query("SELECT parent_campaign_id, COUNT(posting_status) as complete FROM `comboposter_campaigns` WHERE parent_campaign_id IS NOT NULL AND parent_campaign_id != '0' AND campaign_type = '{$campaign_type}' AND posting_status = 'completed' GROUP BY parent_campaign_id");
+        $temp_complete_results = $query->result_array();
+        $complete_results = array();
+
+        foreach ($temp_complete_results as $key => $value) {
+        	$complete_results[$value['parent_campaign_id']] = $value['complete'];
+        }
+
+
 
         for($i=0;$i<count($info);$i++)
         {   
@@ -342,8 +354,6 @@ class Comboposter extends Home
 
 
 
-            
-
             /* posting status */
             if( $posting_status == 'completed') {
 
@@ -352,7 +362,14 @@ class Comboposter extends Home
                     if ($info[$i]['full_complete'] == "1") {
                         $info[$i]['posting_status'] = '<div style="min-width:120px;" class="text-success"><i class="fas fa-check-circle"></i> '.$this->lang->line("Completed").'</div>';
                     } else {
-                        $info[$i]['posting_status'] = '<div style="min-width:120px;" class="text-muted"><i class="fas fa-exclamation-circle"></i> '.$this->lang->line("Not all completed").'</div>';
+
+                    	$completed = 1;
+                    	if (isset($complete_results[$info[$i]['id']])) {
+                    		$completed = $complete_results[$info[$i]['id']] + 1;
+                    	}
+
+                    	$total = $info[$i]['repeat_times'] + 1;
+                        $info[$i]['posting_status'] = '<div style="min-width:120px;" class="text-muted"><i class="fas fa-exclamation-circle"></i> '. $completed . '/' . $total . ' '. $this->lang->line("completed").'</div>';
                     }
                     
                 } else {
@@ -1066,6 +1083,7 @@ class Comboposter extends Home
             $post_content['tag'] = $campaign_info['tag'];
             $post_content['message'] = $campaign_info['message'];
             $post_content['subreddits'] = $campaign_info['subreddits'];
+            $post_content['wpsh_selected_category'] = $single_campaign_info['wpsh_selected_category'];
         } else if($campaign_info['campaign_type'] == 'image') {
 
             $post_content['campaign_name'] = $campaign_info['campaign_name'];
@@ -1074,6 +1092,9 @@ class Comboposter extends Home
             $post_content['message'] = $campaign_info['message'];
             $post_content['rich_content'] = $campaign_info['rich_content'];
             $post_content['image_url'] = $campaign_info['image_url'];
+            $post_content['link'] = $campaign_info['link'];
+            $post_content['wpsh_selected_category'] = $single_campaign_info['wpsh_selected_category'];
+
         } else if($campaign_info['campaign_type'] == 'video') {
 
             $post_content['campaign_name'] = $campaign_info['campaign_name'];
@@ -1083,6 +1104,7 @@ class Comboposter extends Home
             $post_content['privacy_type'] = $campaign_info['privacy_type'];
             $post_content['video_url'] = $campaign_info['video_url'];
             $post_content['thumbnail_url'] = $campaign_info['thumbnail_url'];
+            $post_content['wpsh_selected_category'] = $single_campaign_info['wpsh_selected_category'];
         } else if($campaign_info['campaign_type'] == 'link') {
 
             $post_content['campaign_name'] = $campaign_info['campaign_name'];
@@ -1099,6 +1121,7 @@ class Comboposter extends Home
             $post_content['title'] = $campaign_info['title'];
             $post_content['tag'] = $campaign_info['tag'];
             $post_content['rich_content'] = $campaign_info['rich_content'];
+            $post_content['wpsh_selected_category'] = $single_campaign_info['wpsh_selected_category'];
         }
 
         /*--------  end get post content   -------*/
@@ -1214,6 +1237,7 @@ class Comboposter extends Home
                     $post_content['tag'] = $single_campaign_info['tag'];
                     $post_content['message'] = $single_campaign_info['message'];
                     $post_content['subreddits'] = $single_campaign_info['subreddits'];
+                    $post_content['wpsh_selected_category'] = $single_campaign_info['wpsh_selected_category'];
                 }
                 else if($single_campaign_info['campaign_type'] == 'image')
                 {
@@ -1223,6 +1247,8 @@ class Comboposter extends Home
                     $post_content['message'] = $single_campaign_info['message'];
                     $post_content['rich_content'] = $single_campaign_info['rich_content'];
                     $post_content['image_url'] = $single_campaign_info['image_url'];
+                    $post_content['link'] = $single_campaign_info['link'];
+                    $post_content['wpsh_selected_category'] = $single_campaign_info['wpsh_selected_category'];
                 }
                 else if($single_campaign_info['campaign_type'] == 'video')
                 {
@@ -1233,6 +1259,7 @@ class Comboposter extends Home
                     $post_content['privacy_type'] = $single_campaign_info['privacy_type'];
                     $post_content['video_url'] = $single_campaign_info['video_url'];
                     $post_content['thumbnail_url'] = $single_campaign_info['thumbnail_url'];
+                    $post_content['wpsh_selected_category'] = $single_campaign_info['wpsh_selected_category'];
                 }
                 else if($single_campaign_info['campaign_type'] == 'link')
                 {
@@ -1251,6 +1278,7 @@ class Comboposter extends Home
                     $post_content['title'] = $single_campaign_info['title'];
                     $post_content['tag'] = $single_campaign_info['tag'];
                     $post_content['rich_content'] = $single_campaign_info['rich_content'];
+                    $post_content['wpsh_selected_category'] = $single_campaign_info['wpsh_selected_category'];
                 }
 
                 /*--------  end get post content   -------*/
@@ -1609,17 +1637,18 @@ class Comboposter extends Home
 
                         if (strpos($reddit_url, 'https://www.reddit.com') !== false) {
                             $temp_report['report'] = $reddit_url;
-                        } else if (strpos($reddit_url, 'error') !== false) {
-                            // $temp_report['report'] = $reddit_url;
-
-                            if (isset($reddit_status->jquery[18][3][0]) && $reddit_status->jquery[18][3][0] == "that link has already been submitted"){
-                                $temp_report['report'] = $reddit_status->jquery[18][3][0];
-                            }
-                            if (isset($reddit_status->jquery[20][3][0])) {
-                                $temp_report['report'] = $reddit_status->jquery[20][3][0];
-                            }
                         } else {
-                            $temp_report['report'] = 'https://www.reddit.com' . $reddit_url;
+                            $reddit_error="";
+
+                            for($i=10;$i<=24;$i++) {
+
+                                if(isset($reddit_status->jquery[$i][3][0]) && is_array($reddit_status->jquery[$i][3])){
+                                   $reddit_error = $reddit_error." | ". $reddit_status->jquery[$i][3][0]; 
+                                }
+                            }
+
+                            $temp_report['report'] = trim($reddit_error,' | ');
+
                         }
 
                         array_push($posting_report['Reddit'], $temp_report);
@@ -1638,25 +1667,35 @@ class Comboposter extends Home
                     try {
 
                         $reddit_status = $this->reddit->createStory($title, $link, $subreddits, "", $refresh_token, $token_type);
-                        $reddit_url = $reddit_status->jquery[16][3][0];
 
-                        if(strpos($reddit_url, 'https://www.reddit.com') !== false) {
-                            $temp_report['report'] = $reddit_url;
-                        } else if(strpos($reddit_url, 'error') !== false) {
-                            // $temp_report['report'] = $reddit_url;
-
-                            if (isset($reddit_status->jquery[18][3][0]) && $reddit_status->jquery[18][3][0] == "that link has already been submitted"){
-                                $temp_report['report'] = $reddit_status->jquery[18][3][0];
-                            }
-                            if (isset($reddit_status->jquery[20][3][0])) {
-                                $temp_report['report'] = $reddit_status->jquery[20][3][0];
-                            }
-                        } else {
-                            $temp_report['report'] = 'https://www.reddit.com' . $reddit_url;
+                        if(isset($reddit_status['error'])){
+                            $temp_report['report'] = $reddit_status['error'];
+                            array_push($posting_report['Reddit'], $temp_report);
                         }
+                        else {
 
-                        array_push($posting_report['Reddit'], $temp_report);
-                    } catch(Exception $e) {
+                            $reddit_url = $reddit_status->jquery[16][3][0];
+
+                            if(strpos($reddit_url, 'https://www.reddit.com') !== false) {
+                                $temp_report['report'] = $reddit_url;
+                            } 
+                            else {
+                                $reddit_error="";
+
+                                for($i=10;$i<=24;$i++) {
+
+                                    if(isset($reddit_status->jquery[$i][3][0]) && is_array($reddit_status->jquery[$i][3])){
+                                       $reddit_error = $reddit_error." | ". $reddit_status->jquery[$i][3][0]; 
+                                    }
+                                }
+
+                                $temp_report['report'] = trim($reddit_error,' | ');
+                            }
+
+                            array_push($posting_report['Reddit'], $temp_report);
+                        } 
+                    } 
+                    catch(Exception $e) {
 
                         $temp_report['report'] = $e->getMessage();
                         array_push($posting_report['Reddit'], $temp_report);
@@ -1665,7 +1704,7 @@ class Comboposter extends Home
             } elseif(strpos($single_media, 'pinterest') !== false) {
 
                 /* get accounts & access tokens */
-                $select = array( 'user_name', 'image', 'code', 'pinterest_board_info.board_name as board_name', 'pinterest_config_table_id' );
+                $select = array( 'user_name', 'image', 'code', 'pinterest_board_info.board_name as board_name','board_id','pinterest_config_table_id' );
                 $join = array( 'pinterest_board_info' => 'pinterest_users_info.id=pinterest_board_info.pinterest_table_id,left' );
                 $wherer['where_in'] = array( 'pinterest_board_info.id' => $social_media_info[1] );
 
@@ -1676,11 +1715,12 @@ class Comboposter extends Home
 
                 $user_name = $pinterest['user_name'];
                 $board_name = $pinterest['board_name'];
+                $board_id = $pinterest['board_id'];
                 $code = $pinterest['code'];
 
                 /* set report */
                 $temp_report = [];
-                $temp_report['display_name'] = $pinterest['user_name'];
+                $temp_report['display_name'] = $pinterest['user_name']." | ".$board_name;
                 $temp_report['display_account_image'] = $pinterest['image'];
 
                 /* posting */
@@ -1688,16 +1728,25 @@ class Comboposter extends Home
 
                     $image_url = $post_content['image_url'];
                     $message = $post_content['message'];
+                    $pin_link=$post_content['link'];
 
                     try {
 
                         $this->pinterests->app_initialize($pinterest['pinterest_config_table_id']);
-                        $pinterest_status = $this->pinterests->image_post_to_pinterest($user_name, $board_name, $image_url, $code, $message);
+                        $pinterest_status = $this->pinterests->image_post_to_pinterest($user_name, $board_id, $image_url, $code, $message,$pin_link);
 
-                        $pinterest_url = $pinterest_status['url'];
-                        $temp_report['report'] = $pinterest_url;
+                        if(isset($pinterest_status['error']) && isset($pinterest_status['error_message'])){
+                             $temp_report['report'] = $pinterest_status['error_message'];
+                             array_push($posting_report['Pinterest'], $temp_report);
+                        }
 
-                        array_push($posting_report['Pinterest'], $temp_report);
+                        else{
+                             $pinterest_url = $pinterest_status['url'];
+                             $temp_report['report'] = $pinterest_url;
+                            array_push($posting_report['Pinterest'], $temp_report);
+                        }
+
+                       
                     } catch(Exception $e) {
 
                         $temp_report['report'] = $e->getMessage();
@@ -1720,12 +1769,19 @@ class Comboposter extends Home
                 $temp_report = [];
                 $temp_report['display_name'] = $wp_sh_config['domain_name'];
                 $temp_report['display_account_image'] = base_url('assets/images/wordpress.png');
+                $post_category = isset($post_content['wpsh_selected_category']) 
+                    ? (string) $post_content['wpsh_selected_category']
+                    : '';
+
+                $post_category = json_decode($post_category, true);
+
 
                 $data = [
                     'post_title' => $post_content['title'],
                     'domain_name' => $wp_sh_config['domain_name'],
                     'user_key' => $wp_sh_config['user_key'],
                     'authentication_key' => $wp_sh_config['authentication_key'],
+                    'post_category' => $post_category,
                 ];                
 
                 /* posting */

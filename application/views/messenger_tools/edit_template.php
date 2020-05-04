@@ -297,6 +297,7 @@
                       <div class="form-group">
                         <label style="width:100%">
                         '.$this->lang->line("Choose Labels")." ".$popover.'
+                        <a class="blue float-right pointer" page_id_for_label="'.$bot_info['page_id'].'" id="create_label_postback"><i class="fas fa-plus-circle"></i> '.$this->lang->line("Create Label").'</a>  
                         </label>';
                         
                         $broadcaster_labels=$bot_info['broadcaster_labels'];
@@ -463,7 +464,7 @@
                     </div> 
                     <br/>
 
-                    <div class="row">
+                    <div class="row" id="delay_and_typing_on_<?php echo $k; ?>">
                       <div class="col-12 col-sm-6">
                         <div class="row">
                           <div class="<?php if($iframe == '1') echo 'col-7'; else echo 'col-5' ?>"><label for="" style="margin-top: 8px; color: #34395e; font-size: 14px;"><?php echo $this->lang->line('Typing on display :'); ?></label></div>
@@ -490,6 +491,7 @@
                     </div>
                     <br/>
 
+                    
                     <div class="row" id="text_div_<?php echo $k; ?>"> 
                       <div class="col-12">              
                         <div class="form-group">
@@ -510,6 +512,30 @@
                       </div>  
                     </div>
 
+                    <div class="row" id="One_Time_Notification_div_<?php echo $k; ?>" style="display: none;"> 
+                      <div class="col-12 col-md-6">              
+                        <div class="form-group">
+                          <label><?php echo $this->lang->line("Title"); ?>
+                          </label>
+                          <input class="form-control" type="text" name="otn_title_<?php echo $k; ?>" id="otn_title_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'One Time Notification') echo $full_message[$k]['attachment']['payload']['title'];?>">
+                        </div>        
+                      </div> 
+                      <div class="col-12 col-md-6">              
+                        <div class="form-group">
+                          <label><?php echo $this->lang->line("OTN Postback"); ?>
+                          </label>
+                          <?php 
+                            if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'One Time Notification')
+                              $selected_otn_postback = $full_message[$k]['attachment']['payload']['payload'];
+                            else
+                              $selected_otn_postback = ''; 
+                            $name_id = "otn_postback_".$k;
+                            echo form_dropdown($name_id,$otn_postback_list,$selected_otn_postback,'id="'.$name_id.'" class="form-control push_otn_postback select2"');
+                          ?>
+                        </div>        
+                      </div> 
+                    </div>
+
                     <div class="row" id="image_div_<?php echo $k; ?>" style="display: none;">             
                       <div class="col-12">              
                         <div class="form-group">
@@ -517,7 +543,7 @@
 
                           <span class="badge badge-status blue load_preview_modal float-right" item_type="image" file_path="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'image') echo $full_message[$k]['attachment']['payload']['url'];?>"><i class="fa fa-eye"></i> <?php echo $this->lang->line('preview'); ?></span>
 
-                          <input type="hidden" class="form-control"  name="image_reply_field_<?php echo $k; ?>" id="image_reply_field_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'image') echo $full_message[$k]['attachment']['payload']['url'];?>">
+                          <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="image_reply_field_<?php echo $k; ?>" id="image_reply_field_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type']== 'image') echo $full_message[$k]['attachment']['payload']['url'];?>">
                           <div id="image_reply_<?php echo $k; ?>"><?php echo $this->lang->line("upload") ?></div>
                           <img id="image_reply_div_<?php echo $k; ?>" style="display: none;" height="200px;" width="400px;">
                         </div>       
@@ -632,6 +658,8 @@
                                     }
                                   ?>
                                 </select>
+                                <a href="" class="add_template float-left" page_id_add_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                <a href="" class="ref_template float-right" page_id_ref_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                               </div>
 
 
@@ -756,6 +784,8 @@
                                     }
                                   ?>
                                 </select>
+                                <a href="" class="add_template float-left" page_id_add_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                <a href="" class="ref_template float-right" page_id_ref_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                               </div>
 
                             </div>
@@ -895,6 +925,8 @@
                                     }
                                   ?>
                                 </select>
+                                <a href="" class="add_template float-left" page_id_add_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                <a href="" class="ref_template float-right" page_id_ref_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                               </div>
 
 
@@ -944,7 +976,7 @@
 
                                   <span class="badge badge-status blue load_preview_modal float-right" item_type="image" file_path="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'generic template' && isset($full_message[$k]['attachment']['payload']['elements'][0]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][0]['image_url'];?>"><i class="fa fa-eye"></i> <?php echo $this->lang->line('preview'); ?></span>
 
-                                  <input type="hidden" class="form-control"  name="generic_template_image_<?php echo $k; ?>" id="generic_template_image_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'generic template' && isset($full_message[$k]['attachment']['payload']['elements'][0]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][0]['image_url'];?>" />
+                                  <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="generic_template_image_<?php echo $k; ?>" id="generic_template_image_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'generic template' && isset($full_message[$k]['attachment']['payload']['elements'][0]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][0]['image_url'];?>" />
                                   <div id="generic_image_<?php echo $k; ?>"><?php echo $this->lang->line('upload'); ?></div>
                                 </div>                         
                               </div>
@@ -1054,6 +1086,8 @@
                                         }
                                       ?>
                                     </select>
+                                    <a href="" class="add_template float-left" page_id_add_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                    <a href="" class="ref_template float-right" page_id_ref_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                                   </div>
 
                                 </div>
@@ -1091,7 +1125,14 @@
                         <div class="col-12" id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" style="<?php if(!isset($full_message[$k]['attachment']['payload']['elements'][$j-1])) echo 'display: none;'; else $carousel_template_counter++; ?>"> 
                           <div class="card card-secondary">
                             <div class="card-header">
-                              <h4><?php echo $this->lang->line('Carousel Template').' '.$j; ?></h4>
+                              <h4 class="full_width">
+                                <?php echo $this->lang->line('Carousel Template').' '.$j; ?>
+                                <?php if($j != 1 && $j == count($full_message[$k]['attachment']['payload']['elements'])) : ?>
+                                  <i class="fa fa-times-circle remove_carousel_template float-right red" previous_row_id="carousel_div_<?php echo $j-1; ?>_<?php echo $k; ?>" current_row_id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" counter_variable="carousel_template_counter_<?php echo $k; ?>" template_add_button="carousel_template_add_button_<?php echo $k; ?>" title="<?php echo $this->lang->line('Remove this item'); ?>"></i>
+                                <?php else : ?>
+                                  <i class="fa fa-times-circle remove_carousel_template float-right red" style="display: none;" previous_row_id="carousel_div_<?php echo $j-1; ?>_<?php echo $k; ?>" current_row_id="carousel_div_<?php echo $j; ?>_<?php echo $k; ?>" counter_variable="carousel_template_counter_<?php echo $k; ?>" template_add_button="carousel_template_add_button_<?php echo $k; ?>" title="<?php echo $this->lang->line('Remove this item'); ?>"></i>
+                                <?php endif; ?>
+                              </h4>
                             </div>
                             <div class="card-body">
 
@@ -1102,7 +1143,7 @@
 
                                     <span class="badge badge-status blue load_preview_modal float-right" item_type="image" file_path="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'carousel' && isset($full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'];?>"><i class="fa fa-eye"></i> <?php echo $this->lang->line('preview'); ?></span>
 
-                                    <input type="hidden" class="form-control"  name="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" id="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'carousel' && isset($full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'];?>"/>
+                                    <input type="text" placeholder="<?php echo $this->lang->line('Put your image URL here or click the upload button.'); ?>" class="form-control"  name="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" id="carousel_image_<?php echo $j; ?>_<?php echo $k; ?>" value="<?php if(isset($full_message[$k]['template_type']) && $full_message[$k]['template_type'] == 'carousel' && isset($full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'])) echo $full_message[$k]['attachment']['payload']['elements'][$j-1]['image_url'];?>"/>
                                     <div id="generic_imageupload_<?php echo $j; ?>_<?php echo $k; ?>"><?php echo $this->lang->line('upload'); ?></div>
                                   </div>                         
                                 </div>
@@ -1214,6 +1255,8 @@
                                           }
                                         ?>
                                       </select>
+                                      <a href="" class="add_template float-left" page_id_add_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                      <a href="" class="ref_template float-right" page_id_ref_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                                     </div>
 
                                   </div>
@@ -1335,6 +1378,8 @@
                                        }
                                      ?>
                                    </select>
+                                   <a href="" class="add_template float-left" page_id_add_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line("Add");?></a>
+                                   <a href="" class="ref_template float-right" page_id_ref_postback="<?php echo $bot_info['page_id']; ?>"><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Refresh");?></a>
                                   </div>
 
                                 </div>
@@ -1497,6 +1542,11 @@ $(document).ready(function(){
     width: '100%'
   });
 
+  $(".push_otn_postback").select2({
+    tags: true,
+    width: '100%'
+  });
+
   $(".quick_reply_button_type_class, .media_type_class, .text_with_button_type_class, .generic_template_button_type_class, .carousel_button_type_class, .list_with_button_type_class").select2({
         width: '100%'
       });
@@ -1510,10 +1560,6 @@ $(document).ready(function(){
 			pickerPosition: "bottom"
 	  });
 
-  // $("#label_ids").multipleSelect({
-  //     filter: true,
-  //     multiple: true
-  // });
 
 });
 
@@ -1600,6 +1646,23 @@ $(document).ready(function(){
       $("#multiple_template_div_"+temp).find(".remove_reply").show();
     }
     if(temp < 6) $("#multiple_template_add_button").show();
+  });
+
+  // remove carousel template 
+  $(document).on('click','.remove_carousel_template',function(){
+    var remove_carousel_counter_variable = $(this).attr('counter_variable');
+    var template_add_button = $(this).attr('template_add_button');
+    var remove_carousel_row_id = $(this).attr('current_row_id');
+    var previous_carousel_row_id = $(this).attr('previous_row_id');
+    $("#"+remove_carousel_row_id).find('textarea,input,select').val('');
+    $("#"+remove_carousel_row_id).hide();
+    eval(remove_carousel_counter_variable+"--");
+    var temp = eval(remove_carousel_counter_variable);
+    if(temp != 1)
+    {
+      $("#"+previous_carousel_row_id).find(".remove_carousel_template").show();
+    }
+    if(temp < 10) $("#"+template_add_button).show();
   });
 
   $(document).on('click','.lead_first_name',function(){
@@ -1909,13 +1972,14 @@ $(document).ready(function(){
         var selected_template = $("#template_type_<?php echo $template_type ?>").val();
         selected_template = selected_template.replace(/ /gi, "_");
 
-        var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media'];
+        var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media','One_Time_Notification'];
         template_type_array.forEach(templates_hide_show_function);
         function templates_hide_show_function(item, index)
         {
           var template_type_preview_div_name = "#"+item+"_preview_div";
-
           var template_type_div_name = "#"+item+"_div_<?php echo $template_type; ?>";
+          var delay_and_typing_on_div = "#delay_and_typing_on_<?php echo $template_type; ?>";
+
           if(selected_template == item){
             $(template_type_div_name).show();
             $(template_type_preview_div_name).show();
@@ -1924,10 +1988,15 @@ $(document).ready(function(){
             $(template_type_div_name).hide();
             $(template_type_preview_div_name).hide();
           }
+          $(delay_and_typing_on_div).show();
 
           if(selected_template == 'quick_reply')
           {
             $("#quick_reply_row_1_<?php echo $template_type; ?>").show();
+          }
+
+          if(selected_template=='One_Time_Notification'){
+            $(delay_and_typing_on_div).hide();
           }
 
           if(selected_template == 'media')
@@ -1969,13 +2038,14 @@ $(document).ready(function(){
         var selected_template_on_change = $("#template_type_<?php echo $template_type ?>").val();
         selected_template_on_change = selected_template_on_change.replace(/ /gi, "_");
 
-        var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media'];
+        var template_type_array = ['text','image','audio','video','file','quick_reply','text_with_buttons','generic_template','carousel','list','media','One_Time_Notification'];
         template_type_array.forEach(templates_hide_show_function);
         function templates_hide_show_function(item, index)
         {
           var template_type_preview_div_name = "#"+item+"_preview_div";
-
           var template_type_div_name = "#"+item+"_div_<?php echo $template_type; ?>";
+          var delay_and_typing_on_div = "#delay_and_typing_on_<?php echo $template_type; ?>";
+
           if(selected_template_on_change == item){
             $(template_type_div_name).show();
             $(template_type_preview_div_name).show();
@@ -1984,10 +2054,15 @@ $(document).ready(function(){
             $(template_type_div_name).hide();
             $(template_type_preview_div_name).hide();
           }
+          $(delay_and_typing_on_div).show();
 
           if(selected_template_on_change == 'quick_reply')
           {
             $("#quick_reply_row_1_<?php echo $template_type; ?>").show();
+          }
+
+          if(selected_template_on_change=='One_Time_Notification'){
+            $(delay_and_typing_on_div).hide();
           }
 
           if(selected_template_on_change == 'media')
@@ -2046,7 +2121,7 @@ $(document).ready(function(){
           
         }
 
-        var reg = /^[0-9a-z_-]+$/i;
+        var reg = /^[0-9a-z_ -]+$/i;
         var output = reg.test(quick_reply_post_id_check);
         if(output === false)
         {
@@ -2181,7 +2256,7 @@ $(document).ready(function(){
             return;
           }
 
-          var reg = /^[0-9a-z_-]+$/i;
+          var reg = /^[0-9a-z_ -]+$/i;
           var output = reg.test(text_with_button_post_id_check);
           if(output === false)
           {
@@ -2247,7 +2322,7 @@ $(document).ready(function(){
           return;
         }
 
-        var reg = /^[0-9a-z_-]+$/i;
+        var reg = /^[0-9a-z_ -]+$/i;
         var output = reg.test(generic_template_button_post_id_check);
         if(output === false)
         {
@@ -2319,7 +2394,7 @@ $(document).ready(function(){
              return;
            }
 
-           var reg = /^[0-9a-z_-]+$/i;
+           var reg = /^[0-9a-z_ -]+$/i;
             var output = reg.test(carousel_button_post_id_check);
             if(output === false)
             {
@@ -2387,6 +2462,9 @@ $(document).ready(function(){
          carousel_template_counter_<?php echo $template_type; ?>++;
       
          var x = carousel_template_counter_<?php echo $template_type; ?>;
+         // remove template
+         var previous_template_counter = x-1;
+         $("#carousel_div_"+previous_template_counter+"_<?php echo $template_type; ?>").find(".remove_carousel_template").hide();
       
          $("#carousel_div_"+x+"_<?php echo $template_type; ?>").show();
          $("#carousel_row_"+x+"_1"+"_<?php echo $template_type; ?>").show();
@@ -2421,7 +2499,7 @@ $(document).ready(function(){
           return;
         }
 
-        var reg = /^[0-9a-z_-]+$/i;
+        var reg = /^[0-9a-z_ -]+$/i;
         var output = reg.test(list_button_post_id_check);
         if(output === false)
         {
@@ -2571,12 +2649,96 @@ $(document).ready(function(){
       page_change_action();
     });
 
+    // getting postback list and making iframe
+    $('#add_template_modal').on('shown.bs.modal',function(){ 
+      var page_id=$(".add_template").attr("page_id_add_postback");
+      var iframe_link="<?php echo base_url('messenger_bot/create_new_template/1/');?>"+page_id;
+      $(this).find('iframe').attr('src',iframe_link); 
+    });   
+    // refresh_template("0");
+    // $("#loader").addClass('hidden');
+    // getting postback list and making iframe
+    // 
+    $(document).on('click','.add_template',function(e){
+        e.preventDefault();
+        var current_id=$(this).prev().prev().attr("id");
+        var page_id=$(this).attr("page_id_add_postback");
+        if(page_id=="")
+        {
+          swal('<?php echo $this->lang->line("Error"); ?>', "<?php echo $this->lang->line('Please select a page first')?>", 'error');
+          return false;
+        }
+        $("#add_template_modal").attr("current_id",current_id);
+        $("#add_template_modal").modal();
+    });
+
+    $(document).on('click','.ref_template',function(e){
+      e.preventDefault();
+      var current_val=$(this).prev().prev().prev().val();
+      var current_id=$(this).prev().prev().prev().attr("id");
+      var page_id=$(this).attr("page_id_ref_postback");
+       if(page_id=="")
+       {
+         swal('<?php echo $this->lang->line("Error"); ?>', "<?php echo $this->lang->line('Please select a page first')?>", 'error');
+         return false;
+       }
+       $.ajax({
+         type:'POST' ,
+         url: base_url+"messenger_bot/get_postback",
+         data: {page_id:page_id},
+         success:function(response){
+           $("#"+current_id).html(response).val(current_val);
+         }
+       });
+    });
+
+    $('#add_template_modal').on('hidden.bs.modal', function (e) { 
+      var current_id=$("#add_template_modal").attr("current_id");
+      var page_id=$(".add_template").attr("page_id_add_postback");
+       if(page_id=="")
+       {
+         swal('<?php echo $this->lang->line("Error"); ?>', "<?php echo $this->lang->line('Please select a page first')?>", 'error');
+         return false;
+       }
+       $.ajax({
+         type:'POST' ,
+         url: base_url+"messenger_bot/get_postback",
+         data: {page_id:page_id},
+         success:function(response){
+           $("#"+current_id).html(response);
+         }
+       });
+    });
+
+
+    // function refresh_template(is_from_add_button='1')
+    //  {
+    //    var page_id=$(this).attr("page_id_ref_postback");
+    //    if(page_id=="")
+    //    {
+    //      alertify.alert('<?php echo $this->lang->line("Alert"); ?>',"<?php echo $this->lang->line('Please select a page first')?>",function(){});
+    //      return false;
+    //    }
+    //    $.ajax({
+    //      type:'POST' ,
+    //      url: base_url+"messenger_bot/get_postback",
+    //      data: {page_id:page_id,order_by:"template_name",is_from_add_button:is_from_add_button},
+    //      success:function(response){
+    //        $(".push_postback").html(response);
+    //      }
+    //    });
+    //  }
+
+
 
     function page_change_action()
     {
       var page_id=$('#page_table_id').val();
       if(page_id=='') return;
 
+      $(".add_template").attr("page_id_add_postback",page_id);
+      $(".ref_template").attr("page_id_ref_postback",page_id);
+      
       $.ajax({
         type:'POST' ,
         url: base_url+'messenger_bot/get_postback_dropdown_child',
@@ -2584,6 +2746,16 @@ $(document).ready(function(){
         dataType : 'JSON',
         success:function(response){  
           $(".push_postback").html(response.dropdown);  
+        }
+      });
+
+      $.ajax({
+        type:'POST' ,
+        url: base_url+'messenger_bot/get_otn_postback_dropdown',
+        data: {page_auto_id:page_id},
+        dataType : 'JSON',
+        success:function(response){  
+          $(".push_otn_postback").html(response.dropdown);  
         }
       });
 
@@ -2618,6 +2790,7 @@ $(document).ready(function(){
         data: {page_id:page_id},
         dataType : 'JSON',
         success:function(response){
+          $("#create_label_postback").attr("page_id_for_label",page_id); // put page_table_id for create label
           $('.show_label').removeClass('hidden');
           $('#first_dropdown').html(response.first_dropdown);      
         }
@@ -2639,6 +2812,51 @@ $(document).ready(function(){
       });
       // $('.dropdown_con').removeClass('hidden');
     }
+
+    // create an new label and put inside label list
+    $(document).on('click','#create_label_postback',function(e){
+      e.preventDefault();
+      
+      var page_id=$(this).attr('page_id_for_label');
+
+      swal("<?php echo $this->lang->line('Label Name'); ?>", {
+        content: "input",
+        button: {text: "<?php echo $this->lang->line('New Label'); ?>"},
+      })
+      .then((value) => {
+        var label_name = `${value}`;
+        if(label_name!="" && label_name!='null')
+        {
+          $("#save_changes").addClass("btn-progress");
+          $.ajax({
+            context: this,
+            type:'POST',
+            dataType:'JSON',
+            url:"<?php echo site_url();?>home/common_create_label_and_assign",
+            data:{page_id:page_id,label_name:label_name},
+            success:function(response){
+                $("#save_changes").removeClass("btn-progress");
+                if(response.error) {
+
+                  var span = document.createElement("span");
+                  span.innerHTML = response.error;
+
+                  swal({
+                    icon: 'error',
+                    title: '<?php echo $this->lang->line('Error'); ?>',
+                    content:span,
+                  });
+
+                } else {
+                  var newOption = new Option(response.text, response.id, true, true);
+                  $('#label_ids').append(newOption).trigger('change');
+                }
+            }
+          });
+        }
+      });
+
+    });
 
 
 
@@ -3145,6 +3363,20 @@ $(document).ready(function(){
             }
           }
 
+          if(template_type == "One Time Notification")
+          {
+            var otn_title =$("#otn_title_"+m).val();
+            var otn_postback =$("#otn_postback_"+m).val();
+            if(otn_title == ''){
+              swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Provide OTN Title')?>", 'warning');
+              return;
+            }
+            if(otn_postback == ''){
+              swal('<?php echo $this->lang->line("Warning"); ?>', "<?php echo $this->lang->line('Please Select an OTN Postback')?>", 'warning');
+              return;
+            }
+          }
+
           if(template_type == "audio")
           {
             var audio_reply_field = $("#audio_reply_field_"+m).val();
@@ -3604,7 +3836,22 @@ $(document).ready(function(){
   }); 
 </script>
 
-
+<div class="modal fade" id="add_template_modal" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa fa-plus-circle"></i> <?php echo $this->lang->line('Add Template'); ?></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      </div>
+      <div class="modal-body"> 
+        <iframe src="" frameborder="0" width="100%" onload="resizeIframe(this)"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button data-dismiss="modal" type="button" class="btn-lg btn btn-dark"><i class="fa fa-refresh"></i> <?php echo $this->lang->line("Close & Refresh List");?></button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="error_modal" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog">

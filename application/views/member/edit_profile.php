@@ -66,6 +66,7 @@ else $logo=base_url().'member/'.$logo;
 	    <div class="col-12 col-md-12 col-lg-7">
 	      <div class="card" style="margin-top: 35px;">
 	        <form class="form-horizontal" enctype="multipart/form-data" action="<?php echo site_url().'member/edit_profile_action';?>" method="POST">
+	          <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
 	          <div class="card-header">
 	            <h4><i class="far fa-edit"></i> <?php echo $this->lang->line('Edit Profile'); ?> </h4>
 	          </div>
@@ -147,11 +148,13 @@ else $logo=base_url().'member/'.$logo;
 
 	  $(document).on('click','.delete_confirm',function(){
 	  	$("#message_div").attr("class","text-center").html('<img class="center-block" src="'+base_url+'assets/pre-loader/color/Preloader_9.gif" height="30" width="30" alt="Processing..."><br/>');
-	    $("#delete_dialog").modal(); 
+	    $("#delete_dialog").modal();
+	    var csrf_token = $(this).attr('csrf_token');
 	    $.ajax({
 	      type:'POST',
 	      dataType: 'JSON',
 	      url:"<?php echo site_url();?>home/user_delete_action/"+user_id,
+	      data:{csrf_token:csrf_token},
 	      success:function(response){ 
 	      	if(response.status == 1)
 	      	{
@@ -194,7 +197,7 @@ else $logo=base_url().'member/'.$logo;
              </div>
 
             <div class="modal-footer" style="display: block">
-            	<button class="btn btn-danger delete_confirm btn-lg float-left"><i class="fas fa-trash"></i> <?php echo $this->lang->line('Delete My Account'); ?></button>
+            	<button csrf_token="<?php echo $this->session->userdata('csrf_token_session');?>" class="btn btn-danger delete_confirm btn-lg float-left"><i class="fas fa-trash"></i> <?php echo $this->lang->line('Delete My Account'); ?></button>
             	<button class="btn btn-light cancel_button btn-lg float-right"><i class="fa fa-remove"></i> <?php echo $this->lang->line('Cancel'); ?></button>
             </div>
 

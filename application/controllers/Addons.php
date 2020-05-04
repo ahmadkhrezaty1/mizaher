@@ -54,6 +54,8 @@ class Addons extends Home
             $pos2=count($value)-2; // controllers folder
             $pos3=count($value)-3;  // modules folder
 
+            if($value[$pos3]=='menu_manager') continue;
+            if($value[$pos3]=='blog') continue;
             if($value[$pos3]=='ultrapost') continue;
             if($value[$pos3]=='simplesupport') continue;
             if($value[$pos3]=='comboposter') continue;

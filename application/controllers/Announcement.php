@@ -137,9 +137,10 @@ class Announcement extends Home
         }
         else
         {
-            $title=$this->input->post('title');
-            $description=$this->input->post('description');
-            $status=$this->input->post('status');
+            $this->csrf_token_check();
+            $title=strip_tags($this->input->post('title',true));
+            $description=strip_tags($this->input->post('description',true));
+            $status=$this->input->post('status',true);
             if($status=='') $status='draft';
             $created_at=date("Y-m-d H:i:s");
 
@@ -183,9 +184,10 @@ class Announcement extends Home
         }
         else
         {        
+            $this->csrf_token_check();
             $id=$this->input->post('hidden_id',true);
-            $title=$this->input->post('title',true);
-            $description=$this->input->post('description',true);
+            $title=strip_tags($this->input->post('title',true));
+            $description=strip_tags($this->input->post('description',true));
             $status=$this->input->post('status',true);
             if($status=='') $status='draft';
             $created_at=date("Y-m-d H:i:s");

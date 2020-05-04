@@ -48,10 +48,11 @@
 
 
 
-
+<?php $csrf_token=$this->session->userdata('csrf_token_session'); ?>
 
 <script>       
     var base_url="<?php echo site_url(); ?>";
+    var csrf_token="<?php echo $csrf_token; ?>";
    
     $(document).ready(function() {
 
@@ -127,7 +128,7 @@
                   str=str+"&nbsp;<a class='btn btn-circle btn-outline-warning' href='"+edit_url+"'>"+'<i class="fas fa-edit"></i>'+"</a>";
                  
                   if(row[5]=='0')
-                  str=str+"&nbsp;<a href='"+delete_url+"' class='are_you_sure_datatable btn btn-circle btn-outline-danger'>"+'<i class="fa fa-trash"></i>'+"</a>";
+                  str=str+"&nbsp;<a href='"+delete_url+"' csrf_token='"+csrf_token+"' class='are_you_sure_datatable btn btn-circle btn-outline-danger'>"+'<i class="fa fa-trash"></i>'+"</a>";
                   else str=str+"&nbsp;<a class='btn btn-circle btn-outline-light' data-toggle='tooltip' title='<?php echo $this->lang->line("Default package can not be deleted.");?>'>"+'<i class="fa fa-trash"></i>'+"</a>";
                 
                   return "<div style='min-weight:130px'>"+str+'</div>';

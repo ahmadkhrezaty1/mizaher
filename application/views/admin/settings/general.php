@@ -16,6 +16,9 @@
 	                    </div>'; ?>
 	
 	<form class="form-horizontal text-c" enctype="multipart/form-data" action="<?php echo site_url().'admin/general_settings_action';?>" method="POST">	
+		
+		<input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
+
 		<div class="section-body">
 			<div id="output-status"></div>
 			<div class="row">
@@ -114,11 +117,24 @@
 				             			<span class="red"><?php echo form_error('time_zone'); ?></span>
 						            </div>
 						        </div>
-					        </div>						
-						   
+					        </div>	
+
+
+				        	<div class="form-group">
+				        	  <?php	
+				        	  $force_https = $this->config->item('force_https');
+				        	  if($force_https == '') $force_https='0';
+				        	  ?>
+				        	  <label class="custom-switch mt-2">
+				        	    <input type="checkbox" name="force_https" value="1" class="custom-switch-input"  <?php if($force_https=='1') echo 'checked'; ?>>
+				        	    <span class="custom-switch-indicator"></span>
+				        	    <span class="custom-switch-description"><?php echo $this->lang->line('Force HTTPS');?>?</span>
+				        	    <span class="red"><?php echo form_error('force_https'); ?></span>
+				        	  </label>
+				        	</div>
 
 				            <div class="form-group">
-				             	<label for="email_sending_option"><i class="fa fa-at"></i> <?php echo $this->lang->line('Email Sending Option');?></label> 
+				             	<!-- <label for="email_sending_option"><i class="fa fa-at"></i> <?php echo $this->lang->line('Email Sending Option');?></label>  -->
 		               			<?php
 		               			$email_sending_option= $this->config->item('email_sending_option');
 		               			if($email_sending_option == '') $email_sending_option = 'php_mail';
@@ -144,20 +160,6 @@
 				            </div>
 
    						    <div class="row">
-   						        <div class="col-12 col-md-6">
-   						        	<div class="form-group">
-   						        	  <?php	
-   						        	  $force_https = $this->config->item('force_https');
-   						        	  if($force_https == '') $force_https='0';
-   						        	  ?>
-   						        	  <label class="custom-switch mt-2">
-   						        	    <input type="checkbox" name="force_https" value="1" class="custom-switch-input"  <?php if($force_https=='1') echo 'checked'; ?>>
-   						        	    <span class="custom-switch-indicator"></span>
-   						        	    <span class="custom-switch-description"><?php echo $this->lang->line('Force HTTPS');?>?</span>
-   						        	    <span class="red"><?php echo form_error('force_https'); ?></span>
-   						        	  </label>
-   						        	</div>
-   						        </div>
 
    					           	<div class="col-12 col-md-6">
    					           		<div class="form-group">
@@ -173,6 +175,21 @@
    					           		  </label>
    					           		</div>        				           	
    					            </div>
+
+					           	<div class="col-12 col-md-6">
+					           		<div class="form-group">
+					           		  <?php	
+					           		  $enable_signup_activation = $this->config->item('enable_signup_activation');
+        		               			if($enable_signup_activation == '') $enable_signup_activation='1';
+					           		  ?>
+					           		  <label class="custom-switch mt-2">
+					           		    <input type="checkbox" name="enable_signup_activation" value="1" class="custom-switch-input"  <?php if($enable_signup_activation=='1') echo 'checked'; ?>>
+					           		    <span class="custom-switch-indicator"></span>
+					           		    <span class="custom-switch-description"><?php echo $this->lang->line('Signup Email Activation');?></span>
+					           		    <span class="red"><?php echo form_error('enable_signup_activation'); ?></span>
+					           		  </label>
+					           		</div>        				           	
+					            </div>
    					        </div>
 
 						</div>
@@ -227,6 +244,7 @@
 				             	<label for=""><i class="fa fa-key"></i> <?php echo $this->lang->line("Master Password (will be used for login as user)");?></label>
 		               			<input name="master_password" value="******"  class="form-control" type="text">
 		             			<span class="red"><?php echo form_error('master_password'); ?></span>
+		             			<div class="text-danger mt-1"><?php echo $this->lang->line('Set different than admin password.'); ?></div>
 				           </div>
 						   <div class="row d-none">
 						        <div class="col-12 col-md-6">
@@ -243,24 +261,6 @@
 						        	  </label>
 						        	</div>
 						        </div>
-
-					           	<!-- <div class="col-12 col-md-6">
-					           		<div class="form-group">
-					           		  <?php	
-					           		  $developer_access = $this->config->item('developer_access');
-	   		               			if($developer_access == '') $developer_access='0';
-					           		  ?>
-					           		  <label class="custom-switch mt-2">
-					           		    <input type="checkbox" name="developer_access" value="1" class="custom-switch-input"  <?php if($developer_access=='1') echo 'checked'; ?>>
-					           		    <span class="custom-switch-indicator"></span>
-					           		    <span class="custom-switch-description"><?php echo $this->lang->line('Use Approved Facebook App of Author?');?> </span>
-					           		    <a href="#" data-placement="top"  data-html="true" data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Use Approved Facebook App of Author?") ?>" data-content="<?php echo $this->lang->line("If you select Yes, you may skip to add your own app. You can use Author's app. But this option only for the admin only. This can't be used for other system users. User management feature will be disapeared."); ?><br><br><?php echo $this->lang->line("If select No , you will need to add your own app & get approval and system users can use it.");?>"><i class='fa fa-info-circle'></i> </a>
-
-					           		    <span class="red"><?php echo form_error('developer_access'); ?></span>
-					           		    
-					           		  </label>
-					           		</div>        				           	
-					            </div> -->
 					        </div>
 						</div>
 						<?php echo $save_button; ?>
@@ -294,102 +294,27 @@
 	 			             			<span class="red"><?php echo form_error('messengerbot_subscriber_profile_update_limit_per_cron_job'); ?></span>
 	 					            </div>
 			              		</div>
+			              		<div class="col-12">
+			              			
+			              			<div class="form-group">
+   					           		  <?php	
+   					           		  $enable_tracking_subscribers_last_interaction = $this->config->item('enable_tracking_subscribers_last_interaction');
+           		               			if($enable_tracking_subscribers_last_interaction == '') $enable_tracking_subscribers_last_interaction='yes';
+   					           		  ?>
+   					           		  <label class="custom-switch mt-2">
+   					           		    <input type="checkbox" name="enable_tracking_subscribers_last_interaction" value="yes" class="custom-switch-input"  <?php if($enable_tracking_subscribers_last_interaction=='yes') echo 'checked'; ?>>
+   					           		    <span class="custom-switch-indicator"></span>
+   					           		    <span class="custom-switch-description"><?php echo $this->lang->line('Enable Tracking of Subscribers Last Interaction');?></span>
+   					           		    <span class="red"><?php echo form_error('enable_tracking_subscribers_last_interaction'); ?></span>
+   					           		  </label>
+   					           		</div> 
+
+			              		</div>
 			              	</div>
 						</div>
 						<?php echo $save_button; ?>
 					</div>
 
-					<!-- <div class="card" id="auto-reply">
-						<div class="card-header">
-							<h4><i class="fas fa-reply-all"></i> <?php echo $this->lang->line("Auto Reply"); ?></h4>
-						</div>
-						<div class="card-body">
-			              	<div class="row">
-			              		<div class="col-12 col-md-6">
-      				              	<div class="form-group">
-      					             	<label for=""><i class="fas fa-business-time"></i> <?php echo $this->lang->line("Delay used in auto-reply (seconds)");?></label>
-             	             			<?php 
-             		             			$auto_reply_delay_time=$this->config->item('auto_reply_delay_time');
-             		             			if($auto_reply_delay_time=="") $auto_reply_delay_time=10; 
-             	             			?>
-      			               			<input name="auto_reply_delay_time" value="<?php echo $auto_reply_delay_time;?>"  class="form-control" type="number" min="1">		          
-      			             			<span class="red"><?php echo form_error('auto_reply_delay_time'); ?></span>
-      					            </div>
-			              		</div>
-			              		<div class="col-12 col-md-6">
-      				              	<div class="form-group">
-      					             	<label for=""><i class="fa fa-sort-numeric-asc"></i> <?php echo $this->lang->line("Num: of campaign processed per auto reply");?></label>
-	 			             			<?php 
-	 				             			$auto_reply_campaign_per_cron_job=$this->config->item('auto_reply_campaign_per_cron_job');
-	 				             			if($auto_reply_campaign_per_cron_job=="") $auto_reply_campaign_per_cron_job=10; 
-	 			             			?>
-      			               			<input name="auto_reply_campaign_per_cron_job" value="<?php echo $auto_reply_campaign_per_cron_job;?>"  class="form-control" type="number" min="1">		          
-      			             			<span class="red"><?php echo form_error('auto_reply_campaign_per_cron_job'); ?></span>
-      					            </div>
-			              		</div>
-			              	</div>	
-
-				            <div class="row">
-			              		<div class="col-12 col-md-6">
-			              			<div class="form-group">
-						             	<label for=""><i class="fas fa-history"></i> <?php echo $this->lang->line("Old comment that system will auto reply?");?></label>
-             	             			<?php 
-             		             			$number_of_old_comment_reply=$this->config->item('number_of_old_comment_reply');
-             		             			if($number_of_old_comment_reply=="") $number_of_old_comment_reply=20; 
-             	             			?>
-				               			<input name="number_of_old_comment_reply" value="<?php echo $number_of_old_comment_reply;?>"  class="form-control" type="number" min="1">	
-				               			<span><i><small><?php echo $this->lang->line('system has the ability to reply maximum 200 old comments and minimum 20 old comments'); ?></small></i></span>	 	          
-				             			<span class="red"><?php echo form_error('number_of_old_comment_reply'); ?></span>
-						            </div>
-			              		</div>
-
-			              		<div class="col-12 col-md-6">
-      					            <div class="form-group">
-      					             	<label for=""><i class="fa fa-clock-o"></i> <?php echo $this->lang->line("Auto-reply campaign live duration (days)");?></label>
-             	             			<?php 
-             		             			$auto_reply_campaign_live_duration=$this->config->item('auto_reply_campaign_live_duration');
-             		             			if($auto_reply_campaign_live_duration=="") $auto_reply_campaign_live_duration=50; 
-             	             			?>
-      			               			<input name="auto_reply_campaign_live_duration" value="<?php echo $auto_reply_campaign_live_duration;?>"  class="form-control" type="number" min="1">		          
-      			             			<span class="red"><?php echo form_error('auto_reply_campaign_live_duration'); ?></span>
-      					            </div>
-			              		</div>
-			              	</div>
-						    <div class="row">
-						        <div class="col-12 col-md-6">
-						        	<div class="form-group">
-						        	  <?php	
-						        	  $autoreply_renew_access = $this->config->item('autoreply_renew_access');
-						        	  if($autoreply_renew_access == '') $autoreply_renew_access='0';
-						        	  ?>
-						        	  <label class="custom-switch mt-2">
-						        	    <input type="checkbox" name="autoreply_renew_access" value="1" class="custom-switch-input"  <?php if($autoreply_renew_access=='1') echo 'checked'; ?>>
-						        	    <span class="custom-switch-indicator"></span>
-						        	    <span class="custom-switch-description"><?php echo $this->lang->line('Give autoreply renew access to users');?>?</span>
-						        	    <span class="red"><?php echo form_error('autoreply_renew_access'); ?></span>
-						        	  </label>
-						        	</div>
-						        </div>
-
-					           	<div class="col-12 col-md-6">
-					           		<div class="form-group">
-					           		  <?php	
-					           		  $read_page_mailboxes_permission = $this->config->item('read_page_mailboxes_permission');
-        		               			if($read_page_mailboxes_permission == '') $read_page_mailboxes_permission='yes';
-					           		  ?>
-					           		  <label class="custom-switch mt-2">
-					           		    <input type="checkbox" name="read_page_mailboxes_permission" value="yes" class="custom-switch-input"  <?php if($read_page_mailboxes_permission=='yes') echo 'checked'; ?>>
-					           		    <span class="custom-switch-indicator"></span>
-					           		    <span class="custom-switch-description"><?php echo $this->lang->line('Do you have read_page_mailboxes permission?');?></span>
-					           		    <span class="red"><?php echo form_error('read_page_mailboxes_permission'); ?></span>
-					           		  </label>
-					           		</div>        				           	
-					            </div> 
-					        </div>
-
-						</div>
-						<?php echo $save_button; ?>
-					</div> -->
 					
 					<div class="card" id="persistent-menu">
 						<div class="card-header">
@@ -425,13 +350,14 @@
 						<?php echo $save_button; ?>
 					</div>
 
+					<?php if($this->is_broadcaster_exist) : ?>
 					<div class="card" id="messenger-broadcast">
 						<div class="card-header">
 							<h4><i class="fas fa-mail-bulk"></i> <?php echo $this->lang->line("Messenger Broadcast"); ?></h4>
 						</div>
 						<div class="card-body">
 							<div class="row">
-								<div class="col-12 col-md-6">
+								<div class="col-12 hidden">
 					              	<div class="row">
 					              		<div class="col-12">
 		      				              	<div class="form-group">
@@ -468,7 +394,7 @@
 					              		</div>
 					              	</div>
 								</div>
-								<div class="col-12 col-md-6">
+								<div class="col-12">
 					              	<div class="row <?php if(!$this->is_broadcaster_exist) echo 'hidden';?>">
 					              		<div class="col-12">
 		      				              	<div class="form-group">
@@ -515,6 +441,7 @@
 						</div>
 						<?php echo $save_button; ?>
 					</div>
+					<?php endif; ?>
 
 					<div class="card" id="group-posting">
 						<div class="card-header">
@@ -1187,11 +1114,15 @@
 										<li class="nav-item"><a href="#brand" class="nav-link"><i class="fas fa-flag"></i> <?php echo $this->lang->line("Brand"); ?></a></li>
 										<li class="nav-item"><a href="#preference" class="nav-link"><i class="fas fa-tasks"></i> <?php echo $this->lang->line("Preference"); ?></a></li>
 										<li class="nav-item"><a href="#logo-favicon" class="nav-link"><i class="fas fa-images"></i> <?php echo $this->lang->line("Logo & Favicon"); ?></a></li>
-										<li class="nav-item"><a href="#master-password" class="nav-link"><i class="fab fa-keycdn"></i> <?php echo $this->lang->line("Master Password & APP Access"); ?></a></li>
+										<li class="nav-item"><a href="#master-password" class="nav-link"><i class="fab fa-keycdn"></i> <?php echo $this->lang->line("Master Password"); ?></a></li>
 										<li class="nav-item"><a href="#subscriber" class="nav-link"><i class="fas fa-user-circle"></i> <?php echo $this->lang->line("Subscriber"); ?></a></li>
 										<!-- <li class="nav-item"><a href="#auto-reply" class="nav-link"><i class="fas fa-reply-all"></i> <?php echo $this->lang->line("Auto Reply"); ?></a></li> -->
 										<li class="nav-item"><a href="#persistent-menu" class="nav-link"><i class="fas fa-bars"></i> <?php echo $this->lang->line("Persistent Menu"); ?></a></li>
+
+										<?php if($this->is_broadcaster_exist) : ?>
 										<li class="nav-item"><a href="#messenger-broadcast" class="nav-link"><i class="fas fa-mail-bulk"></i> <?php echo $this->lang->line("Messenger Broadcast"); ?></a></li>
+										<?php endif; ?>
+
 										<li class="nav-item"><a href="#group-posting" class="nav-link"><i class="fas fa-share-square"></i> <?php echo $this->lang->line("Facebook Poster"); ?></a></li>
 
 										<?php if($this->basic->is_exist("modules",array("id"=>263)) || $this->basic->is_exist("modules",array("id"=>264))) { ?>

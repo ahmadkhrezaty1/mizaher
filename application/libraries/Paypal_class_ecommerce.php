@@ -27,6 +27,8 @@ class Paypal_class_ecommerce{
 		$button="";
 		if($this->mode=='sandbox') $paypal_url="https://www.sandbox.paypal.com/cgi-bin/webscr";
 		else $paypal_url="https://www.paypal.com/cgi-bin/webscr";
+
+		$paypal_lang = $this->CI->lang->line("Pay with PayPal");
 		
 		$button.= "<form action='{$paypal_url}' method='post' style='padding: 0; margin: 0;'>";
 			$button.= "<input type='hidden' name='cmd' value='_xclick' />";
@@ -42,7 +44,7 @@ class Paypal_class_ecommerce{
 			$button.= "<input type='hidden' name='return' value='{$this->success_url}'>";
 			$button.= "<input type='hidden' name='cancel_return' value='{$this->cancel_url}'>";
 			$button.= "<input type='hidden' name='custom' value='{$this->cart_id}_{$this->subscriber_id}'>";
-			$button.= "<button type='submit' class='btn btn-info btn-lg'>PayPal</button>";
+			$button.= "<button type='submit' class='btn btn-info btn-lg'>".$paypal_lang."</button>";
 		$button.= "</form>";	
 		
 		return $button;

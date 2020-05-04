@@ -114,6 +114,10 @@ class Cron_job extends Home
 
     public function api_key_check($api_key="")
     {
+
+        
+        if($this->input->is_cli_request()) return TRUE;
+
         $user_id="";
         if($api_key!="")
         {
@@ -1480,6 +1484,11 @@ class Cron_job extends Home
                     $reddit_accounts = json_decode($value['reddit_accounts'], true);
                     $subreddits = $value['subreddits'];
 
+                    if(!is_array($twitter_accounts)) $twitter_accounts=array();
+                    if(!is_array($linkedin_accounts)) $linkedin_accounts=array();
+                    if(!is_array($reddit_accounts)) $reddit_accounts=array();
+
+
                     $final_accounts_list = array_merge($twitter_accounts, $linkedin_accounts, $reddit_accounts);
 
                     if (count($final_accounts_list) > 0) {
@@ -1503,87 +1512,6 @@ class Cron_job extends Home
                     	$this->basic->insert_data('comboposter_campaigns', $create_campaign_data_1);
                     }
                     /* processing other social media's post */
-
-
-
-                    //processing broadcasting
-                    $get_meta_tag_fb=$this->rss_feed->get_meta_tag_fb($post_feed_url);
-                    $feed_url_title=isset($get_meta_tag_fb['title'])?$get_meta_tag_fb['title']:"";
-                    $feed_url_image=isset($get_meta_tag_fb['image'])?$get_meta_tag_fb['image']:"";
-                    $feed_url_des=isset($get_meta_tag_fb['description'])?$get_meta_tag_fb['description']:"";
-
-                    if(strlen($feed_url_des)>80)
-                    $feed_url_subtitle=substr($feed_url_des,0,77)."...";
-                    else $feed_url_subtitle=$feed_url_des;
-
-                    if(strlen($feed_url_title)>80)
-                    $feed_url_title=substr($feed_url_title,0,77)."...";
-
-                    $broadcast_schedule_time_gapped=$broadcast_schedule_time;
-                    if($valid_feed<=3) // if there is a small amount of feeds then we will try to post in first hour
-                    {
-                       $broadcast_schedule_time_gapped = strtotime($broadcast_schedule_time.' + '.$broadcast_gap_minute.' minute');
-                       $broadcast_schedule_time_gapped = date('Y-m-d H:i:s', $broadcast_schedule_time_gapped);
-                    }
-                    else // if there is a large amount of feeds then we will try to span the feed post process to cover whole timeslot
-                    {
-                       if($broadcast_gap_minute>0)
-                       {
-                           $broadcast_schedule_time_gapped = strtotime($broadcast_schedule_time.' + '.$broadcast_gap_minute.' minute');
-                           $broadcast_schedule_time_gapped = date('Y-m-d H:i:s', $broadcast_schedule_time_gapped);
-                       }
-                    }
-
-
-                    if($value["page_id"]!="")
-                    {
-                        $post_data=array
-                        (                        
-                            "campaign_name" => $feed_name." [RSS Autopost]",
-                            "fb_page_id" => $value["fb_page_id"],
-                            "page" => $value["page_id"],
-                            "notification_type" => $broadcast_notification_type,
-                            "display_unsubscribe" => $broadcast_display_unsubscribe,
-                            "label_ids" => $value['label_ids'],
-                            "excluded_label_ids" => $value['excluded_label_ids'],
-                            "template_type_1" => "generic template",    
-                            "generic_template_image_1" => $feed_url_image,
-                            "generic_template_image_destination_link_1" => $post_feed_url,
-                            "generic_template_title_1" => $feed_url_title,
-                            "generic_template_subtitle_1" => $feed_url_subtitle,
-                            "generic_template_button_text_1_1" => "Unsubscribe",
-                            "generic_template_button_type_1_1" => "post_back",                        
-                            "generic_template_button_post_id_1_1" => "UNSUBSCRIBE_QUICK_BOXER",                        
-                            "schedule_type" => "later",
-                            "time_zone" => $broadcast_timezone,
-                            "schedule_time" => $broadcast_schedule_time_gapped,
-                            "user_id" => $user_id
-                        );
-
-                        // curl api to create auto post quick bulk broadcast campaign
-                        $url=base_url("messenger_bot_enhancers/rss_autoposting_quick_broadcast_cron_call/".$api_key);                       
-                        $post_data = json_encode($post_data);
-                        $ch = curl_init($url);
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-                        curl_setopt($ch, CURLOPT_POST, true);
-                        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data); 
-                        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-                        $st=curl_exec($ch);  
-                        $result=json_decode($st,TRUE);
-                        curl_close($ch);
-
-                        if(isset($result['status']) && $result['status']=='0') // checking and logging if any error found
-                        { 
-                            $error_message=isset($result['message'])?$result['message']:$this->lang->line("Something went wrong while creating broadcast campaign.");
-                            $error_message.=" [Broadcast]";
-                            $error_row=array("time"=>$datetime,"message"=>$error_message);
-                            array_push($error_log, $error_row);
-                            $this->basic->update_data("autoposting",array("id"=>$value['id']),array("last_updated_at"=>$datetime,"error_message"=>json_encode($error_log)));                        
-                        }
-
-                    }
-                    //processing broadcasting
                 }
                 
             } 
@@ -1643,6 +1571,9 @@ class Cron_job extends Home
     {
         
         $this->api_key_check($api_key);
+
+        $this->load->library("fb_rx_login"); 
+
         $limit=$this->config->item("messengerbot_subscriber_profile_update_limit_per_cron_job");
         if($limit=="") $limit=100;
         $subscriber_info = $this->basic->get_data('messenger_bot_subscriber',array('where'=>array('is_updated_name'=>'0','is_bot_subscriber'=>'0')),$select='',$join='',$limit, '', 'last_name_update_time asc');
@@ -1659,6 +1590,25 @@ class Cron_job extends Home
              $access_token = $facebook_rx_fb_page_info['page_access_token'];
 
              $user_info = $this->subscriber_info($access_token, $subscribe_id); // home controller
+
+             $xlabels=$this->fb_rx_login->retrieve_level_of_psid($subscribe_id,$access_token);
+             $existing_label_str="";
+            
+            if(isset($xlabels['data']))
+            {
+              $get_groupdata=$this->basic->get_data('messenger_bot_broadcast_contact_group',array('where'=>array('page_id'=>$page_table_id)));
+              $label_id=array();
+              foreach ($get_groupdata as $key => $value) 
+              {
+                  $label_id[$value['label_id']]=$value['id'];
+              }
+              $existing_label_array=array();
+              foreach ($xlabels['data'] as $key => $value) 
+              {
+                if(isset($label_id[$value['id']])) $existing_label_array[]=$label_id[$value['id']];
+              }
+              $existing_label_str = implode(',', $existing_label_array);
+            }
 
              if (!isset($user_info['error'])) {
 
@@ -1682,7 +1632,8 @@ class Cron_job extends Home
                          'gender'=>$gender,
                          'locale'=>$locale,
                          'timezone'=>$timezone,
-                         'last_name_update_time' => date('Y-m-d H:i:s')
+                         'last_name_update_time' => date('Y-m-d H:i:s'),
+                         'contact_group_id'=>$existing_label_str
                      );
                      if($full_name!="") $data["full_name"] = $full_name;
 
@@ -2067,6 +2018,7 @@ class Cron_job extends Home
                 $subscribeauto_id = $value['subscriber_auto_id'];
                 $client_first_name = $value['subscriber_name'];
                 $client_last_name = $value['subscriber_lastname'];
+                $client_otn_token=$value['otn_token']; // if OTN Campaign
                 
                 $error_msg="";
                 $message_error_code = "";
@@ -2080,6 +2032,9 @@ class Cron_job extends Home
                 $campaign_message_send = str_replace('{{last_name}}',$client_last_name,$campaign_message_send);
                 $replace_search=array('PUT_SUBSCRIBER_ID','#SUBSCRIBER_ID_REPLACE#');
                 $campaign_message_send=str_replace($replace_search, $subscribe_id, $campaign_message_send);
+
+                if($client_otn_token!="")
+                    $campaign_message_send = str_replace('PUT_OTN_TOKEN',$client_otn_token,$campaign_message_send);
 
 
                 // print_r($campaign_message_send); continue;
@@ -2801,6 +2756,10 @@ class Cron_job extends Home
        $this->basic->delete_data("send_email_to_autoresponder_log",array("insert_time <="=>$last_time));
        $this->basic->delete_data("messenger_bot_reply_error_log",array("error_time <="=>$last_time));
 
+       /**Clean JSON API Log Table**/
+       if($this->addon_exist("messenger_bot_connectivity")) 
+            $this->basic->delete_data("messenger_bot_thirdparty_webhook_activity",array("post_time <="=>$last_time));
+
        //Delete error log file in root
        @unlink("error_log");
 
@@ -2867,12 +2826,8 @@ class Cron_job extends Home
     	// $link=base_url().'cron_job/conversation_broadcast/'.$api_key;
     	// $this->call_curl_internal_cronjob($link);
 
-    	if($this->basic->is_exist("add_ons",array("project_id"=>30)))
-    	{
-    		$link=base_url().'cron_job/subscriber_broadcaster/'.$api_key;
-    		$this->call_curl_internal_cronjob($link);
-    	}
-
+		$link=base_url().'cron_job/subscriber_broadcaster/'.$api_key;
+		$this->call_curl_internal_cronjob($link);
     	
     	// Email Broadcast
     	if($this->basic->is_exist("modules",array("id"=>263)))

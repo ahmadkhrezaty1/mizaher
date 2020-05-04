@@ -62,7 +62,7 @@
                     <div class="input-group-prepend">
                       <span class="input-group-text"><?php echo $config_currency_icon; ?></span>
                     </div>
-                    <input name="original_price" value="<?php echo set_value('original_price');?>"  class="form-control" type="number">
+                    <input name="original_price" value="<?php echo set_value('original_price');?>"  class="form-control" type="text">
                   </div>                  
                   <span class="red"><?php echo form_error('original_price'); ?></span>
                 </div>
@@ -76,7 +76,7 @@
                     <div class="input-group-prepend">
                       <span class="input-group-text"><?php echo $config_currency_icon; ?></span>
                     </div>
-                    <input name="sell_price" value="<?php echo set_value('sell_price');?>"  class="form-control" type="number">
+                    <input name="sell_price" value="<?php echo set_value('sell_price');?>"  class="form-control" type="text">
                   </div>                  
                   <span class="red"><?php echo form_error('sell_price'); ?></span>
                 </div>
@@ -85,24 +85,24 @@
           
 
             <div class="row">
-              <div class="col-12 col-md-4">
+              <div class="col-12 col-md-6">
                 <div class="form-group">
                   <label for="product_description"> <?php echo $this->lang->line("Product description")?></label>
-                  <textarea name="product_description"  class="form-control" style="height: 180px !important;"><?php echo set_value('product_description');?></textarea>
+                  <textarea name="product_description"  class="form-control visual_editor"><?php echo set_value('product_description');?></textarea>
                   <span class="red"><?php echo form_error('product_description'); ?></span>
                 </div>
               </div>
-              <div class="col-12 col-md-4">
+              <div class="col-12 col-md-6">
                 <div class="form-group">
                   <label for="purchase_note"> <?php echo $this->lang->line("Purchase note")?></label>
-                  <textarea name="purchase_note"  class="form-control" style="height: 180px !important;"><?php echo set_value('purchase_note');?></textarea>
+                  <textarea name="purchase_note"  class="form-control visual_editor"><?php echo set_value('purchase_note');?></textarea>
                   <span class="red"><?php echo form_error('purchase_note'); ?></span>
                 </div>
               </div>
-              <div class="col-12 col-md-4">
+              <div class="col-12 col-md-6">
                 <div class="form-group">
                   <label><?php echo $this->lang->line('Thumbnail'); ?> 
-                   <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Thumbnail"); ?>" data-content="<?php echo $this->lang->line("Maximum: 1MB, Format: JPG/PNG, Preference: Square image"); ?>"><i class='fa fa-info-circle'></i> </a>
+                   <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Thumbnail"); ?>" data-content="<?php echo $this->lang->line("Maximum: 1MB, Format: JPG/PNG, Preference: Square image, Recommended dimension : 500x500"); ?>"><i class='fa fa-info-circle'></i> </a>
                   </label>
                   <div id="thumb-dropzone" class="dropzone mb-1">
                     <div class="dz-default dz-message">
@@ -111,6 +111,20 @@
                     </div>
                   </div>
                   <span class="red"><?php echo form_error('thumbnail'); ?></span>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="form-group">
+                  <label><?php echo $this->lang->line('Featured  Images'); ?> 
+                   <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="<?php echo $this->lang->line("Featured  Images"); ?>" data-content="<?php echo $this->lang->line("Upto 3 images, Maximum: 1MB each, Format: JPG/PNG, Preference: Square image, Recommended dimension : 500x500"); ?>"><i class='fa fa-info-circle'></i> </a>
+                  </label>
+                  <div id="feature-dropzone" class="dropzone mb-1">
+                    <div class="dz-default dz-message">
+                      <input class="form-control" name="featured_images" id="featured-uploaded-file" type="hidden">
+                      <span style="font-size: 20px;"><i class="fas fa-cloud-upload-alt" style="font-size: 35px;color: #6777ef;"></i> <?php echo $this->lang->line('Upload'); ?></span>
+                    </div>
+                  </div>
+                  <span class="red"><?php echo form_error('featured_images'); ?></span>
                 </div>
               </div>
             </div>
@@ -129,7 +143,52 @@
               if(set_value('taxable')=='1') $checked3="checked";
               else $checked3="";
             }
+            $checked4="";
+            if(validation_errors())
+            {
+              if(set_value('stock_display')=='1') $checked4="checked";
+              else $checked4="";
+            }
+            $checked5="";
+            if(validation_errors())
+            {
+              if(set_value('stock_prevent_purchase')=='1') $checked5="checked";
+              else $checked5="";
+            }
             ?>
+
+            <div class="row">             
+              <div class="col-6 col-md-4">
+                <div class="form-group">
+                  <?php $default_stock_item =  set_value('stock_item')!='' ? set_value('stock_item') : 0; ?>
+                  <label for="status" > <?php echo $this->lang->line('Item in stock');?> *</label><br>
+                  <input name="stock_item" value="<?php echo $default_stock_item;?>"  class="form-control" type="number" min="0">
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-group">
+                  <label for="stock_display"> <?php echo $this->lang->line('Display stock');?> *</label><br>
+                  <label class="custom-switch mt-2">
+                    <input type="checkbox" name="stock_display" value="1" class="custom-switch-input" <?php echo $checked4; ?>>
+                    <span class="custom-switch-indicator"></span>
+                    <span class="custom-switch-description"><?php echo $this->lang->line('Yes');?></span>
+                    <span class="red"><?php echo form_error('stock_display'); ?></span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-group">
+                  <label for="stock_prevent_purchase"> <?php echo $this->lang->line('Prevent purchase if out of stock');?> *</label><br>
+                  <label class="custom-switch mt-2">
+                    <input type="checkbox" name="stock_prevent_purchase" value="1" class="custom-switch-input" <?php echo $checked5; ?>>
+                    <span class="custom-switch-indicator"></span>
+                    <span class="custom-switch-description"><?php echo $this->lang->line('Yes');?></span>
+                    <span class="red"><?php echo form_error('stock_prevent_purchase'); ?></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
 
             <div class="row">             
               <div class="col-6 col-md-4">
@@ -159,7 +218,7 @@
 
           </div>
 
-          <div class="card-footer p-0">
+          <div class="card-footer p-0" style="margin-bottom: 200px">
             <button name="submit" type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save"></i> <?php echo $this->lang->line("Save");?></button>
             <button  type="button" class="btn btn-secondary btn-lg float-right" onclick='goBack("ecommerce/product_list",0)'><i class="fa fa-remove"></i> <?php echo $this->lang->line("Cancel");?></button>
           </div>
@@ -169,73 +228,11 @@
   </div>
 </section>
 
-<script>
-  $(document).ready(function() {
-
-    // Uploads files
-    var uploaded_file = $('#uploaded-file');
-    Dropzone.autoDiscover = false;
-    $("#thumb-dropzone").dropzone({ 
-      url: '<?php echo base_url('ecommerce/upload_product_thumb'); ?>',
-      maxFilesize:1,
-      uploadMultiple:false,
-      paramName:"file",
-      createImageThumbnails:true,
-      acceptedFiles: ".png,.jpg,.jpeg",
-      maxFiles:1,
-      addRemoveLinks:true,
-      success:function(file, response) {
-        var data = JSON.parse(response);
-
-        // Shows error message
-        if (data.error) {
-          swal({
-            icon: 'error',
-            text: data.error,
-            title: '<?php echo $this->lang->line('Error!'); ?>'
-          });
-          return;
-        }
-
-        if (data.filename) {
-          $(uploaded_file).val(data.filename);
-        }
-      },
-      removedfile: function(file) {
-        var filename = $(uploaded_file).val();
-        delete_uploaded_file(filename);
-      },
-    });
-
-    function delete_uploaded_file(filename) {
-      if('' !== filename) {     
-        $.ajax({
-          type: 'POST',
-          dataType: 'JSON',
-          data: { filename },
-          url: '<?php echo base_url('ecommerce/delete_product_thumb'); ?>',
-          success: function(data) {
-            $('#uploaded-file').val('');
-          }
-        });
-      }
-
-      // Empties form values
-      empty_form_values();     
-    }
-
-    // Empties form values
-    function empty_form_values() {
-      $('.dz-preview').remove();
-      $('#thumb-dropzone').removeClass('dz-started dz-max-files-reached');
-      // Clears added file
-      Dropzone.forElement('#thumb-dropzone').removeAllFiles(true);
-    }
-});
-</script>
-
+<?php include(APPPATH.'views/ecommerce/product_js.php'); ?>
 
 <style type="text/css">
   .dropzone{min-height: 150px !important;}
   .dropzone .dz-message{margin:2em !important;}
 </style>
+
+<?php include(APPPATH.'views/ecommerce/editor_js.php'); ?>

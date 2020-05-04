@@ -33,10 +33,8 @@ class Sms_manager{
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-	    curl_setopt($ch, CURLOPT_COOKIEJAR, "my_cookies.txt");  
-	   	curl_setopt($ch, CURLOPT_COOKIEFILE, "my_cookies.txt");  
 	    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-	    curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3"); 
+	    curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0');
         // grab URL and pass it to the browser
         $response=curl_exec($ch);
 
@@ -356,7 +354,7 @@ class Sms_manager{
 	     	curl_setopt($ch, CURLOPT_COOKIEJAR, "my_cookies.txt");  
 	    	curl_setopt($ch, CURLOPT_COOKIEFILE, "my_cookies.txt");  
 	     	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-	     	curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3");  
+	     	curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0');
 			curl_setopt($ch, CURLOPT_USERPWD, $AUTH_ID . ":" . $AUTH_TOKEN);
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
 			$response = curl_exec( $ch );
@@ -604,7 +602,7 @@ class Sms_manager{
 						$message_info['status']= $response_decode['errorDescription'];
 						
 					} else {
-						$message_info['status'] = $this->lang->line('something went wrong.');
+						$message_info['status'] = $this->CI->lang->line('something went wrong.');
 					}
 				}
 			}		
@@ -1057,7 +1055,7 @@ class Sms_manager{
 		    curl_setopt($ch, CURLOPT_COOKIEJAR, "my_cookies.txt");  
 		    curl_setopt($ch, CURLOPT_COOKIEFILE, "my_cookies.txt");  
 		    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-		    curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3");  
+		    curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0'); 
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json","Apikey:{$api_key}"));
 			$response = curl_exec( $ch );
 			curl_close($ch);
@@ -1088,7 +1086,7 @@ class Sms_manager{
 	    // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
 	    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);   
 	    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-	    curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3");  
+	    curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0');
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json","Apikey:{$api_key}"));
 		$response = curl_exec( $ch );
 		curl_close($ch);
@@ -1126,10 +1124,10 @@ class Sms_manager{
 			$ch=curl_init($url);
 			curl_setopt($ch, CURLOPT_POST, true);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);    
-			// curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-			curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3");  		curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
+			curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0');
+			curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
 			$response = curl_exec( $ch );
 			$response=json_decode($response,TRUE);
 			
@@ -1175,10 +1173,10 @@ class Sms_manager{
 			$response['currency']="";
 			
 			$ch=curl_init($url);
-			// curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-			curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3");  		curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
+			curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0'); 		
+			curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
 			$response = curl_exec( $ch );
 			$response=json_decode($response,TRUE);
 			$balance= $response['balance']." ".$response['currency'];	
@@ -1234,7 +1232,7 @@ class Sms_manager{
 			curl_setopt($ch, CURLOPT_COOKIEJAR,'cookie.txt');  
 			curl_setopt($ch, CURLOPT_COOKIEFILE,'cookie.txt');  
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-			curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3"); 
+			curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0'); 
 			$response=curl_exec($ch); 
 			$response=json_decode($response,TRUE);
 

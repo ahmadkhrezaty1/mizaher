@@ -57,6 +57,8 @@
  
   $(document).ready(function() {
 
+    "use strict";
+
     var perscroll;
     var table = $("#mytable").DataTable({
         serverSide: true,
@@ -120,6 +122,7 @@
         if (willDelete) 
         {
           var app_table_id = $(this).attr('table_id');
+          var csrf_token = $(this).attr('csrf_token');
           $(this).removeClass('btn-outline-danger');
           $(this).addClass('btn-danger');
           $(this).addClass('btn-progress');
@@ -129,7 +132,7 @@
             type:'POST' ,
             url:"<?php echo site_url();?>social_accounts/app_delete_action",
             dataType: 'json',
-            data:{app_table_id : app_table_id},
+            data:{app_table_id : app_table_id,csrf_token:csrf_token},
             success:function(response){ 
               
               $(this).removeClass('btn-progress');

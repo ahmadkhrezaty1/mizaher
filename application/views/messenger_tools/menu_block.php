@@ -35,6 +35,27 @@
           </div>
         </div>
       </div>
+      <?php if($this->session->userdata('user_type') == 'Admin' || in_array(275,$this->module_access)) : ?>
+      <div class="col-lg-6">
+        <div class="card card-large-icons">
+          <div class="card-icon text-primary">
+            <i class="fas fa-th-large"></i>
+          </div>
+          <div class="card-body">
+            <h4><?php echo $this->lang->line("OTN Post-back Manager"); ?> <i class="fas fa-info-circle otn_info_modal" style="color: #6777EF;"></i></h4>
+            <p><?php echo $this->lang->line("OTN Postback ID & postback data management"); ?></p>
+            <div class="dropdown">
+              <a href="#" data-toggle="dropdown" class="no_hover" style="font-weight: 500;"><?php echo $this->lang->line("Actions"); ?> <i class="fas fa-chevron-right"></i></a>
+              <div class="dropdown-menu">
+                <div class="dropdown-title"><?php echo $this->lang->line("Tools"); ?></div>                        
+                <a class="dropdown-item has-icon" href="<?php echo base_url("messenger_bot/otn_template_manager"); ?>"><i class="fas fa-check-square"></i> <?php echo $this->lang->line("Manage Templates"); ?></a>
+                <a class="dropdown-item has-icon" href="<?php echo base_url("messenger_bot/otn_subscribers"); ?>"><i class="fas fa-eye"></i> <?php echo $this->lang->line("Report"); ?></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <?php endif; ?>
 
       <div class="col-lg-6">
         <div class="card card-large-icons">
@@ -210,4 +231,44 @@
     </div>
   </div>
 </section>
+
+<style type="text/css">
+  .otn_info_modal{cursor: pointer;}
+</style>
+
+<script type="text/javascript">
+  $("document").ready(function(){
+
+    $(document).on('click','.otn_info_modal',function(e){
+        e.preventDefault();
+        $("#otn_info_modal").modal();
+      });
+
+  });
+</script>
+
+
+<div class="modal fade" id="otn_info_modal" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-users"></i> <?php echo $this->lang->line("OTN Subscribers");?></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <div class="modal-body">    
+        <div class="section">                
+          <h2 class="section-title"><?php echo $this->lang->line('One-Time Notification'); ?></h2>
+          <p><?php echo $this->lang->line("The Messenger Platform's One-Time Notification allows a page to request a user to send one follow-up message after 24-hour messaging window have ended. The user will be offered to receive a future notification. Once the user asks to be notified, the page will receive a token which is an equivalent to a permission to send a single message to the user. The token can only be used once and will expire within 1 year of creation."); ?></p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <a class="btn btn-outline-secondary float-right" data-dismiss="modal"><i class="fas fa-times"></i> <?php echo $this->lang->line("Close") ?></a>
+      </div>
+    </div>
+  </div>
+</div>
 

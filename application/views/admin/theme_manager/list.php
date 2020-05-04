@@ -58,7 +58,7 @@
                   <a title="<?php echo $this->lang->line("activate"); ?>" class="btn btn-outline-primary activate_action" data-i='<?php echo $i; ?>' href="" data-unique-name="<?php echo $value['folder_name'];?>"><i class="fa fa-check"></i> <?php echo $this->lang->line('activate');?></a>
 
                 <?php else: ?>
-                  <a title="<?php echo $this->lang->line("deactivate"); ?>" class="<?php if($this->is_demo=='1') echo 'disabled'; ?> btn btn-outline-dark deactivate_action" href="" data-i='<?php echo $i; ?>' data-unique-name="<?php echo $value['folder_name'];?>"><i class="fa fa-ban"></i> <?php echo $this->lang->line('deactivate');?></a>
+                  <a title="<?php echo $this->lang->line("deactivate"); ?>" class="<?php if($this->is_demo=='1' || count($theme_list)<=1) echo 'disabled'; ?> btn btn-outline-dark deactivate_action" href="" data-i='<?php echo $i; ?>' data-unique-name="<?php echo $value['folder_name'];?>"><i class="fa fa-ban"></i> <?php echo $this->lang->line('deactivate');?></a>
                 <?php endif; ?>
                 <?php if($value['folder_name'] != 'default'): ?>
                 <a title="<?php echo $this->lang->line("delete"); ?>" class="<?php if($this->is_demo=='1') echo 'disabled'; ?> btn btn-outline-danger delete_action" href="" data-i='<?php echo $i; ?>' data-unique-name="<?php echo $value['folder_name'];?>"><i class="fa fa-trash"></i> <?php echo $this->lang->line('delete');?></a>

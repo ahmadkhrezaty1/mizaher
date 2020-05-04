@@ -248,12 +248,12 @@ class Sms_email_manager extends Home
         $response = $this->sms_manager->send_sms($message, $number);
         
         if($test_gateway_name != 'custom') {
-            echo json_encode($response);
+            echo json_encode($response); exit;
         } else if($test_gateway_name == 'custom') {
             unset($response['status']);
-            echo isset($response['id']) ? $response['id']: "";
+            echo json_encode($response); exit;
         } else {
-            echo json_encode(['response'=>"something went wrong, please try once again"]);
+            echo json_encode(['response'=>"something went wrong, please try once again"]); exit;
         }
     }
 
@@ -4519,7 +4519,7 @@ class Sms_email_manager extends Home
 
         $table_id = $this->input->post("table_id",true);
         $user_id = $this->user_id;
-        $message = $this->input->post("message",true);
+        $message = $this->input->post("message");
         // $message  = preg_replace("@<(script|script[^>]+)>(.*)(</script>)?@mui", "[removed]disallowed characters[removed]", $message);
         $edited_message = array('email_message' => $message);
 
@@ -4879,7 +4879,7 @@ class Sms_email_manager extends Home
         /* Campaign form data */
         $campaign_name        = strip_tags(trim($this->input->post('campaign_name', true)));
         $email_subject        = strip_tags(trim($this->input->post('email_subject', true)));
-        $email_message        = $this->input->post('message',true);
+        $email_message        = $this->input->post('message');
 
         $from_email           = strip_tags(trim($this->input->post('from_email', true)));
 
@@ -5365,7 +5365,7 @@ class Sms_email_manager extends Home
         $previous_thread      = $this->input->post("previous_thread");
         $campaign_name        = strip_tags(trim($this->input->post('campaign_name', true)));
         $email_subject        = strip_tags(trim($this->input->post('email_subject', true)));
-        $email_message        = $this->input->post('message',true);
+        $email_message        = $this->input->post('message');
         // $email_message        = preg_replace("@<(script|script[^>]+)>(.*)(</script>)?@mui", "[removed]>disallowed characters[removed]", $email_message);
         $from_email           = strip_tags(trim($this->input->post('from_email', true)));
         $from_email_separate  = explode('_', $from_email);
@@ -6123,10 +6123,8 @@ class Sms_email_manager extends Home
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-        curl_setopt($ch, CURLOPT_COOKIEJAR, "my_cookies.txt");  
-        curl_setopt($ch, CURLOPT_COOKIEFILE, "my_cookies.txt");  
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3"); 
+        curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0');
         // grab URL and pass it to the browser
         $response=curl_exec($ch);
 

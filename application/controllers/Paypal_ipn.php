@@ -18,7 +18,6 @@ class Paypal_ipn extends CI_Controller
         set_time_limit(0);
     }
 
-
       public function ipn_notify(){
 
             $payment_info=$this->paypal_class->run_ipn();
@@ -237,62 +236,97 @@ class Paypal_ipn extends CI_Controller
     }
 
 
-    function _mail_sender($from = '', $to = '', $subject = '', $message = '', $mask = "", $html = 0, $smtp = 1)
+    function _mail_sender($from = '', $to = '', $subject = '', $message = '', $mask = "", $html = 1, $smtp = 1,$attachement="",$test_mail="")
     {
-        if ($from!= '' && $to!= '' && $subject!='' && $message!= '') {
-            if (!is_array($to)) {
-                $to=array($to);
-            }
+        if ($to!= '' && $subject!='' && $message!= '')
+        {
+            if($this->config->item('email_sending_option') == '') $email_sending_option = 'smtp';
+            else $email_sending_option = $this->config->item('email_sending_option');
 
-            if ($smtp == '1') {
-                $where2 = array("where" => array('status' => '1'));
-                $email_config_details = $this->basic->get_data("email_config", $where2, $select = '', $join = '', $limit = '', $start = '',
-                                                        $group_by = '', $num_rows = 0);
+            if($test_mail == 1) $email_sending_option = 'smtp';
 
-                if (count($email_config_details) == 0) {
-                    $this->load->library('email');
-                } else {
-                    foreach ($email_config_details as $send_info) {
-                        $send_email = trim($send_info['email_address']);
-                        $smtp_host = trim($send_info['smtp_host']);
-                        $smtp_port = trim($send_info['smtp_port']);
-                        $smtp_user = trim($send_info['smtp_user']);
-                        $smtp_password = trim($send_info['smtp_password']);
+            $message=$message."<br/><br/>".$this->lang->line("The email was sent by"). ": ".$from;
+
+            if($email_sending_option == 'smtp')
+            {
+                if ($smtp == '1') {
+                    $where2 = array("where" => array('status' => '1','deleted' => '0'));
+                    $email_config_details = $this->basic->get_data("email_config", $where2, $select = '', $join = '', $limit = '', $start = '', $group_by = '', $num_rows = 0);
+
+                    if (count($email_config_details) == 0) {
+                        $this->load->library('email');
+                    } else {
+                        foreach ($email_config_details as $send_info) {
+                            $send_email = trim($send_info['email_address']);
+                            $smtp_host = trim($send_info['smtp_host']);
+                            $smtp_port = trim($send_info['smtp_port']);
+                            $smtp_user = trim($send_info['smtp_user']);
+                            $smtp_password = trim($send_info['smtp_password']);
+                            $smtp_type = trim($send_info['smtp_type']);
+                        }
+
+                    /*****Email Sending Code ******/
+                    $config = array(
+                      'protocol' => 'smtp',
+                      'smtp_host' => "{$smtp_host}",
+                      'smtp_port' => "{$smtp_port}",
+                      'smtp_user' => "{$smtp_user}", // change it to yours
+                      'smtp_pass' => "{$smtp_password}", // change it to yours
+                      'mailtype' => 'html',
+                      'charset' => 'utf-8',
+                      'newline' =>  "\r\n",
+                      'set_crlf'=> "\r\n",
+                      'smtp_timeout' => '30',
+                      'wrapchars'   => '998'
+                     );
+                    if($smtp_type != 'Default')
+                        $config['smtp_crypto'] = $smtp_type;
+
+                        $this->load->library('email', $config);
                     }
+                } /*** End of If Smtp== 1 **/
 
-            /*****Email Sending Code ******/
-                $config = array(
-                  'protocol' => 'smtp',
-                  'smtp_host' => "{$smtp_host}",
-                  'smtp_port' => "{$smtp_port}",
-                  'smtp_user' => "{$smtp_user}", // change it to yours
-                  'smtp_pass' => "{$smtp_password}", // change it to yours
-                  'mailtype' => 'html',
-                  'charset' => 'utf-8',
-                  'newline' =>  '\r\n',
-                  'smtp_timeout' => '30'
-                 );
-
-                    $this->load->library('email', $config);
+                if (isset($send_email) && $send_email!= "") {
+                    $from = $send_email;
                 }
-            } /*** End of If Smtp== 1 **/
+                $this->email->from($from, $mask);
+                $this->email->to($to);
+                $this->email->subject($subject);
+                $this->email->message($message);
+                if ($html == 1) {
+                    $this->email->set_mailtype('html');
+                }
+                if ($attachement!="") {
+                    $this->email->attach($attachement);
+                }
 
-            if (isset($send_email) && $send_email!= "") {
-                $from = $send_email;
-            }
-            $this->email->from($from, $mask);
-            $this->email->to($to);
-            $this->email->subject($subject);
-            $this->email->message($message);
-            if ($html == 1) {
-                $this->email->set_mailtype('html');
+                if ($this->email->send()) {
+                    return true;
+                } else {
+
+                    if($test_mail==1) {
+                        return $this->email->print_debugger();
+                    } else {
+                        return false;
+                    }
+                }                
             }
 
-            if ($this->email->send()) {
-                return true;
-            } else {
-                return false;
+            if($email_sending_option == 'php_mail')
+            {
+                $from = get_domain_only(base_url());
+                $from = "support@".$from;
+                $headers = 'MIME-Version: 1.0' . "\r\n";
+                $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+                $headers .= "From: {$from}" . "\r\n";
+                if(mail($to, $subject, $message, $headers))
+                    return true;
+                else
+                    return false;
             }
+
+
+
         } else {
             return false;
         }

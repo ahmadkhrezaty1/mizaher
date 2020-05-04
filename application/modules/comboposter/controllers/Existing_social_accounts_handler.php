@@ -231,7 +231,12 @@ class Existing_social_accounts_handler
 		    )
 		);
 		$select = array(
-			'id', 'user_id', 'domain_name', 'user_key', 'authentication_key'
+			'id', 
+			'user_id', 
+			'domain_name', 
+			'user_key', 
+			'authentication_key',
+			'blog_category',
 		);
 
 		$wordpress_self_hosted = $this->comboposter->basic->get_data('wordpress_config_self_hosted', $where, $select);

@@ -26,8 +26,10 @@ class Messenger_bot extends Home
                         exit();
                    }
               }
+
+            $this->member_validity();
         } 
-        $this->member_validity();
+       
     }
 
 
@@ -187,6 +189,7 @@ class Messenger_bot extends Home
         $response=array();
         $response['is_new']=FALSE;
         if(!empty($subscriber_info) && $subscriber_info[0]['is_bot_subscriber']=='1'){
+        	$this->user_id=$subscriber_info[0]['user_id'];
             $response['subscriber_info']=$subscriber_info[0];
             return $response; 
         }
@@ -201,6 +204,7 @@ class Messenger_bot extends Home
             $page_access_token_array = $this->basic->get_data($table,$where,"page_access_token,user_id,id");
             $page_access_token = $page_access_token_array[0]['page_access_token'];
             $user_id = $page_access_token_array[0]['user_id'];
+            $this->user_id=$user_id; // for using in webhook thridparty json trigger function in query 
             $user_data = $this->subscriber_info($page_access_token,$sender_id);
             $this->db->db_debug = FALSE; //disable debugging for queries
 
@@ -280,68 +284,100 @@ class Messenger_bot extends Home
     }
 
 
+    //$refference_id is passed for Checkbox plugin only 
+    public function send_message_bot_reply($value,$sender_id,$subscriber_info,$page_id,$user_reference_id=""){
+
+        $message_str = $value['message'];
+        $message_array = json_decode($message_str,true);
+        // if(!isset($message_array[1])) $message_array[1]=$message_array;
+        if(!isset($message_array[1])){
+            $message_array_org=$message_array;
+            $message_array=array();
+            $message_array[1]=$message_array_org; 
+        }
+        foreach($message_array as $msg)
+        {
+            $template_type_file_track=$msg['message']['template_type'];
+            unset($msg['message']['template_type']);
+
+            // typing on and typing on delay [alamin]
+            $enable_typing_on = $msg['message']['typing_on_settings'];
+            $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
+            unset($msg['message']['typing_on_settings']);
+            $typing_on_delay_time = $msg['message']['delay_in_reply'];
+            if($typing_on_delay_time=="") $typing_on_delay_time = 0;
+            unset($msg['message']['delay_in_reply']);
+
+            
+            /** Spintax **/
+            if(isset($msg['message']['text']))
+                $msg['message']['text']=spintax_process($msg['message']['text']);
+                
+            $msg['messaging_type'] = "RESPONSE";
+            $reply = json_encode($msg);     
+
+            if($user_reference_id==""){
+                $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
+                $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
+                $reply=str_replace($replace_search, $replace_with, $reply);
+            }
+
+            else{
+
+                $reply=str_replace('{"id":"replace_id"}', '{"user_ref":"'.$user_reference_id.'"}', $reply);
+            }
+            
+
+            if(isset($subscriber_info[0]['first_name']))
+                $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
+            if(isset($subscriber_info[0]['last_name']))
+                $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
+            $access_token = $value['page_access_token'];
+
+            if((isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1") || $user_reference_id!="")
+            {
+                // typing on and typing on delay [alamin]
+                if($enable_typing_on && $user_reference_id=="") $this->sender_action($sender_id,"typing_on",$access_token);                                
+                if($typing_on_delay_time>0 && $user_reference_id =="") sleep($typing_on_delay_time);
+
+                $reply_response= $this->send_reply($access_token,$reply);
+             
+             /*****Insert into database messenger_bot_reply_error_log if get error****/
+             if(isset($reply_response['error']['message'])){
+                $bot_settings_id= $value['id'];
+                $reply_error_message= $reply_response['error']['message'];
+                $error_time= date("Y-m-d H:i:s");
+                $page_table_id=$value['page_id'];
+                $user_id=$value['user_id'];
+                
+                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
+                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
+                                    "error_time"=>$error_time);
+                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
+                
+             }
+             
+            }   
+            
+        }
+    }
+
     public function webhook_callback_main()
     {
         
         $currenTime=date("Y-m-d H:i:s");
-        $response_raw=$this->input->post("response_raw");   
+        $response_raw=$this->input->post("response_raw");  
 
         /*file_put_contents("fb.txt",$response_raw, FILE_APPEND | LOCK_EX);        
-        exit();*/ 
-        
+        exit();*/
+
         $response = json_decode($response_raw,TRUE);
         if(isset($response['entry']['0']['messaging'][0]['delivery'])) exit();
+        if(isset($response['entry']['0']['messaging'][0]['read'])) exit; 
+
         // for package expired users bot will not work section
         $page_id = $response['entry']['0']['messaging'][0]['recipient']['id'];
         
-        if(isset($response['entry']['0']['messaging'][0]['read'])) 
-        {           
-            $receipent_id_read=isset($response['entry']['0']['messaging'][0]['sender']['id'])?$response['entry']['0']['messaging'][0]['sender']['id']:"";
-            $where_array=array("subscribe_id"=>$receipent_id_read,"opened"=>"0","processed"=>'1',"error_message"=>"");
-            $campaign_info=$this->basic->get_data("messenger_bot_broadcast_serial_send",array("where"=>$where_array));
-            $campaign_id_read=array();
-            foreach($campaign_info as $read_info)
-            {
-                $campaign_id_read[]= $read_info['campaign_id']; 
-            }
-            if(!empty($campaign_id_read))   
-            {
-                $campaign_info_multiple=$this->basic->get_data("messenger_bot_broadcast_serial",array("where_in"=>array("id"=>$campaign_id_read)));
-                foreach ($campaign_info_multiple as $key => $value) 
-                {
-                   $cam_id=$value["id"];
-                   $successfully_opened=$value["successfully_opened"];
-                   $report_temp=json_decode($value["report"],true);
-                   $report_temp[$receipent_id_read]["opened"]="1";
-                   $report_temp[$receipent_id_read]["open_time"]=$currenTime;
-                   $report_json=json_encode($report_temp);
-                   $successfully_opened++;
-                   $this->basic->update_data("messenger_bot_broadcast_serial",array("id"=>$cam_id),array("report"=>$report_json,"successfully_opened"=>$successfully_opened));
-                }
-                $update_data_read= array("opened"=>"1","open_time"=>$currenTime);
-                $this->basic->update_data('messenger_bot_broadcast_serial_send',$where_array,$update_data_read); 
-            }
-            
-
-            // drip message open update
-
-            if($this->db->table_exists('messenger_bot_drip_campaign'))
-            {
-                $drip_subscriber_data=$this->basic->get_data("messenger_bot_subscriber",array("where"=>array("subscribe_id"=>$receipent_id_read)));
-                if(!isset($drip_subscriber_data[0])) exit();
-                $driptime=date("Y-m-d H:i:s");
-                $drip_insert_data=array
-                (
-                    "is_opened"=>"1",
-                    "opened_at"=>$driptime,
-                    "last_updated_at"=>$driptime
-                );
-                $this->basic->update_data("messenger_bot_drip_report",array("subscribe_id"=>$drip_subscriber_data[0]["subscribe_id"],"is_opened"=>"0"),$drip_insert_data);
-            }
-               
-            exit();                         
-        }
-       
        
        //if it's optin from checkbox plugin, then tese action is not needed. As not information can be found for that. 
        
@@ -361,13 +397,10 @@ class Messenger_bot extends Home
             $conversation_broadcast_unavailable=isset($subscriber_info[0]['unavailable_conversation']) ? $subscriber_info[0]['unavailable_conversation'] :"0";
             $subsciber_broadcast_unavailable=isset($subscriber_info[0]['unavailable']) ? $subscriber_info[0]['unavailable'] :"0";
             
-        
         }
      
         /***   Check if it coming from after subscribing by checkbox plugin    ***/
-        
-        if($this->db->table_exists('messenger_bot_engagement_checkbox'))
-        {
+
             if(isset($response['entry'][0]['messaging'][0]['prior_message']['source']) && $response['entry'][0]['messaging'][0]['prior_message']['source']=="checkbox_plugin")
             {
             
@@ -419,20 +452,9 @@ class Messenger_bot extends Home
                         
                         if($label_ids!="" )
                         {                 
-                            // $this->assign_label_webhook_call($sender_id,$page_id,$label_ids);
-
+                        
                             //DEPRECATED FUNCTION FOR QUICK BROADCAST
-                            $post_data_label_assign=array("psid"=>$sender_id,"fb_page_id"=>$page_id,"label_auto_ids"=>$label_ids);
-                            $url=base_url()."home/assign_label_webhook_call";
-                            $ch = curl_init();
-                            curl_setopt($ch, CURLOPT_URL, $url);
-                            curl_setopt($ch,CURLOPT_POST,1);
-                            curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data_label_assign);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-                            // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                            $reply_response=curl_exec($ch);                  
+                            $this->multiple_assign_label($sender_id,$page_id,$label_ids);
                         }                        
                         
                     }   
@@ -440,8 +462,6 @@ class Messenger_bot extends Home
                 }
             
             }
-        }
-     
      
      
         
@@ -452,8 +472,11 @@ class Messenger_bot extends Home
         {
             $messages = $response['entry']['0']['messaging'][0]['message']['text'];
             $table_name = "messenger_bot";
+
             $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'messenger_bot.status'=>'1','facebook_rx_fb_page_info.bot_enabled' => '1');
-            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");   
+
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left");   
+
             $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time"),$join,'','','messenger_bot.id asc');
             
             $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];
@@ -472,93 +495,13 @@ class Messenger_bot extends Home
                         }
                     }
                     $pos= stripos($messages,trim($cam_keywords));
+
+
                     if($pos!==FALSE){
-                        $message_str = $value['message'];
-                        $message_array = json_decode($message_str,true);
-                        // if(!isset($message_array[1])) $message_array[1]=$message_array;
-                        if(!isset($message_array[1])){
-                            $message_array_org=$message_array;
-                            $message_array=array();
-                            $message_array[1]=$message_array_org; 
-                        }
-                        foreach($message_array as $msg)
-                        {
-                            $template_type_file_track=$msg['message']['template_type'];
-                            unset($msg['message']['template_type']);
 
-                            // typing on and typing on delay [alamin]
-                            $enable_typing_on = $msg['message']['typing_on_settings'];
-                            $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
-                            unset($msg['message']['typing_on_settings']);
-                            $typing_on_delay_time = $msg['message']['delay_in_reply'];
-                            if($typing_on_delay_time=="") $typing_on_delay_time = 0;
-                            unset($msg['message']['delay_in_reply']);
+                    
+                    $this->send_message_bot_reply($value,$sender_id,$subscriber_info,$page_id);
 
-                            
-                            /** Spintax **/
-                            if(isset($msg['message']['text']))
-                                $msg['message']['text']=spintax_process($msg['message']['text']);
-                                
-                            $msg['messaging_type'] = "RESPONSE";
-                            $reply = json_encode($msg);     
-
-                            $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
-                            $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
-                            $reply=str_replace($replace_search, $replace_with, $reply);
-                            
-
-                            if(isset($subscriber_info[0]['first_name']))
-                                $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
-                            if(isset($subscriber_info[0]['last_name']))
-                                $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
-                            $access_token = $value['page_access_token'];
-                            if(isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1")
-                            {
-                                // typing on and typing on delay [alamin]
-                                if($enable_typing_on) $this->sender_action($sender_id,"typing_on",$access_token);                                
-                                if($typing_on_delay_time>0) sleep($typing_on_delay_time);
-                            
-                                if($template_type_file_track=='video' || $template_type_file_track=='file' || $template_type_file_track=='audio')
-                                {
-                                    $post_data=array("access_token"=>$access_token,"reply"=>$reply);
-                                    $url=base_url()."home/send_reply_curl_call";
-                                    $ch = curl_init();
-                                    curl_setopt($ch, CURLOPT_URL, $url);
-                                    curl_setopt($ch, CURLOPT_POST,1);
-                                    curl_setopt($ch, CURLOPT_POSTFIELDS,$post_data);
-                                    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                                    // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                                    $reply_response=curl_exec($ch);  
-                                }
-                                else
-                                    $reply_response= $this->send_reply($access_token,$reply);
-                             
-                             /*****Insert into database messenger_bot_reply_error_log if get error****/
-                             if(isset($reply_response['error']['message'])){
-                                $bot_settings_id= $value['id'];
-                                $reply_error_message= $reply_response['error']['message'];
-                                $error_time= date("Y-m-d H:i:s");
-                                $page_table_id=$value['page_id'];
-                                $user_id=$value['user_id'];
-                                
-                                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
-                                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
-                                                    "error_time"=>$error_time);
-                                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
-                                
-                             }
-                             
-                             
-                            }
-                            
-                            
-                        }
-
-                        /** Assign Drip Messaging Campaign ID ****/
-                     /*   $drip_type="default";
-                        $this->assign_drip_messaging_id($drip_type,"0",$subscriber_info[0]['page_table_id'],$subscriber_info[0]['subscribe_id']);  */
 
                     //update Subscriber Last Interaction time. 
                     $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
@@ -578,103 +521,29 @@ class Messenger_bot extends Home
                             $update_data=array("refferer_id"=>$reference_id,"refferer_source"=>"ADS","refferer_uri"=>$reference_ad_id);
                             $this->basic->update_data("messenger_bot_subscriber",array("id"=>$subscriber_id_update),$update_data);
                         }
-
                     }
-
-
-                        die();
-                    }
+                    
+                    die();
+                }
                 }
             }
+
+
             $table_name = "messenger_bot";
+
             $where['where'] = array('messenger_bot.fb_page_id' => $page_id, 'messenger_bot.keyword_type' => 'no match','facebook_rx_fb_page_info.bot_enabled' => '1','facebook_rx_fb_page_info.no_match_found_reply'=>'enabled');
-            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");   
+
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left");   
+
             $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time"),$join,'1','','messenger_bot.id asc');
             
             $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];
             
             if(isset($messenger_bot_info[0]) && !empty($messenger_bot_info)){
-                $message_str = $messenger_bot_info[0]['message'];
-                $message_array = json_decode($message_str,true);
-                // if(!isset($message_array[1])) $message_array[1]=$message_array;
-                if(!isset($message_array[1])){
-                    $message_array_org=$message_array;
-                    $message_array=array();
-                    $message_array[1]=$message_array_org;
-                }
-                foreach($message_array as $msg)
-                {
-                    $template_type_file_track=$msg['message']['template_type'];
-                    unset($msg['message']['template_type']);
 
-                    // typing on and typing on delay [alamin]
-                    $enable_typing_on = $msg['message']['typing_on_settings'];
-                    $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
-                    unset($msg['message']['typing_on_settings']);
-                    $typing_on_delay_time = $msg['message']['delay_in_reply'];
-                    if($typing_on_delay_time=="") $typing_on_delay_time = 0;
-                    unset($msg['message']['delay_in_reply']);
-
-
-                    /** Spintax **/
-                    if(isset($msg['message']['text']))
-                        $msg['message']['text']=spintax_process($msg['message']['text']);
-                                
-                    $msg['messaging_type'] = "RESPONSE";
-                    $reply = json_encode($msg);         
-
-                    $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
-                    $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
-                    $reply=str_replace($replace_search, $replace_with, $reply);
-
-                    if(isset($subscriber_info[0]['first_name']))
-                        $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
-                    if(isset($subscriber_info[0]['last_name']))
-                        $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
-                    $access_token = $messenger_bot_info[0]['page_access_token'];
-                    if(isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1")
-                    {
-                        // typing on and typing on delay [alamin]
-                        if($enable_typing_on) $this->sender_action($sender_id,"typing_on",$access_token);                                
-                        if($typing_on_delay_time>0) sleep($typing_on_delay_time);
-    
-                        if($template_type_file_track=='video' || $template_type_file_track=='file' || $template_type_file_track=='audio')
-                        {
-                            $post_data=array("access_token"=>$access_token,"reply"=>$reply);
-                            $url=base_url()."home/send_reply_curl_call";
-                            $ch = curl_init();
-                            curl_setopt($ch, CURLOPT_URL, $url);
-                            curl_setopt($ch,CURLOPT_POST,1);
-                            curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                            // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                            $reply_response=curl_exec($ch);  
-                    
-                        }
-                        else
-                            $reply_response=$this->send_reply($access_token,$reply);
-                            /*****Insert into database messenger_bot_reply_error_log if get error****/
-                             if(isset($reply_response['error']['message'])){
-                                $bot_settings_id= $value['id'];
-                                $reply_error_message= $reply_response['error']['message'];
-                                $error_time= date("Y-m-d H:i:s");
-                                $page_table_id=$value['page_id'];
-                                $user_id=$value['user_id'];
-                                
-                                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
-                                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
-                                                    "error_time"=>$error_time);
-                                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
-                                
-                             }  
-                    }
-                }
-
+                 $this->send_message_bot_reply($messenger_bot_info[0],$sender_id,$subscriber_info,$page_id);
                  //update Subscriber Last Interaction time. 
                  $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
-
 
                 die();
             }
@@ -682,8 +551,11 @@ class Messenger_bot extends Home
 
         elseif(isset($response['entry'][0]['messaging'][0]['optin'])) //Optins from Send to messengers 
         {
-        
-            if($this->db->table_exists('messenger_bot_engagement_checkbox')){
+            
+            $user_reference_id=""; // assigning variable for CheckBox Plugin 
+
+            $is_one_time_notification= isset($response['entry'][0]['messaging'][0]['optin']['type']) ? $response['entry'][0]['messaging'][0]['optin']['type']:"";
+            if($is_one_time_notification!='one_time_notif_req'){
         
             $reference_id = isset($response['entry'][0]['messaging'][0]['optin']['ref'])?$response['entry'][0]['messaging'][0]['optin']['ref']:"";
             $user_reference_id = isset($response['entry'][0]['messaging'][0]['optin']['user_ref'])?$response['entry'][0]['messaging'][0]['optin']['user_ref']:"";
@@ -711,10 +583,6 @@ class Messenger_bot extends Home
                 $this->basic->insert_data("messenger_bot_engagement_checkbox_reply",$reference_data_checkbox);
                 exit;
             }
-
-
-
-
             
             if($user_reference_id!="")
                 $table_name="messenger_bot_engagement_checkbox";
@@ -763,6 +631,43 @@ class Messenger_bot extends Home
                     $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'facebook_rx_fb_page_info.bot_enabled' => '1',"postback_id"=>$postback_id);
                     
             }
+
+
+            elseif ($response['entry'][0]['messaging'][0]['optin']['type']=='one_time_notif_req') {
+
+                $otn_payload= $response['entry'][0]['messaging'][0]['optin']['payload'];
+                $otn_token= $response['entry'][0]['messaging'][0]['optin']['one_time_notif_token'];
+
+                // Insert subscriber token info 
+                $optin_time=date("Y-m-d H:i:s");
+
+               //If not exist this subscriber, then insert. If exist then update token & optin time . And also mark as is_sent=0 , that means if already sent, then token will updated & eligible for send again. 
+
+                $page_table_auto_id=$subscriber_info[0]['page_table_id']; 
+                $sql_otn_insert="INSERT INTO otn_optin_subscriber (otn_id,subscriber_id,otn_token,optin_time,page_table_id) 
+                      VALUES ('$otn_payload','$sender_id','$otn_token','$optin_time','$page_table_auto_id')
+                      ON DUPLICATE KEY UPDATE  otn_token='$otn_token',optin_time='$optin_time',is_sent='0'";
+                      
+                $this->basic->execute_complex_query($sql_otn_insert);
+
+                
+
+                $otn_postback_info=$this->basic->get_data('otn_postback',array("where"=>array("id"=>$otn_payload)));
+
+                $label_ids=isset($otn_postback_info[0]['label_id']) ? $otn_postback_info[0]['label_id']:"";
+                $template_id=isset($otn_postback_info[0]['reply_postback_id']) ? $otn_postback_info[0]['reply_postback_id']:"";
+                $drip_campaign_id=isset($otn_postback_info[0]['drip_campaign_id']) ? $otn_postback_info[0]['drip_campaign_id']:"";
+
+                if($template_id!=""){ 
+                    $postback_id_info= $this->basic->get_data("messenger_bot_postback",array("where"=>array("id"=>$template_id)));
+                    $postback_id= isset($postback_id_info[0]['postback_id']) ? $postback_id_info[0]['postback_id'] :"";
+                    $where['where'] = array('messenger_bot.fb_page_id' => $page_id,"postback_id"=>$postback_id,'facebook_rx_fb_page_info.bot_enabled' => '1');
+                     $table_name = "messenger_bot";
+                }
+            }
+
+
+
             
             else{
             
@@ -773,8 +678,10 @@ class Messenger_bot extends Home
             }
             
             
-            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left");   
+
             $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time"),$join,'','','messenger_bot.id asc');
+
             
             $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];            
             
@@ -782,97 +689,29 @@ class Messenger_bot extends Home
                 $this->sender_action($sender_id,"mark_seen",$messenger_bot_info[0]['page_access_token']);
                 
             
-            foreach ($messenger_bot_info as $key => $value) {
-                $message_str = $value['message'];
-                $message_array = json_decode($message_str,true);
-                // if(!isset($message_array[1])) $message_array[1]=$message_array;
-                if(!isset($message_array[1])){
-                    $message_array_org=$message_array;
-                    $message_array=array();
-                    $message_array[1]=$message_array_org;
-                }
-                foreach($message_array as $msg)
-                {
-                    $template_type_file_track=$msg['message']['template_type'];
-                    unset($msg['message']['template_type']);
+            if(isset($messenger_bot_info[0]) && !empty($messenger_bot_info)){
+                
+                if($user_reference_id=="") 
+                    $this->send_message_bot_reply($messenger_bot_info[0],$sender_id,$subscriber_info,$page_id);
+                else
+                    $this->send_message_bot_reply($messenger_bot_info[0],'',array(),$page_id,$user_reference_id);
 
-                    // typing on and typing on delay [alamin]
-                    $enable_typing_on = $msg['message']['typing_on_settings'];
-                    $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
-                    unset($msg['message']['typing_on_settings']);
-                    $typing_on_delay_time = $msg['message']['delay_in_reply'];
-                    if($typing_on_delay_time=="") $typing_on_delay_time = 0;
-                    unset($msg['message']['delay_in_reply']);
-                    
-                    /** Spintax **/
-                    if(isset($msg['message']['text']))
-                        $msg['message']['text']=spintax_process($msg['message']['text']);
-                        
-                    $msg['messaging_type'] = "RESPONSE";
-                    $reply = json_encode($msg);       
-                    
-                    if($user_reference_id=="") {  // if comes from send-to-messenger rather than checkbox plugin  
-                        $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
-                        $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
-                        $reply=str_replace($replace_search, $replace_with, $reply);
-                    }                 
-                     
-                      
-                    else // if comes from checkbox plugin, then it's different message structure. 
-                        $reply=str_replace('{"id":"replace_id"}', '{"user_ref":"'.$user_reference_id.'"}', $reply);
-                    
-                    if(isset($subscriber_info[0]['first_name']))
-                        $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
-                    if(isset($subscriber_info[0]['last_name']))
-                        $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
-                    $access_token = $value['page_access_token'];
-                    
-                    if((isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1") || $user_reference_id!=""){                   
-                     
-                        // typing on and typing on delay [alamin]
-                        // User_reference id means comes from checkbox plugin and did not set typing on display for it
-                        if($enable_typing_on && $user_reference_id=="") $this->sender_action($sender_id,"typing_on",$access_token);
-                        if($typing_on_delay_time>0 && $user_reference_id=="") sleep($typing_on_delay_time);
-                        
-                        if($template_type_file_track=='video' || $template_type_file_track=='file' || $template_type_file_track=='audio'){
-                            $post_data=array("access_token"=>$access_token,"reply"=>$reply);
-                            $url=base_url()."home/send_reply_curl_call";
-                            $ch = curl_init();
-                            curl_setopt($ch, CURLOPT_URL, $url);
-                            curl_setopt($ch,CURLOPT_POST,1);
-                            curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                            // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                            $reply_response=curl_exec($ch);  
-                    
-                        }
-                        else
-                             $reply_response=$this->send_reply($access_token,$reply);
-                                
-                         /*****Insert into database messenger_bot_reply_error_log if get error****/
-                             if(isset($reply_response['error']['message'])){
-                                $bot_settings_id= $value['id'];
-                                $reply_error_message= $reply_response['error']['message'];
-                                $error_time= date("Y-m-d H:i:s");
-                                $page_table_id=$value['page_id'];
-                                $user_id=$value['user_id'];
-                                
-                                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
-                                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
-                                                    "error_time"=>$error_time);
-                                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
-                                
-                             }
-                    }
-                }
 
                 /*** Assign Drip Campaing & also Label ***/
-             if($this->db->table_exists('messenger_bot_engagement_2way_chat_plugin')){
 
                 /***    Assign Drip Messaging Campaign ID *****/
-                if($user_reference_id==""){
+
+                if($is_one_time_notification=='one_time_notif_req'){
+
+                    if($drip_campaign_id!="" && $drip_campaign_id!="0"){
+                        
+                        $drip_type="custom";
+                        $this->assign_drip_messaging_id($drip_type,"0",$subscriber_info[0]['page_table_id'],$subscriber_info[0]['subscribe_id'],$drip_campaign_id); 
+                    }
+                    
+                }
+
+                else if($user_reference_id==""){
                     $drip_type="messenger_bot_engagement_send_to_msg";
                     $this->assign_drip_messaging_id($drip_type,$plugin_auto_id,$subscriber_info[0]['page_table_id'],$subscriber_info[0]['subscribe_id']);    
                 }       
@@ -889,29 +728,18 @@ class Messenger_bot extends Home
                  }
             
                 if($label_ids!="" && $user_reference_id==""){   // Update Label if only send-to-messenger. Don't for checkbox for first time. As we can't infromation
-                
-                    // $this->assign_label_webhook_call($sender_id,$page_id,$label_ids);
 
                     //DEPRECATED FUNCTION FOR QUICK BROADCAST
-                    $post_data_label_assign=array("psid"=>$sender_id,"fb_page_id"=>$page_id,"label_auto_ids"=>$label_ids);
-                    $url=base_url()."home/assign_label_webhook_call";
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $url);
-                    curl_setopt($ch,CURLOPT_POST,1);
-                    curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data_label_assign);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-                    // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                    $reply_response=curl_exec($ch); 
+                   $this->multiple_assign_label($sender_id,$page_id,$label_ids);
                      
                 } 
-            }
+    
 
              //update Subscriber Last Interaction time. 
-            $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
+            if($user_reference_id=="")
+                $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
 
-            die();
+            exit; 
 
             }
         }
@@ -927,7 +755,7 @@ class Messenger_bot extends Home
         
             /**Check If the Engagement add-on is installed or not. Check a table of this addon is exist or not**/
             
-        if($this->db->table_exists('messenger_bot_engagement_2way_chat_plugin')){
+        	if($this->addon_exist("messenger_bot_enhancers")){
         
         
             /* If get started not set, then get the refferal means already have the conversation */
@@ -1037,10 +865,10 @@ class Messenger_bot extends Home
             
                     
             
-            $messages = $response['entry'][0]['messaging'][0]['message']['text'];
             $table_name = "messenger_bot";
             
-            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left");  
+
             $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time"),$join,'','','messenger_bot.id asc');
             
             $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];
@@ -1048,114 +876,24 @@ class Messenger_bot extends Home
             if($enable_mark_seen) // mark ass seen action
                 $this->sender_action($sender_id,"mark_seen",$messenger_bot_info[0]['page_access_token']);
             
-            foreach ($messenger_bot_info as $key => $value) {
-                $message_str = $value['message'];
-                $message_array = json_decode($message_str,true);
-                // if(!isset($message_array[1])) $message_array[1]=$message_array;
-                if(!isset($message_array[1])){
-                    $message_array_org=$message_array;
-                    $message_array=array();
-                    $message_array[1]=$message_array_org;
-                }
-                foreach($message_array as $msg)
-                {
-                    $template_type_file_track=$msg['message']['template_type'];
-                    unset($msg['message']['template_type']);
-
-                    // typing on and typing on delay [alamin]
-                    $enable_typing_on = $msg['message']['typing_on_settings'];
-                    $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
-                    unset($msg['message']['typing_on_settings']);
-                    $typing_on_delay_time = $msg['message']['delay_in_reply'];
-                    if($typing_on_delay_time=="") $typing_on_delay_time = 0;
-                    unset($msg['message']['delay_in_reply']);
-                    
-                    /** Spintax **/
-                    if(isset($msg['message']['text']))
-                        $msg['message']['text']=spintax_process($msg['message']['text']);               
-                    
-                    $msg['messaging_type'] = "RESPONSE";
-                    $reply = json_encode($msg);     
-
-                    $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
-                    $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
-                    $reply=str_replace($replace_search, $replace_with, $reply);
-
-                    if(isset($subscriber_info[0]['first_name']))
-                        $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
-                    if(isset($subscriber_info[0]['last_name']))
-                        $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
-                    $access_token = $value['page_access_token'];
-                    if(isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1"){
-                    
-                        // typing on and typing on delay [alamin]
-                        if($enable_typing_on) $this->sender_action($sender_id,"typing_on",$access_token);                                
-                        if($typing_on_delay_time>0) sleep($typing_on_delay_time);
-
-                        if($template_type_file_track=='video' || $template_type_file_track=='file' || $template_type_file_track=='audio'){
-                            $post_data=array("access_token"=>$access_token,"reply"=>$reply);
-                            $url=base_url()."home/send_reply_curl_call";
-                            $ch = curl_init();
-                            curl_setopt($ch, CURLOPT_URL, $url);
-                            curl_setopt($ch,CURLOPT_POST,1);
-                            curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                            // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                            $reply_response=curl_exec($ch);  
-                    
-                        }
-                        else
-                             $reply_response=$this->send_reply($access_token,$reply);
-                            /*****Insert into database messenger_bot_reply_error_log if get error****/
-                             if(isset($reply_response['error']['message'])){
-                                $bot_settings_id= $value['id'];
-                                $reply_error_message= $reply_response['error']['message'];
-                                $error_time= date("Y-m-d H:i:s");
-                                $page_table_id=$value['page_id'];
-                                $user_id=$value['user_id'];
-                                
-                                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
-                                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
-                                                    "error_time"=>$error_time);
-                                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
-                                
-                             }
-                    }
-                }
-
-                
-                if($this->db->table_exists('messenger_bot_engagement_2way_chat_plugin')){
-
-                    /****   Update Drip Messaging Campaign ID ****/
-                    if(isset($plugin_auto_id))
-                    $this->assign_drip_messaging_id($drip_type,$plugin_auto_id,$subscriber_info[0]['page_table_id'],$sender_id);    
-
-                    else if($reference_source=="ADS"){  // If Ads & come from Get Started Button Click 
-                        $drip_type="default";
-                        $this->assign_drip_messaging_id($drip_type,"0",$subscriber_info[0]['page_table_id'],$sender_id);
-                    }
+              if(isset($messenger_bot_info[0]) && !empty($messenger_bot_info)){
+              
+                $this->send_message_bot_reply($messenger_bot_info[0],$sender_id,$subscriber_info,$page_id);
                
-                    if(!empty($label_ids)){
-                    
-                        // $this->assign_label_webhook_call($sender_id,$page_id,$label_ids);
+                /****   Update Drip Messaging Campaign ID ****/
+                if(isset($plugin_auto_id))
+                $this->assign_drip_messaging_id($drip_type,$plugin_auto_id,$subscriber_info[0]['page_table_id'],$sender_id);    
 
-                        //DEPRECATED FUNCTION FOR QUICK BROADCAST
-                        $post_data_label_assign=array("psid"=>$sender_id,"fb_page_id"=>$page_id,"label_auto_ids"=>$label_ids);
-                        $url=base_url()."home/assign_label_webhook_call";
-                        $ch = curl_init();
-                        curl_setopt($ch, CURLOPT_URL, $url);
-                        curl_setopt($ch,CURLOPT_POST,1);
-                        curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data_label_assign);
-                        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-                        // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                        $reply_response=curl_exec($ch); 
-                         
-                    } 
+                else if($reference_source=="ADS"){  // If Ads & come from Get Started Button Click 
+                    $drip_type="default";
+                    $this->assign_drip_messaging_id($drip_type,"0",$subscriber_info[0]['page_table_id'],$sender_id);
                 }
+           
+                if(!empty($label_ids)){
+                    //DEPRECATED FUNCTION FOR QUICK BROADCAST
+                    $this->multiple_assign_label($sender_id,$page_id,$label_ids);
+                     
+                } 
                 
                  //update Subscriber Last Interaction time. 
                 $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
@@ -1172,9 +910,15 @@ class Messenger_bot extends Home
             $payload_id = $response['entry'][0]['messaging'][0]['message']['quick_reply']['payload'];
             $messages = $response['entry'][0]['messaging'][0]['message']['text'];
             $table_name = "messenger_bot";
-            $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'facebook_rx_fb_page_info.bot_enabled' => '1');
-            $this->db->where("FIND_IN_SET('$payload_id',messenger_bot.postback_id) !=", 0);
-            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");
+
+            $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'postback_id'=>$payload_id,'facebook_rx_fb_page_info.bot_enabled' => '1');
+
+            $where_custom = "(keyword_type='post-back' or keyword_type='reply')";
+            $this->db->where($where_custom);
+
+
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left");   
+
             $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time","facebook_rx_fb_page_info.mail_service_id as mail_service_id","facebook_rx_fb_page_info.sms_api_id as sms_api_id","facebook_rx_fb_page_info.sms_reply_message as sms_reply_message","email_api_id","email_reply_message","email_reply_subject","page_name"),$join,'','','messenger_bot.id asc');
             
             $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];
@@ -1186,12 +930,8 @@ class Messenger_bot extends Home
             
             if($this->is_email($payload_id)){
                 
-             //   $fb_page_id=$subscriber_info[0]['page_id'];
                 $user_id=$subscriber_info[0]['user_id'];
                 $fb_user_id=$subscriber_info[0]['subscribe_id'];
-               // $fb_user_first_name=$subscriber_info[0]['first_name'];
-               // $fb_user_last_name=$subscriber_info[0]['last_name'];
-              //  $profile_pic=$subscriber_info[0]['profile_pic'];
                 $update_time=date("Y-m-d H:i:s");
                 $email=$payload_id;                
                
@@ -1199,7 +939,9 @@ class Messenger_bot extends Home
 
                 $this->basic->execute_complex_query($sql);
                 $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'facebook_rx_fb_page_info.bot_enabled' => '1',"keyword_type"=>"email-quick-reply");
-                $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");
+
+                $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left");   
+
                 $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time","facebook_rx_fb_page_info.mail_service_id as mail_service_id","facebook_rx_fb_page_info.sms_api_id as sms_api_id","facebook_rx_fb_page_info.sms_reply_message as sms_reply_message","email_api_id","email_reply_message","email_reply_subject","page_name"),$join,'','','messenger_bot.id asc');
                 $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];
                 $enable_typing_on=$messenger_bot_info[0]['enbale_type_on'];
@@ -1209,214 +951,113 @@ class Messenger_bot extends Home
             }
             elseif($this->is_phone_number($payload_id)){
             
-               // $fb_page_id=$subscriber_info[0]['page_id'];
+              
                 $user_id=$subscriber_info[0]['user_id'];
                 $fb_user_id=$subscriber_info[0]['subscribe_id'];
-             //   $fb_user_first_name=$subscriber_info[0]['first_name'];
-             //   $fb_user_last_name=$subscriber_info[0]['last_name'];
-              //  $profile_pic=$subscriber_info[0]['profile_pic'];
                 $update_time=date("Y-m-d H:i:s");
                 $phone_number=$payload_id;
                 
                 $sql="UPDATE messenger_bot_subscriber SET phone_number='$phone_number',phone_number_entry_time='$update_time',phone_number_last_update='$update_time' WHERE subscribe_id='$fb_user_id';";              
                     
                 $this->basic->execute_complex_query($sql);
+
                 $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'facebook_rx_fb_page_info.bot_enabled' => '1',"keyword_type"=>"phone-quick-reply");
-                $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");
+
+                $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left");   
+
                 $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time","facebook_rx_fb_page_info.mail_service_id as mail_service_id","facebook_rx_fb_page_info.sms_api_id as sms_api_id","facebook_rx_fb_page_info.sms_reply_message as sms_reply_message","email_api_id","email_reply_message","email_reply_subject","page_name"),$join,'','','messenger_bot.id asc');
                 
                 $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];
             }
             
-            
-            
             if($enable_mark_seen)
                 $this->sender_action($sender_id,"mark_seen",$messenger_bot_info[0]['page_access_token']);    
                 
-            foreach ($messenger_bot_info as $key => $value) {
-                $message_str = $value['message'];
-                $message_array = json_decode($message_str,true);
-                // if(!isset($message_array[1])) $message_array[1]=$message_array;
-                if(!isset($message_array[1])){
-                    $message_array_org=$message_array;
-                    $message_array=array();
-                    $message_array[1]=$message_array_org;
-                }
-                foreach($message_array as $msg)
-                {
-                    $template_type_file_track=$msg['message']['template_type'];
-                    unset($msg['message']['template_type']);
+          
 
-                    // typing on and typing on delay [alamin]
-                    $enable_typing_on = $msg['message']['typing_on_settings'];
-                    $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
-                    unset($msg['message']['typing_on_settings']);
-                    $typing_on_delay_time = $msg['message']['delay_in_reply'];
-                    if($typing_on_delay_time=="") $typing_on_delay_time = 0;
-                    unset($msg['message']['delay_in_reply']);
-                    
-                    /** Spintax **/
-                    if(isset($msg['message']['text']))
-                        $msg['message']['text']=spintax_process($msg['message']['text']);
-                                
-                    $msg['messaging_type'] = "RESPONSE";
-                    $reply = json_encode($msg);        
+            if(isset($messenger_bot_info[0]) && !empty($messenger_bot_info)){
 
-                   $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
-                   $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
-                   $reply=str_replace($replace_search, $replace_with, $reply);
+	            $this->send_message_bot_reply($messenger_bot_info[0],$sender_id,$subscriber_info,$page_id);
 
-                    if(isset($subscriber_info[0]['first_name']))
-                        $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
-                    if(isset($subscriber_info[0]['last_name']))
-                        $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
-                    $access_token = $value['page_access_token'];
-                    if(isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1"){
-                    
-                       // typing on and typing on delay [alamin]
-                       if($enable_typing_on) $this->sender_action($sender_id,"typing_on",$access_token);                                
-                       if($typing_on_delay_time>0) sleep($typing_on_delay_time);
-
-                        if($template_type_file_track=='video' || $template_type_file_track=='file' || $template_type_file_track=='audio'){
-                            $post_data=array("access_token"=>$access_token,"reply"=>$reply);
-                            $url=base_url()."home/send_reply_curl_call";
-                            $ch = curl_init();
-                            curl_setopt($ch, CURLOPT_URL, $url);
-                            curl_setopt($ch,CURLOPT_POST,1);
-                            curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                            // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                            $reply_response=curl_exec($ch);  
-                    
-                        }
-                        else
-                             $reply_response=$this->send_reply($access_token,$reply);
-                         /*****Insert into database messenger_bot_reply_error_log if get error****/
-                             if(isset($reply_response['error']['message'])){
-                                $bot_settings_id= $value['id'];
-                                $reply_error_message= $reply_response['error']['message'];
-                                $error_time= date("Y-m-d H:i:s");
-                                $page_table_id=$value['page_id'];
-                                $user_id=$value['user_id'];
-                                
-                                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
-                                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
-                                                    "error_time"=>$error_time);
-                                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
-                                
-                             }
-                    }                    
-                }
-
-                  /** Assign Drip Messaging Campaign ID ****/
-
-                $drip_assign_id=isset($messenger_bot_info[0]['drip_campaign_id']) ? $messenger_bot_info[0]['drip_campaign_id']:"";
-
-                 if($drip_assign_id!="" && $drip_assign_id!="0"){
-                    
-                    $drip_type="custom";
-                    $this->assign_drip_messaging_id($drip_type,"0",$subscriber_info[0]['page_table_id'],$sender_id,$drip_assign_id);  
-                }
+	            /** Assign Drip Messaging Campaign ID ****/
+	            $drip_assign_id=isset($messenger_bot_info[0]['drip_campaign_id']) ? $messenger_bot_info[0]['drip_campaign_id']:"";
+	             if($drip_assign_id!="" && $drip_assign_id!="0"){
+	                $drip_type="custom";
+	                $this->assign_drip_messaging_id($drip_type,"0",$subscriber_info[0]['page_table_id'],$sender_id,$drip_assign_id);  
+	            }
                 
 
+	            /***Set labels if any setup available for this postback for quickReply ***/
 
-                /***Set labels if any setup available for this postback for quickReply ***/
+	            $label_ids=isset($messenger_bot_info[0]['broadcaster_labels']) ? $messenger_bot_info[0]['broadcaster_labels']:"";
+	       
+	            if(!empty($label_ids)){
 
-                // if($this->db->table_exists('messenger_bot_broadcast')){
+	                //DEPRECATED FUNCTION FOR QUICK BROADCAST
+	                $this->multiple_assign_label($sender_id,$page_id,$label_ids);
+	                 
+	            } 
 
-                $label_ids=isset($messenger_bot_info[0]['broadcaster_labels']) ? $messenger_bot_info[0]['broadcaster_labels']:"";
-           
-                if(!empty($label_ids)){
-               
-                    // $this->assign_label_webhook_call($sender_id,$page_id,$label_ids);
+	           if($this->addon_exist("messenger_bot_connectivity")) 
+	            {
+	                if($this->is_email($payload_id))
+	                	$this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_email");
+	                else if($this->is_phone_number($payload_id))
+	                	$this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_phone_number");
+	                else
+	                	$this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_postback",$payload_id);
+	            }
 
-                    //DEPRECATED FUNCTION FOR QUICK BROADCAST
-                    $post_data_label_assign=array("psid"=>$sender_id,"fb_page_id"=>$page_id,"label_auto_ids"=>$label_ids);
-                    $url=base_url()."home/assign_label_webhook_call";
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $url);
-                    curl_setopt($ch,CURLOPT_POST,1);
-                    curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data_label_assign);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-                    // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                    $reply_response=curl_exec($ch); 
-                     
-                } 
-                // }
-
-                if($this->db->table_exists('messenger_bot_thirdparty_webhook') && $this->basic->is_exist("messenger_bot_thirdparty_webhook",array("page_id"=>$page_id)))
-                {
-                    if($this->is_email($payload_id))
-                    $this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_email");
-                    else if($this->is_phone_number($payload_id))
-                    $this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_phone_number");
-                    else
-                    $this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_postback",$payload_id);
-                }
-
-                // Send to Email Auto Responder
-                if($this->is_email($payload_id)){
-                    $email_auto_responder_id= isset($messenger_bot_info[0]['mail_service_id']) ? $messenger_bot_info[0]['mail_service_id']:"";
-                    $pagename= isset($messenger_bot_info[0]['page_name']) ? $messenger_bot_info[0]['page_name'] : "";
-                    $mailchimp_tags=array($pagename); // Page Name
-                    if($email_auto_responder_id!="")
-                        $this->send_email_to_autoresponder($email_auto_responder_id, $payload_id,$subscriber_info[0]['first_name'],$subscriber_info[0]['last_name'],$type='quick-reply',$user_id,$mailchimp_tags);
+            // Send to Email Auto Responder
+	            if($this->is_email($payload_id)){
+	                $email_auto_responder_id= isset($messenger_bot_info[0]['mail_service_id']) ? $messenger_bot_info[0]['mail_service_id']:"";
+	                $pagename= isset($messenger_bot_info[0]['page_name']) ? $messenger_bot_info[0]['page_name'] : "";
+	                $mailchimp_tags=array($pagename); // Page Name
+	                if($email_auto_responder_id!="")
+	                    $this->send_email_to_autoresponder($email_auto_responder_id, $payload_id,$subscriber_info[0]['first_name'],$subscriber_info[0]['last_name'],$type='quick-reply',$user_id,$mailchimp_tags);
 
 
-                // Send Email From System 
+	                // Send Email From System 
 
-                 $email_api_id= isset($messenger_bot_info[0]['email_api_id']) ? $messenger_bot_info[0]['email_api_id']:"";
-                 $email_reply_message= isset($messenger_bot_info[0]['email_reply_message']) ? nl2br($messenger_bot_info[0]['email_reply_message']):"";
-                 $email_reply_subject= isset($messenger_bot_info[0]['email_reply_subject']) ? $messenger_bot_info[0]['email_reply_subject']:"";
+	             $email_api_id= isset($messenger_bot_info[0]['email_api_id']) ? $messenger_bot_info[0]['email_api_id']:"";
+	             $email_reply_message= isset($messenger_bot_info[0]['email_reply_message']) ? nl2br($messenger_bot_info[0]['email_reply_message']):"";
+	             $email_reply_subject= isset($messenger_bot_info[0]['email_reply_subject']) ? $messenger_bot_info[0]['email_reply_subject']:"";
 
-                 if($email_api_id!=""){
+	             if($email_api_id!=""){
 
-                    if(isset($subscriber_info[0]['first_name']))
-                        $email_reply_message=str_replace("{{user_first_name}}", $subscriber_info[0]['first_name'], $email_reply_message);
-                    if(isset($subscriber_info[0]['last_name']))
-                        $email_reply_message=str_replace("{{user_last_name}}", $subscriber_info[0]['last_name'], $email_reply_message);
-                   $this->send_email_by_for_bot_email($email_api_id,$email_reply_message,$payload_id, $email_reply_subject,$user_id);
+	                if(isset($subscriber_info[0]['first_name']))
+	                    $email_reply_message=str_replace("{{user_first_name}}", $subscriber_info[0]['first_name'], $email_reply_message);
+	                if(isset($subscriber_info[0]['last_name']))
+	                    $email_reply_message=str_replace("{{user_last_name}}", $subscriber_info[0]['last_name'], $email_reply_message);
+	               $this->send_email_by_for_bot_email($email_api_id,$email_reply_message,$payload_id, $email_reply_subject,$user_id);
 
-                 }
-
-
-
-
-                }
+	             }
+            	}
 
 
-                // Send SMS to Phone Number With Email Sender 
+	            // Send SMS to Phone Number With Email Sender 
 
-                if($this->is_phone_number($payload_id)){
+	            if($this->is_phone_number($payload_id)){
 
-                $sms_api_id= isset($messenger_bot_info[0]['sms_api_id']) ? $messenger_bot_info[0]['sms_api_id']:"";
-                $sms_reply_message= isset($messenger_bot_info[0]['sms_reply_message']) ? $messenger_bot_info[0]['sms_reply_message']:"";
+	            $sms_api_id= isset($messenger_bot_info[0]['sms_api_id']) ? $messenger_bot_info[0]['sms_api_id']:"";
+	            $sms_reply_message= isset($messenger_bot_info[0]['sms_reply_message']) ? $messenger_bot_info[0]['sms_reply_message']:"";
 
-                if(isset($subscriber_info[0]['first_name']))
-                    $sms_reply_message=str_replace("{{user_first_name}}", $subscriber_info[0]['first_name'], $sms_reply_message);
-                if(isset($subscriber_info[0]['last_name']))
-                    $sms_reply_message=str_replace("{{user_last_name}}", $subscriber_info[0]['last_name'], $sms_reply_message);
+	            if(isset($subscriber_info[0]['first_name']))
+	                $sms_reply_message=str_replace("{{user_first_name}}", $subscriber_info[0]['first_name'], $sms_reply_message);
+	            if(isset($subscriber_info[0]['last_name']))
+	                $sms_reply_message=str_replace("{{user_last_name}}", $subscriber_info[0]['last_name'], $sms_reply_message);
 
-                $this->send_sms_by_for_bot_phone_number($sms_api_id,$user_id,$sms_reply_message,$payload_id);
-                
-                }
+	            $this->send_sms_by_for_bot_phone_number($sms_api_id,$user_id,$sms_reply_message,$payload_id);
+	            
+	            }
 
+	            //update Subscriber Last Interaction time. 
+	            $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
 
+	           exit; 
+        	}
 
-
-               
-
-
-
-                 //update Subscriber Last Interaction time. 
-                 $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
-
-                die();
-            }
+    
         }
         elseif(isset($response['entry'][0]['messaging'][0]['postback']))//Clicking on Payload Button like Start Chatting
         {
@@ -1424,13 +1065,18 @@ class Messenger_bot extends Home
             POST_BACK_BLOCK:
 
             $payload_id = $response['entry'][0]['messaging'][0]['postback']['payload'];
-            $messages = $response['entry'][0]['messaging'][0]['message']['text'];
+
             $table_name = "messenger_bot";
-            $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'facebook_rx_fb_page_info.bot_enabled' => '1');
-            $this->db->where("FIND_IN_SET('$payload_id',messenger_bot.postback_id) !=", 0);
-            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");
+
+            $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'postback_id'=>$payload_id,'facebook_rx_fb_page_info.bot_enabled' => '1');
+
+            $where_custom = "(keyword_type='post-back' or keyword_type='reply')";
+            $this->db->where($where_custom);
+
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left"); 
+
             $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time","facebook_rx_fb_page_info.page_name as page_name","facebook_rx_fb_page_info.chat_human_email"),$join,'','','messenger_bot.id asc');
-            
+
             $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];            
             
             if($enable_mark_seen)
@@ -1448,7 +1094,6 @@ class Messenger_bot extends Home
                 curl_setopt($ch,CURLOPT_POST,1);
                 curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data_unsubscribe);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-                // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
                 $reply_response=curl_exec($ch);  
@@ -1465,7 +1110,6 @@ class Messenger_bot extends Home
                 curl_setopt($ch,CURLOPT_POST,1);
                 curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data_unsubscribe);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-                // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
                 $reply_response=curl_exec($ch);  
@@ -1505,84 +1149,9 @@ class Messenger_bot extends Home
                 $this->basic->update_data("messenger_bot_subscriber",array("page_id"=>$page_id,"subscribe_id"=>$sender_id),array("status"=>"1"));                
             }
 
-            foreach ($messenger_bot_info as $key => $value) {
-                
-                $message_str = $value['message'];
-                $message_array = json_decode($message_str,true);
-                // if(!isset($message_array[1])) $message_array[1]=$message_array;
-                if(!isset($message_array[1])){
-                    $message_array_org=$message_array;
-                    $message_array=array();
-                    $message_array[1]=$message_array_org;
-                }
-                foreach($message_array as $msg)
-                {
-                    $template_type_file_track=$msg['message']['template_type'];
-                    unset($msg['message']['template_type']);
+            if(isset($messenger_bot_info[0]) && !empty($messenger_bot_info)){
 
-                    // typing on and typing on delay [alamin]
-                    $enable_typing_on = $msg['message']['typing_on_settings'];
-                    $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
-                    unset($msg['message']['typing_on_settings']);
-                    $typing_on_delay_time = $msg['message']['delay_in_reply'];
-                    if($typing_on_delay_time=="") $typing_on_delay_time = 0;
-                    unset($msg['message']['delay_in_reply']);
-                    
-                    /** Spintax **/
-                    if(isset($msg['message']['text']))
-                        $msg['message']['text']=spintax_process($msg['message']['text']);
-                    
-                    $msg['messaging_type'] = "RESPONSE";
-                    $reply = json_encode($msg);    
-
-                    $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
-                    $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
-                    $reply=str_replace($replace_search, $replace_with, $reply);
-
-                    if(isset($subscriber_info[0]['first_name']))
-                        $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
-                    if(isset($subscriber_info[0]['last_name']))
-                        $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
-                    $access_token = $value['page_access_token'];
-                    if((isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1") || $payload_id=="YES_START_CHAT_WITH_BOT"){
-                        
-                        // typing on and typing on delay [alamin]
-                        if($enable_typing_on) $this->sender_action($sender_id,"typing_on",$access_token);                                
-                        if($typing_on_delay_time>0) sleep($typing_on_delay_time);
-        
-                        if($template_type_file_track=='video' || $template_type_file_track=='file' || $template_type_file_track=='audio'){
-                            $post_data=array("access_token"=>$access_token,"reply"=>$reply);
-                            $url=base_url()."home/send_reply_curl_call";
-                            $ch = curl_init();
-                            curl_setopt($ch, CURLOPT_URL, $url);
-                            curl_setopt($ch,CURLOPT_POST,1);
-                            curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                            // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                            $reply_response=curl_exec($ch);  
-                    
-                        }
-                        else
-                            $reply_response=$this->send_reply($access_token,$reply);
-                         /*****Insert into database messenger_bot_reply_error_log if get error****/
-                             if(isset($reply_response['error']['message'])){
-                                $bot_settings_id= $value['id'];
-                                $reply_error_message= $reply_response['error']['message'];
-                                $error_time= date("Y-m-d H:i:s");
-                                $page_table_id=$value['page_id'];
-                                $user_id=$value['user_id'];
-                                
-                                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
-                                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
-                                                    "error_time"=>$error_time);
-                                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
-                                
-                             }
-                    }                                       
-                }
-
+                $this->send_message_bot_reply($messenger_bot_info[0],$sender_id,$subscriber_info,$page_id);
 
                 $drip_assign_id=isset($messenger_bot_info[0]['drip_campaign_id']) ? $messenger_bot_info[0]['drip_campaign_id']:"";
                 
@@ -1594,245 +1163,78 @@ class Messenger_bot extends Home
 
                /***Set labels if any setup available for this postback for quickReply ***/
 
-                // if($this->db->table_exists('messenger_bot_broadcast')){
-
                 $label_ids=isset($messenger_bot_info[0]['broadcaster_labels']) ? $messenger_bot_info[0]['broadcaster_labels']:"";
            
                 if(!empty($label_ids)){
-               
-                    ///$this->assign_label_webhook_call($sender_id,$page_id,$label_ids);
-
+                
                     //DEPRECATED FUNCTION FOR QUICK BROADCAST
-                    $post_data_label_assign=array("psid"=>$sender_id,"fb_page_id"=>$page_id,"label_auto_ids"=>$label_ids);
-                    $post_data_label_assign=array("psid"=>$sender_id,"fb_page_id"=>$page_id,"label_auto_ids"=>$label_ids);
-                    $url=base_url()."home/assign_label_webhook_call";
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $url);
-                    curl_setopt($ch,CURLOPT_POST,1);
-                    curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data_label_assign);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-                    // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                    $reply_response=curl_exec($ch); 
-                     
+                    $this->multiple_assign_label($sender_id,$page_id,$label_ids);
                 } 
-                // }
 
-
-                if($this->db->table_exists('messenger_bot_thirdparty_webhook') && $this->basic->is_exist("messenger_bot_thirdparty_webhook",array("page_id"=>$page_id)))                
-                 $this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_postback",$payload_id);
+                if($this->addon_exist("messenger_bot_connectivity"))                
+                 	$this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_postback",$payload_id);
 
                 //update Subscriber Last Interaction time. 
                 $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
 
-                die();
+               exit; 
             }
         } 
+
         elseif(isset($response['entry'][0]['messaging'][0]['message']['attachments'][0]['payload']['coordinates']['lat'])){ 
             
             $lattitued= $response['entry'][0]['messaging'][0]['message']['attachments'][0]['payload']['coordinates']['lat'];
             $longitude= $response['entry'][0]['messaging'][0]['message']['attachments'][0]['payload']['coordinates']['long'];
             $location_bing_map=$response['entry'][0]['messaging'][0]['message']['attachments'][0]['url'];
             $user_location=$lattitued.",".$longitude;
-            
-            
-          //  $fb_page_id=$subscriber_info[0]['page_id'];
-         //   $user_id=$subscriber_info[0]['user_id'];
-         //   $fb_user_id=$subscriber_info[0]['subscribe_id'];
-           // $fb_user_first_name=$subscriber_info[0]['first_name'];
-          //  $fb_user_last_name=$subscriber_info[0]['last_name'];
-           // $profile_pic=$subscriber_info[0]['profile_pic'];
             $update_time=date("Y-m-d H:i:s");
 
                 $sql="UPDATE messenger_bot_subscriber SET user_location='$user_location',location_map_url='$location_bing_map',last_update_time='$update_time' WHERE subscribe_id='$fb_user_id';";                      
                 $this->basic->execute_complex_query($sql);
                 $table_name = "messenger_bot";
-                $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'facebook_rx_fb_page_info.bot_enabled' => '1',"keyword_type"=>"location-quick-reply");
-                $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");
+
+                $where['where'] = array('messenger_bot.fb_page_id' => $page_id,'keyword_type"=>"location-quick-reply','facebook_rx_fb_page_info.bot_enabled' => '1');
+
+                $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left"); 
+
                 $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time"),$join,'','','messenger_bot.id asc');
                 
                 $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];
             
             
             if($enable_mark_seen)
-                $this->sender_action($sender_id,"mark_seen",$messenger_bot_info[0]['page_access_token']);
-            foreach ($messenger_bot_info as $key => $value) {
-                $message_str = $value['message'];
-                $message_array = json_decode($message_str,true);
-                // if(!isset($message_array[1])) $message_array[1]=$message_array;
-                if(!isset($message_array[1])){
-                    $message_array_org=$message_array;
-                    $message_array=array();
-                    $message_array[1]=$message_array_org;
-                }
-                foreach($message_array as $msg)
-                {
-                    $template_type_file_track=$msg['message']['template_type'];
-                    unset($msg['message']['template_type']);
+            $this->sender_action($sender_id,"mark_seen",$messenger_bot_info[0]['page_access_token']);
+           
+            if(isset($messenger_bot_info[0]) && !empty($messenger_bot_info)){
 
-                    // typing on and typing on delay [alamin]
-                    $enable_typing_on = $msg['message']['typing_on_settings'];
-                    $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
-                    unset($msg['message']['typing_on_settings']);
-                    $typing_on_delay_time = $msg['message']['delay_in_reply'];
-                    if($typing_on_delay_time=="") $typing_on_delay_time = 0;
-                    unset($msg['message']['delay_in_reply']);
-                    
-                    /** Spintax **/
-                    if(isset($msg['message']['text']))
-                        $msg['message']['text']=spintax_process($msg['message']['text']);
-                    
-                    $msg['messaging_type'] = "RESPONSE";
-                    $reply = json_encode($msg);                           
+            $this->send_message_bot_reply($messenger_bot_info[0],$sender_id,$subscriber_info,$page_id);
 
-                   $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
-                   $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
-                   $reply=str_replace($replace_search, $replace_with, $reply);
+            if($this->addon_exist("messenger_bot_connectivity"))             
+            	$this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_location");
 
-                    if(isset($subscriber_info[0]['first_name']))
-                        $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
-                    if(isset($subscriber_info[0]['last_name']))
-                        $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
-                    $access_token = $value['page_access_token'];
-                    if(isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1"){
-                    
-                        // typing on and typing on delay [alamin]
-                        if($enable_typing_on) $this->sender_action($sender_id,"typing_on",$access_token);                                
-                        if($typing_on_delay_time>0) sleep($typing_on_delay_time);
+            //update Subscriber Last Interaction time. 
+            $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
+            
+        	exit; 
+        }
 
-                        if($template_type_file_track=='video' || $template_type_file_track=='file' || $template_type_file_track=='audio'){
-                            $post_data=array("access_token"=>$access_token,"reply"=>$reply);
-                            $url=base_url()."home/send_reply_curl_call";
-                            $ch = curl_init();
-                            curl_setopt($ch, CURLOPT_URL, $url);
-                            curl_setopt($ch,CURLOPT_POST,1);
-                            curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                            // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                            $reply_response=curl_exec($ch);  
-                    
-                        }
-                        else
-                             $reply_response=$this->send_reply($access_token,$reply);
-                         /*****Insert into database messenger_bot_reply_error_log if get error****/
-                             if(isset($reply_response['error']['message'])){
-                                $bot_settings_id= $value['id'];
-                                $reply_error_message= $reply_response['error']['message'];
-                                $error_time= date("Y-m-d H:i:s");
-                                $page_table_id=$value['page_id'];
-                                $user_id=$value['user_id'];
-                                
-                                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
-                                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
-                                                    "error_time"=>$error_time);
-                                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
-                                
-                             }
-                    }                    
-                }
-
-                if($this->db->table_exists('messenger_bot_thirdparty_webhook') && $this->basic->is_exist("messenger_bot_thirdparty_webhook",array("page_id"=>$page_id)))                
-                $this->thirdparty_webhook_trigger($page_id,$sender_id,"trigger_location");
-
-                //update Subscriber Last Interaction time. 
-               $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
-                
-                die();
-            }
             
         }     
         else
         {   
             $table_name = "messenger_bot";
+
             $where['where'] = array('messenger_bot.fb_page_id' => $page_id, 'messenger_bot.keyword_type' => 'no match','facebook_rx_fb_page_info.bot_enabled' => '1','facebook_rx_fb_page_info.no_match_found_reply'=>'enabled');
-            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=messenger_bot.fb_page_id,left");   
+
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=messenger_bot.page_id,left");  
+
             $messenger_bot_info = $this->basic->get_data($table_name,$where,array("messenger_bot.*","facebook_rx_fb_page_info.page_access_token as page_access_token","facebook_rx_fb_page_info.enable_mark_seen as enable_mark_seen","facebook_rx_fb_page_info.enbale_type_on as enbale_type_on","facebook_rx_fb_page_info.reply_delay_time as reply_delay_time"),$join,'1','','messenger_bot.id asc');
             
             $enable_mark_seen=$messenger_bot_info[0]['enable_mark_seen'];
-            
-    
             if($enable_mark_seen)
                 $this->sender_action($sender_id,"mark_seen",$messenger_bot_info[0]['page_access_token']);
             if(isset($messenger_bot_info[0]) && !empty($messenger_bot_info)){
-                $message_str = $messenger_bot_info[0]['message'];
-                $message_array = json_decode($message_str,true);
-                // if(!isset($message_array[1])) $message_array[1]=$message_array;
-                if(!isset($message_array[1])){
-                    $message_array_org=$message_array;
-                    $message_array=array();
-                    $message_array[1]=$message_array_org;
-                }
-                foreach($message_array as $msg)
-                {
-                    $template_type_file_track=$msg['message']['template_type'];
-                    unset($msg['message']['template_type']);
-
-                    // typing on and typing on delay [alamin]
-                    $enable_typing_on = $msg['message']['typing_on_settings'];
-                    $enable_typing_on = ($enable_typing_on=='on')  ? 1 : 0;
-                    unset($msg['message']['typing_on_settings']);
-                    $typing_on_delay_time = $msg['message']['delay_in_reply'];
-                    if($typing_on_delay_time=="") $typing_on_delay_time = 0;
-                    unset($msg['message']['delay_in_reply']);
-                    
-                    /** Spintax **/
-                    if(isset($msg['message']['text']))
-                        $msg['message']['text']=spintax_process($msg['message']['text']);
-            
-                    $msg['messaging_type'] = "RESPONSE";
-                    $reply = json_encode($msg);   
-                                             
-                    $replace_search=array('{"id":"replace_id"}','#SUBSCRIBER_ID_REPLACE#');
-                    $replace_with=array('{"id":"'.$sender_id.'"}',$sender_id);
-                    $reply=str_replace($replace_search, $replace_with, $reply);
-
-                    if(isset($subscriber_info[0]['first_name']))
-                        $reply=str_replace('#LEAD_USER_FIRST_NAME#', $subscriber_info[0]['first_name'], $reply);
-                    if(isset($subscriber_info[0]['last_name']))
-                        $reply=str_replace('#LEAD_USER_LAST_NAME#', $subscriber_info[0]['last_name'], $reply);
-                    $access_token = $messenger_bot_info[0]['page_access_token'];
-                    if(isset($subscriber_info[0]['status']) && $subscriber_info[0]['status']=="1"){
-                    
-                        // typing on and typing on delay [alamin]
-                        if($enable_typing_on) $this->sender_action($sender_id,"typing_on",$access_token);                                
-                        if($typing_on_delay_time>0) sleep($typing_on_delay_time);
-                        
-                        if($template_type_file_track=='video' || $template_type_file_track=='file' || $template_type_file_track=='audio'){
-                            $post_data=array("access_token"=>$access_token,"reply"=>$reply);
-                            $url=base_url()."home/send_reply_curl_call";
-                            $ch = curl_init();
-                            curl_setopt($ch, CURLOPT_URL, $url);
-                            curl_setopt($ch,CURLOPT_POST,1);
-                            curl_setopt($ch,CURLOPT_POSTFIELDS,$post_data);
-                            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-                            // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);  
-                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  
-                            $reply_response=curl_exec($ch);  
-                    
-                        }
-                        else
-                             $reply_response=$this->send_reply($access_token,$reply);
-                         /*****Insert into database messenger_bot_reply_error_log if get error****/
-                             if(isset($reply_response['error']['message'])){
-                                $bot_settings_id= $value['id'];
-                                $reply_error_message= $reply_response['error']['message'];
-                                $error_time= date("Y-m-d H:i:s");
-                                $page_table_id=$value['page_id'];
-                                $user_id=$value['user_id'];
-                                
-                                $error_insert_data=array("page_id"=>$page_table_id,"fb_page_id"=>$page_id,"user_id"=>$user_id,
-                                                    "error_message"=>$reply_error_message,"bot_settings_id"=>$bot_settings_id,
-                                                    "error_time"=>$error_time);
-                                $this->basic->insert_data('messenger_bot_reply_error_log',$error_insert_data);
-                                
-                             }
-                    }                                     
-                }
-
+                $this->send_message_bot_reply($messenger_bot_info[0],$sender_id,$subscriber_info,$page_id);
                 //update Subscriber Last Interaction time. 
                $this->update_subscriber_last_interaction($sender_id,$currenTime,$conversation_broadcast_unavailable,$subsciber_broadcast_unavailable);
                 
@@ -1885,14 +1287,14 @@ class Messenger_bot extends Home
             {
                 if($value['id'] == $selected_page_id)
                 {
-                	if($value['mail_service_id'] != '')
-                	{
-                		$mail_service_id = json_decode($value['mail_service_id'],true);
-	                	$selected_mailchimp_list_ids = isset($mail_service_id['mailchimp']) ? $mail_service_id['mailchimp']:"";
+                    if($value['mail_service_id'] != '')
+                    {
+                        $mail_service_id = json_decode($value['mail_service_id'],true);
+                        $selected_mailchimp_list_ids = isset($mail_service_id['mailchimp']) ? $mail_service_id['mailchimp']:"";
                         $selected_sendinblue_list_ids = isset($mail_service_id['sendinblue']) ? $mail_service_id['sendinblue']:"";
                         $selected_activecampaign_list_ids = isset($mail_service_id['activecampaign']) ? $mail_service_id['activecampaign']:"";
-                	}
-                	$page_list[0] = $value;
+                    }
+                    $page_list[0] = $value;
 
                     $sms_api_id = $value['sms_api_id'];
                     $sms_reply_message = $value['sms_reply_message'];
@@ -2064,6 +1466,7 @@ class Messenger_bot extends Home
     public function get_page_details()
     {
         $this->ajax_check();
+        $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
         $page_table_id = $this->input->post('page_table_id',true);
         $facebook_rx_fb_user_info_id  =  $this->session->userdata('facebook_rx_fb_user_info');
         $this->session->set_userdata('bot_list_get_page_details_page_table_id',$page_table_id);
@@ -2175,6 +1578,8 @@ class Messenger_bot extends Home
 
         $mail_service_id = json_decode($page_info[0]['mail_service_id'],true);
         $selected_mailchimp_list_ids = isset($mail_service_id['mailchimp']) ? $mail_service_id['mailchimp'] : array();
+        $selected_sendinblue_list_ids = isset($mail_service_id['sendinblue']) ? $mail_service_id['sendinblue'] : array();
+        $selected_activecampaign_list_ids = isset($mail_service_id['activecampaign']) ? $mail_service_id['activecampaign'] : array();
 
 
         $subscription_messaging_permission_str = '';
@@ -2232,6 +1637,7 @@ class Messenger_bot extends Home
 
         $murl = base_url('messenger_bot/persistent_menu_list/').$page_table_id.'/1';
         $durl = base_url('messenger_bot_enhancers/sequence_message_campaign/').$page_table_id.'/1';
+        $ses_url = base_url('sms_email_sequence/sms_email_sequence_message_campaign/').$page_table_id.'/1';
         $surl = base_url('subscriber_manager/bot_subscribers/0/').$page_table_id;
 
         $middle_column_content='
@@ -2331,8 +1737,21 @@ class Messenger_bot extends Home
                     <i class="fas fa-tint"></i>
                   </div>
                   <div class="card-body">
-                    <h4>'.$this->lang->line("Sequence Message Settings").'</h4>                    
-                    <a href="'.$durl.'" class="card-cta iframed" data-height="795">'.$this->lang->line("Change Settings").'</a>
+                    <h4>'.$this->lang->line("Sequence Message Settings").'</h4>
+                    <div class="dropdown avatar-badge">
+                      <span class="dropdown-toggle pointer" data-toggle="dropdown">
+                         '.$this->lang->line("Change Settings").'
+                      </span>
+                      <div class="dropdown-menu large">
+                        <a href="'.$durl.'" class="pointer dropdown-item has-icon card-cta iframed" data-height="795"><i class="fas fa-robot"></i> '.$this->lang->line("Messenger Sequence Settings").'</a>';
+
+            if($this->addon_exist("sms_email_sequence")) {
+                $middle_column_content .= '<a href="'.$ses_url.'" class="pointer dropdown-item has-icon card-cta iframed" data-height="795"><i class="fas fa-envelope"></i> '.$this->lang->line("SMS/Email Sequence Settings").'</a>';
+            }
+
+            $middle_column_content .= '</div>
+                    </div>             
+                    
                   </div>
                 </div>
               </div>';
@@ -2393,6 +1812,8 @@ class Messenger_bot extends Home
 
         $response['middle_column_content'] = $middle_column_content;
         $response['selected_mailchimp_list_ids'] = $selected_mailchimp_list_ids;
+        $response['selected_sendinblue_list_ids'] = $selected_sendinblue_list_ids;
+        $response['selected_activecampaign_list_ids'] = $selected_activecampaign_list_ids;
 
         $response['sms_api_id'] = $page_info[0]['sms_api_id'];
         $response['sms_reply_message'] = $page_info[0]['sms_reply_message'];
@@ -2450,6 +1871,14 @@ class Messenger_bot extends Home
             $data['has_broadcaster_addon'] = 1;
         else
             $data['has_broadcaster_addon'] = 0;
+
+        $otn_postbacks = [];
+        $otn_postback_info = $this->basic->get_data('otn_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$page_id)),array('id','otn_postback_id','template_name'));
+        foreach($otn_postback_info as $value)
+        {
+            $otn_postbacks[$value['id']] = $value['otn_postback_id']." (".$value['template_name'].")";
+        }
+        $data['otn_postback_list'] = $otn_postbacks;
         
         $data['default_template'] = $default_template;
         $data['iframe']=$iframe;
@@ -2482,6 +1911,14 @@ class Messenger_bot extends Home
         if($this->basic->is_exist("add_ons",array("project_id"=>16)))
             $data['has_broadcaster_addon'] = 1;
         else  $data['has_broadcaster_addon'] = 0;
+
+        $otn_postbacks = [];
+        $otn_postback_info = $this->basic->get_data('otn_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$page_auto_id)),array('id','otn_postback_id','template_name'));
+        foreach($otn_postback_info as $value)
+        {
+            $otn_postbacks[$value['id']] = $value['otn_postback_id']." (".$value['template_name'].")";
+        }
+        $data['otn_postback_list'] = $otn_postbacks;
 
         $data['iframe']=$iframe;
         $this->_viewcontroller($data);  
@@ -2638,6 +2075,23 @@ class Messenger_bot extends Home
                     $reply_bot[$k]['attachment']['payload']['is_reusable'] = true;                    
                 }
             }
+
+            if($template_type == 'One_Time_Notification')
+            {
+                $otn_title = 'otn_title_'.$k;
+                $otn_postback = 'otn_postback_'.$k;
+                $otn_title = isset($$otn_title) ? $$otn_title : '';
+                $otn_postback = isset($$otn_postback) ? $$otn_postback : '';
+                if($otn_postback != '' && $otn_postback != '')
+                {       
+                    $reply_bot[$k]['template_type'] = $template_type;             
+                    $reply_bot[$k]['attachment']['type'] = 'template';
+                    $reply_bot[$k]['attachment']['payload']['template_type'] = "one_time_notif_req";
+                    $reply_bot[$k]['attachment']['payload']['title'] = $otn_title;
+                    $reply_bot[$k]['attachment']['payload']['payload'] = $otn_postback;
+                }
+            }
+            
             if($template_type == 'audio')
             {
                 $audio_reply_field = 'audio_reply_field_'.$k;
@@ -3540,6 +2994,23 @@ class Messenger_bot extends Home
                     $reply_bot[$k]['attachment']['payload']['is_reusable'] = true;                    
                 }
             }
+
+            if($template_type == 'One_Time_Notification')
+            {
+                $otn_title = 'otn_title_'.$k;
+                $otn_postback = 'otn_postback_'.$k;
+                $otn_title = isset($$otn_title) ? $$otn_title : '';
+                $otn_postback = isset($$otn_postback) ? $$otn_postback : '';
+                if($otn_postback != '' && $otn_postback != '')
+                {       
+                    $reply_bot[$k]['template_type'] = $template_type;             
+                    $reply_bot[$k]['attachment']['type'] = 'template';
+                    $reply_bot[$k]['attachment']['payload']['template_type'] = "one_time_notif_req";
+                    $reply_bot[$k]['attachment']['payload']['title'] = $otn_title;
+                    $reply_bot[$k]['attachment']['payload']['payload'] = $otn_postback;
+                }
+            }
+
             if($template_type == 'audio')
             {
                 $audio_reply_field = 'audio_reply_field_'.$k;
@@ -4347,6 +3818,7 @@ class Messenger_bot extends Home
         $data['page_title'] = $this->lang->line('Template Manager');
         $this->_viewcontroller($data);
     }
+
     public function template_manager_data()
     {
         $this->ajax_check();
@@ -4397,8 +3869,10 @@ class Messenger_bot extends Home
 
 
     }
+
     public function create_new_template($is_iframe="0",$default_page="",$default_child_postback_id="")
     {
+        $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
         $data['body'] = 'messenger_tools/add_new_template';
         $data['page_title'] = $this->lang->line('Create new template');
         $data["templates"]=$this->basic->get_enum_values("messenger_bot","template_type");
@@ -4519,6 +3993,7 @@ class Messenger_bot extends Home
                     $reply_bot[$k]['attachment']['payload']['is_reusable'] = true;                    
                 }
             }
+
             if($template_type == 'audio')
             {
                 $audio_reply_field = 'audio_reply_field_'.$k;
@@ -4532,6 +4007,7 @@ class Messenger_bot extends Home
                 }
                 
             }
+
             if($template_type == 'video')
             {
                 $video_reply_field = 'video_reply_field_'.$k;
@@ -4544,6 +4020,7 @@ class Messenger_bot extends Home
                     $reply_bot[$k]['attachment']['payload']['is_reusable'] = true;                    
                 }
             }
+
             if($template_type == 'file')
             {
                 $file_reply_field = 'file_reply_field_'.$k;
@@ -4554,6 +4031,22 @@ class Messenger_bot extends Home
                     $reply_bot[$k]['attachment']['type'] = 'file';
                     $reply_bot[$k]['attachment']['payload']['url'] = $file_reply_field;
                     $reply_bot[$k]['attachment']['payload']['is_reusable'] = true;
+                }
+            }
+
+            if($template_type == 'One_Time_Notification')
+            {
+                $otn_title = 'otn_title_'.$k;
+                $otn_postback = 'otn_postback_'.$k;
+                $otn_title = isset($$otn_title) ? $$otn_title : '';
+                $otn_postback = isset($$otn_postback) ? $$otn_postback : '';
+                if($otn_postback != '' && $otn_postback != '')
+                {       
+                    $reply_bot[$k]['template_type'] = $template_type;             
+                    $reply_bot[$k]['attachment']['type'] = 'template';
+                    $reply_bot[$k]['attachment']['payload']['template_type'] = "one_time_notif_req";
+                    $reply_bot[$k]['attachment']['payload']['title'] = $otn_title;
+                    $reply_bot[$k]['attachment']['payload']['payload'] = $otn_postback;
                 }
             }
 
@@ -5348,6 +4841,8 @@ class Messenger_bot extends Home
     public function edit_template($postback_table_id=0,$iframe='0',$is_default='0')
     {
         if($postback_table_id == 0) exit();
+        $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
+        $this->is_broadcaster_exist=$this->broadcaster_exist();
         $table_name = "messenger_bot_postback";
         $where_bot['where'] = array('id' => $postback_table_id, 'status' => '1', 'user_id'=>$this->user_id);
         $bot_info = $this->basic->get_data($table_name, $where_bot);
@@ -5398,7 +4893,6 @@ class Messenger_bot extends Home
         else
             $data['has_broadcaster_addon'] = 0;
 
-        // $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"],'template_for'=>'reply_message','is_template'=>'1'),'or_where'=>array('template_id'=>$postback_table_id)),array('postback_id','bot_name'));
         $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"],'template_for'=>'reply_message')),array('postback_id','bot_name'));
         $postback_dropdown = array();
         if(!empty($postback_id_list))
@@ -5408,6 +4902,15 @@ class Messenger_bot extends Home
                 // array_push($postback_dropdown, $value['postback_id']);
         }
         $data['postback_dropdown'] = $postback_dropdown;
+
+        $otn_postbacks = [];
+        $otn_postback_info = $this->basic->get_data('otn_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"])),array('id','otn_postback_id','template_name'));
+        foreach($otn_postback_info as $value)
+        {
+            $otn_postbacks[$value['id']] = $value['otn_postback_id']." (".$value['template_name'].")";
+        }
+        $data['otn_postback_list'] = $otn_postbacks;
+
         $data['iframe'] = $iframe;
         $data['is_default'] = $is_default;
 
@@ -5494,6 +4997,23 @@ class Messenger_bot extends Home
                     $reply_bot[$k]['attachment']['payload']['is_reusable'] = true;                    
                 }
             }
+
+            if($template_type == 'One_Time_Notification')
+            {
+                $otn_title = 'otn_title_'.$k;
+                $otn_postback = 'otn_postback_'.$k;
+                $otn_title = isset($$otn_title) ? $$otn_title : '';
+                $otn_postback = isset($$otn_postback) ? $$otn_postback : '';
+                if($otn_postback != '' && $otn_postback != '')
+                {       
+                    $reply_bot[$k]['template_type'] = $template_type;             
+                    $reply_bot[$k]['attachment']['type'] = 'template';
+                    $reply_bot[$k]['attachment']['payload']['template_type'] = "one_time_notif_req";
+                    $reply_bot[$k]['attachment']['payload']['title'] = $otn_title;
+                    $reply_bot[$k]['attachment']['payload']['payload'] = $otn_postback;
+                }
+            }
+
             if($template_type == 'audio')
             {
                 $audio_reply_field = 'audio_reply_field_'.$k;
@@ -6330,7 +5850,9 @@ class Messenger_bot extends Home
 
     public function clone_template($postback_table_id=0,$iframe='0',$is_default='0')
     {
-    	if($postback_table_id == 0) exit();
+        if($postback_table_id == 0) exit();
+        $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
+        $this->is_broadcaster_exist=$this->broadcaster_exist();
         $table_name = "messenger_bot_postback";
         $where_bot['where'] = array('id' => $postback_table_id, 'status' => '1', 'user_id'=>$this->user_id);
         $bot_info = $this->basic->get_data($table_name, $where_bot);
@@ -6394,6 +5916,15 @@ class Messenger_bot extends Home
                 // array_push($postback_dropdown, $value['postback_id']);
         }
         $data['postback_dropdown'] = $postback_dropdown;
+
+        $otn_postbacks = [];
+        $otn_postback_info = $this->basic->get_data('otn_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"])),array('id','otn_postback_id','template_name'));
+        foreach($otn_postback_info as $value)
+        {
+            $otn_postbacks[$value['id']] = $value['otn_postback_id']." (".$value['template_name'].")";
+        }
+        $data['otn_postback_list'] = $otn_postbacks;
+        
         $data['iframe'] = $iframe;
         $data['is_default'] = $is_default;
         $data['action_type'] = 'clone';
@@ -6537,6 +6068,7 @@ class Messenger_bot extends Home
              }
         }
     }
+
     public function upload_live_video()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'GET') exit();
@@ -7778,9 +7310,9 @@ class Messenger_bot extends Home
         $email_reply_message=str_replace(array("'",'"'),array('`','`'),$email_message);
 
         if($mailchimp_list_id == '') 
-        	$mail_service = array('mailchimp'=>array());
+            $mail_service = array('mailchimp'=>array());
         else
-        	$mail_service = array('mailchimp'=>$mailchimp_list_id);
+            $mail_service = array('mailchimp'=>$mailchimp_list_id);
 
         /* sendinblue */
         if($sendinblue_list_id == '') 
@@ -9273,6 +8805,7 @@ class Messenger_bot extends Home
 
     public function bot_menu_section()
     {
+        $this->is_engagement_exist=$this->engagement_exist();
         $data['body'] = 'messenger_tools/menu_block';
         $data['page_title'] = $this->lang->line('Messenger Bot');
         $this->_viewcontroller($data);
@@ -9281,6 +8814,12 @@ class Messenger_bot extends Home
 
 
     public function update_subscriber_last_interaction($subscriber_id='',$time='',$conversation_broadcast_unavailable='0',$subsciber_broadcast_unavailable='0'){
+
+        //if config is disabled for subscriber last interaction to reduce mysql query execute 
+        $is_enable=$this->config->item('enable_tracking_subscribers_last_interaction');
+        
+        if($is_enable == "no")
+            return true; 
 
         $unixtime=strtotime($time);
         date_default_timezone_set('UTC');
@@ -9321,12 +8860,12 @@ class Messenger_bot extends Home
 
             $content='<div class="row">
                     <div class="col-12"> <div class="alert alert-light alert-has-icon">
-	                                <div class="alert-icon"><i class="far fa-lightbulb"></i></div>
-	                                <div class="alert-body">
-	                                  <div class="alert-title">'.$this->lang->line("Usage").'</div>
-	                                  '.$this->lang->line("JSON Code can be used for Facebook click to Messenger ads. For ads avoid putting first name, last name, direct link of webivew form, direct link of ecommerce store. These will not work. Instead use postback button or quick reply button to start the main conversation with JSON ads.").'
-	                                </div>
-	                              </div>';
+                                    <div class="alert-icon"><i class="far fa-lightbulb"></i></div>
+                                    <div class="alert-body">
+                                      <div class="alert-title">'.$this->lang->line("Usage").'</div>
+                                      '.$this->lang->line("JSON Code can be used for Facebook click to Messenger ads. For ads avoid putting first name, last name, direct link of webivew form, direct link of ecommerce store. These will not work. Instead use postback button or quick reply button to start the main conversation with JSON ads.").'
+                                    </div>
+                                  </div>';
             $i=1;
             foreach($json_info as $value)
             {
@@ -9799,26 +9338,6 @@ class Messenger_bot extends Home
 
         }
 
-        // private function package_list()
-        // {
-        //     $payment_package=$this->basic->get_data("package",$where='',$select='',$join='',$limit='',$start=NULL,$order_by='price');
-        //     $return_val=array();
-        //     $config_data=$this->basic->get_data("payment_config");
-        //     $currency=isset($config_data[0]["currency"]) ? $config_data[0]["currency"] : "USD";
-        //     foreach ($payment_package as $row)
-        //     {
-        //         $return_val[$row['id']]=$row['package_name']." : Only @".$currency." ".$row['price']." for ".$row['validity']." days";
-        //     }
-        //     return $return_val;
-        // }
-
-        /* 
-        ===============================================
-        MESSENGER BOT EXPORT IMPORT
-        ***********************************************
-        */
-
-
 
 
         public function edit_bot_settings_from_error_log($settings_id=161){
@@ -9868,6 +9387,553 @@ class Messenger_bot extends Home
                     redirect($edit_link, 'location');  
             }
         }
+
+
+
+        // OTN template manager section
+        public function otn_template_manager()
+        {
+            if($this->session->userdata('user_type') != 'Admin' && !in_array(275,$this->module_access))
+            redirect('home/login_page', 'location');
+
+            $page_list = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("user_id"=>$this->user_id,'bot_enabled'=>'1')),array('page_name','id'));
+            $data['page_info'] = $page_list;
+            $data['body'] = 'messenger_tools/otn_manager/template_manager';
+            $data['page_title'] = $this->lang->line('Template Manager');
+            $this->_viewcontroller($data);
+        }
+
+        public function otn_template_manager_data()
+        {
+            $this->ajax_check();
+            $page_id = $this->input->post('page_id',true);
+            $postback_id = $this->input->post('postback_id',true);
+            $display_columns = array("#","CHECKBOX",'id', 'page_name', 'template_name', 'otn_postback_id', 'total_optin_subscriber', 'total_sent', 'total_not_sent', 'action');
+
+            $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $limit = isset($_POST['length']) ? intval($_POST['length']) : 10;
+            $sort_index = isset($_POST['order'][0]['column']) ? strval($_POST['order'][0]['column']) : 2;
+            $sort = isset($display_columns[$sort_index]) ? $display_columns[$sort_index] : 'id';
+            $order = isset($_POST['order'][0]['dir']) ? strval($_POST['order'][0]['dir']) : 'desc';
+            $order_by=$sort." ".$order;
+
+
+            $where_simple = array();
+            $where_simple['otn_postback.user_id'] = $this->user_id;
+            if($page_id != '') $where_simple['otn_postback.page_id'] = $page_id;
+            if($postback_id != '') $where_simple['otn_postback_id like'] = "%".$postback_id."%";
+            $table="otn_postback";
+            $where = array('where'=>$where_simple);
+            
+            $join = array(
+                'facebook_rx_fb_page_info'=>'otn_postback.page_id=facebook_rx_fb_page_info.id,left',
+                'otn_optin_subscriber'=>'otn_postback.id=otn_optin_subscriber.otn_id,left'
+            );
+            $select = array('otn_postback.*','page_name','count(otn_optin_subscriber.id) as total_optin_subscriber','count(case when is_sent = "1" THEN otn_optin_subscriber.id END) as total_sent','count(case when is_sent = "0" THEN otn_optin_subscriber.id END) as total_not_sent');
+
+            $info=$this->basic->get_data($table,$where,$select,$join,$limit,$start,$order_by,$group_by='otn_postback.id');
+
+            $total_rows_array=$this->basic->count_row($table,$where,$count=$table.".id",$join,$group_by='otn_postback.id');
+            $total_result=$total_rows_array[0]['total_rows'];
+
+            $i=0;
+            $base_url=base_url();
+            foreach ($info as $key => $value) 
+            {
+                $info[$i]["action"] = "<div style='min-width:120px'><a class='btn btn-circle btn-outline-warning' title='". $this->lang->line("Edit") ."' href='".base_url('messenger_bot/otn_edit_template/').$value['id']."'><i class='fas fa-edit'></i></a>&nbsp;<a href='#' class='btn btn-circle btn-outline-danger delete_template' title='Delete' table_id='".$value['id']."'><i class='fa fa-trash'></i></a></div>";
+                $i++;
+            }
+
+            $data['draw'] = (int)$_POST['draw'] + 1;
+            $data['recordsTotal'] = $total_result;
+            $data['recordsFiltered'] = $total_result;
+            $data['data'] = convertDataTableResult($info, $display_columns ,$start,$primary_key="id");
+
+            echo json_encode($data);
+
+
+        }
+
+        public function otn_create_new_template($is_iframe="0",$default_page="",$default_child_postback_id="")
+        {
+            if($this->session->userdata('user_type') != 'Admin' && !in_array(275,$this->module_access))
+            redirect('home/login_page', 'location');
+
+            $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
+            $data['body'] = 'messenger_tools/otn_manager/add_new_template';
+            $data['page_title'] = $this->lang->line('Create new OTN template');
+            $join = array('facebook_rx_fb_user_info'=>'facebook_rx_fb_page_info.facebook_rx_fb_user_info_id=facebook_rx_fb_user_info.id,left');
+            $page_info = $this->basic->get_data('facebook_rx_fb_page_info',array('where'=>array('facebook_rx_fb_page_info.user_id'=>$this->user_id,'bot_enabled'=>'1')),array('facebook_rx_fb_page_info.id','page_name','name'),$join);
+            $page_list = array();
+            foreach($page_info as $value)
+            {
+                $page_list[$value['id']] = $value['page_name']." [".$value['name']."]";
+            }
+            $data['page_list'] = $page_list;
+            $data['is_iframe'] = $is_iframe;
+            $data['iframe'] = $is_iframe;
+            $data['default_page'] = $default_page;
+            $data['default_child_postback_id'] = $default_child_postback_id;
+
+            if($this->basic->is_exist("add_ons",array("project_id"=>16))) $data['has_broadcaster_addon'] = 1;
+            else  $data['has_broadcaster_addon'] = 0;
+
+            $this->_viewcontroller($data); 
+        }
+        
+        public function otn_create_template_action()
+        {
+            $this->ajax_check();
+            $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
+            $template_name = strip_tags($this->input->post('bot_name',true));
+            $page_table_id = strip_tags($this->input->post('page_table_id',true));
+            $reply_postback_id = strip_tags($this->input->post('reply_postback_id',true));
+            $template_postback_id = strip_tags($this->input->post('template_postback_id',true));
+            $label_ids_array = $this->input->post('label_ids',true);
+            $label_ids = '';
+            if($label_ids_array)
+            $label_ids = implode(',', $label_ids_array);
+            
+
+            $this->db->trans_start();
+   
+            $data = array(
+                'user_id' => $this->user_id,
+                'template_name' => $template_name,
+                'page_id' => $page_table_id,
+                'otn_postback_id' => $template_postback_id,
+                'reply_postback_id' => $reply_postback_id,
+                'label_id' => $label_ids
+            );
+            if($this->is_drip_campaigner_exist)
+            {
+                $drip_campaign_id_array = $this->input->post('drip_campaign_id',true);
+                $drip_campaign_ids = implode(',', $drip_campaign_id_array);
+                $data['drip_campaign_id'] = $drip_campaign_ids;
+            }
+            $this->basic->insert_data('otn_postback',$data);
+
+            $this->db->trans_complete();
+            if ($this->db->trans_status() === FALSE)
+            {
+                echo json_encode(array("status" => "0", "message" =>$this->lang->line("Creating template was unsuccessful. Database error occured during creating template.")));
+                exit();
+            }
+            else
+            {
+                echo json_encode(array("status" => "1", "message" =>$this->lang->line("New template has been stored successfully.")));
+            }
+            
+        }
+
+        public function otn_edit_template($postback_table_id=0,$iframe='0',$is_default='0')
+        {
+            if($this->session->userdata('user_type') != 'Admin' && !in_array(275,$this->module_access))
+            redirect('home/login_page', 'location');
+
+            if($postback_table_id == 0) exit();
+            $this->is_broadcaster_exist=$this->broadcaster_exist();
+            $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
+            $table_name = "otn_postback";
+            $where_bot['where'] = array('id' => $postback_table_id, 'user_id'=>$this->user_id);
+            $bot_info = $this->basic->get_data($table_name, $where_bot);
+            if(empty($bot_info)) redirect('messenger_bot/otn_template_manager', 'location');
+            $data['body'] = 'messenger_tools/otn_manager/edit_template';
+            $data['page_title'] = $this->lang->line('Edit template');
+
+            $join = array('facebook_rx_fb_user_info'=>'facebook_rx_fb_page_info.facebook_rx_fb_user_info_id=facebook_rx_fb_user_info.id,left');
+            $page_info = $this->basic->get_data('facebook_rx_fb_page_info',array('where'=>array('facebook_rx_fb_page_info.user_id'=>$this->user_id,'bot_enabled'=>'1')),array('facebook_rx_fb_page_info.id','page_name','name'),$join);
+            $page_list = array();
+            foreach($page_info as $value)
+            {
+                $page_list[$value['id']] = $value['page_name']." [".$value['name']."]";
+            }
+            $data['page_list'] = $page_list;
+            $data['bot_info'] = isset($bot_info[0]) ? $bot_info[0] : array();
+
+            $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"]),'where_not_in'=>array('postback_id'=>array('UNSUBSCRIBE_QUICK_BOXER','RESUBSCRIBE_QUICK_BOXER','YES_START_CHAT_WITH_HUMAN','YES_START_CHAT_WITH_BOT'))));
+
+            $current_postbacks = array();
+            foreach ($postback_id_list as $value) {
+                if($value['template_id'] == $postback_table_id || $value['id'] == $postback_table_id)
+                $current_postbacks[] = $value['postback_id'];
+            }
+            $data['postback_ids'] = $postback_id_list;
+            $data['current_postbacks'] = $current_postbacks;
+
+            $table_type = 'messenger_bot_broadcast_contact_group';
+            $where_type['where'] = array('user_id'=>$this->user_id,"page_id"=>$bot_info[0]["page_id"],"unsubscribe"=>"0","invisible"=>"0");
+            $data['info_type'] = $this->basic->get_data($table_type,$where_type,$select='', $join='', $limit='', $start='', $order_by='group_name');
+
+            if($this->is_broadcaster_exist)
+            {          
+
+                $table_type = 'messenger_bot_drip_campaign';
+                $where_type['where'] = array('user_id'=>$this->user_id,"page_id"=>$bot_info[0]["page_id"]);
+                $data['dripcampaign_list'] = $this->basic->get_data($table_type,$where_type,$select='');
+            }
+            else 
+            {
+                $data['dripcampaign_list']=array();
+            }
+
+
+            if($this->is_broadcaster_exist)
+                $data['has_broadcaster_addon'] = 1;
+            else
+                $data['has_broadcaster_addon'] = 0;
+
+            $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"],'template_for'=>'reply_message')),array('id','postback_id','bot_name'));
+            $postback_dropdown = array();
+            if(!empty($postback_id_list))
+            {
+                foreach($postback_id_list as $value)
+                    // $postback_dropdown[$value['id']] = $value['postback_id'];
+                    $postback_dropdown[$value['id']] = $value['bot_name'].' ['.$value['postback_id'].']';
+            }
+            $data['postback_dropdown'] = $postback_dropdown;
+            $data['iframe'] = $iframe;
+            $data['is_default'] = $is_default;
+
+            $data['iframe']=$iframe;
+            $this->_viewcontroller($data);  
+        }
+
+        public function otn_edit_template_action()
+        {
+            $this->ajax_check();
+            $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();
+            $table_id = strip_tags($this->input->post('id',true));
+
+            $postback_info = $this->basic->get_data('otn_postback',array('where'=>array('id'=>$table_id,'user_id'=>$this->user_id)));
+            if(empty($postback_info))
+            {
+                echo json_encode(array("status" => "0", "message" =>$this->lang->line("No Template is found for this user with this ID.")));
+                exit();
+            }
+
+            $template_name = strip_tags($this->input->post('bot_name',true));
+            $page_table_id = strip_tags($this->input->post('page_table_id',true));
+            $reply_postback_id = strip_tags($this->input->post('reply_postback_id',true));
+            $template_postback_id = strip_tags($this->input->post('template_postback_id',true));
+            $label_ids_array = $this->input->post('label_ids',true);
+            
+            $label_ids = '';
+            if($label_ids_array)
+            $label_ids = implode(',', $label_ids_array);
+
+            $this->db->trans_start();
+            
+            $data = array(
+                'user_id' => $this->user_id,
+                'template_name' => $template_name,
+                'reply_postback_id' => $reply_postback_id,
+                'label_id' => $label_ids
+            );
+            if($this->is_drip_campaigner_exist)
+            {
+                $drip_campaign_id_array = $this->input->post('drip_campaign_id',true);
+                $drip_campaign_ids = implode(',', $drip_campaign_id_array);
+                $data['drip_campaign_id'] = $drip_campaign_ids;
+            }
+
+            $this->basic->update_data('otn_postback',array('id'=>$table_id),$data);
+
+            $this->db->trans_complete();
+            if ($this->db->trans_status() === FALSE)
+            {
+                echo json_encode(array("status" => "0", "message" =>$this->lang->line("Updating template was unsuccessful. Database error occured during updating template.")));
+                exit();
+            }
+            else
+            {
+                echo json_encode(array("status" => "1", "message" =>$this->lang->line("Template has been updated successfully.")));
+            }
+        }
+
+        public function otn_clone_template($postback_table_id=0,$iframe='0',$is_default='0')
+        {
+            if($postback_table_id == 0) exit();
+            $table_name = "messenger_bot_postback";
+            $where_bot['where'] = array('id' => $postback_table_id, 'status' => '1', 'user_id'=>$this->user_id);
+            $bot_info = $this->basic->get_data($table_name, $where_bot);
+            if(empty($bot_info)) redirect('messenger_bot/template_manager', 'location');
+
+            $data['body'] = 'messenger_tools/edit_template';
+            $data['page_title'] = $this->lang->line('Clone template');
+            $data["templates"]=$this->basic->get_enum_values("messenger_bot","template_type");
+            $data["keyword_types"]=$this->basic->get_enum_values("messenger_bot","keyword_type");
+
+            $join = array('facebook_rx_fb_user_info'=>'facebook_rx_fb_page_info.facebook_rx_fb_user_info_id=facebook_rx_fb_user_info.id,left');
+            $page_info = $this->basic->get_data('facebook_rx_fb_page_info',array('where'=>array('facebook_rx_fb_page_info.user_id'=>$this->user_id,'bot_enabled'=>'1')),array('facebook_rx_fb_page_info.id','page_name','name'),$join);
+            $page_list = array();
+            foreach($page_info as $value)
+            {
+                $page_list[$value['id']] = $value['page_name']." [".$value['name']."]";
+            }
+
+            $data['page_list'] = $page_list;
+            $data['bot_info'] = isset($bot_info[0]) ? $bot_info[0] : array();
+
+            $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"]),'where_not_in'=>array('postback_id'=>array('UNSUBSCRIBE_QUICK_BOXER','RESUBSCRIBE_QUICK_BOXER','YES_START_CHAT_WITH_HUMAN','YES_START_CHAT_WITH_BOT'))));
+
+            $current_postbacks = array();
+            foreach ($postback_id_list as $value) {
+                if($value['template_id'] == $postback_table_id || $value['id'] == $postback_table_id)
+                $current_postbacks[] = $value['postback_id'];
+            }
+            $data['postback_ids'] = $postback_id_list;
+            $data['current_postbacks'] = $current_postbacks;
+
+            $table_type = 'messenger_bot_broadcast_contact_group';
+            $where_type['where'] = array('user_id'=>$this->user_id,"page_id"=>$bot_info[0]["page_id"],"unsubscribe"=>"0","invisible"=>"0");
+            $data['info_type'] = $this->basic->get_data($table_type,$where_type,$select='', $join='', $limit='', $start='', $order_by='group_name');
+
+            if($this->is_broadcaster_exist)
+            {          
+
+                $table_type = 'messenger_bot_drip_campaign';
+                $where_type['where'] = array('user_id'=>$this->user_id,"page_id"=>$bot_info[0]["page_id"]);
+                $data['dripcampaign_list'] = $this->basic->get_data($table_type,$where_type,$select='');
+            }
+            else 
+            {
+                $data['dripcampaign_list']=array();
+            }
+
+
+            if($this->is_broadcaster_exist)
+                $data['has_broadcaster_addon'] = 1;
+            else
+                $data['has_broadcaster_addon'] = 0;
+
+            // $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"],'template_for'=>'reply_message','is_template'=>'1'),'or_where'=>array('template_id'=>$postback_table_id)),array('postback_id','bot_name'));
+            $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$bot_info[0]["page_id"],'template_for'=>'reply_message')),array('postback_id','bot_name'));
+            $postback_dropdown = array();
+            if(!empty($postback_id_list))
+            {
+                foreach($postback_id_list as $value)
+                    $postback_dropdown[$value['postback_id']] = $value['postback_id'];
+                    // array_push($postback_dropdown, $value['postback_id']);
+            }
+            $data['postback_dropdown'] = $postback_dropdown;
+            $data['iframe'] = $iframe;
+            $data['is_default'] = $is_default;
+            $data['action_type'] = 'clone';
+
+            $data['iframe']=$iframe;
+            $this->_viewcontroller($data);  
+        }
+
+        public function otn_ajax_delete_template_info()
+        {
+            $id = $this->input->post('table_id',true);
+            $postback_info = $this->basic->get_data('otn_postback',array('where'=>array('id'=>$id,'user_id'=>$this->user_id)));
+            if(empty($postback_info))
+            {
+                echo "no_match";
+                exit;
+            }
+            $postback_id = $postback_info[0]['otn_postback_id'];
+            $search_content = '%"payload":"'.$postback_id.'"%';
+            $bot_info = $this->basic->get_data('messenger_bot',array('where'=>array('message like'=>$search_content)));
+            
+            if(!empty($bot_info))
+            {
+                $response = "<div class='text-center alert alert-danger'>".$this->lang->line('You can not delete this template because it is being used in the following bots. First make sure that these templates are free to delete. You can do this by editing or deleting the following bots.')."</div><br>";
+                $response.= '
+                     <script>
+                         $(document).ready(function() {
+                             $("#need_to_delete_bots").DataTable();
+                         }); 
+                      </script>
+                      <style>
+                         .dataTables_filter
+                          {
+                             float : right;
+                          }
+                      </style>
+                     <div class="table-responsive">
+                     <table id="need_to_delete_bots" class="table table-bordered">
+                         <thead>
+                             <tr>
+                                 <th>'.$this->lang->line("SN.").'</th>
+                                 <th>'.$this->lang->line("Bot Name").'</th>
+                                 <th>'.$this->lang->line("Kyeword").'</th>
+                                 <th>'.$this->lang->line("Keyword Type").'</th>
+                                 <th class="text-center">'.$this->lang->line("Actions").'</th>
+                             </tr>
+                         </thead>
+                         <tbody>';
+                $sn = 0;
+                $value = array();
+                foreach($bot_info as $value)
+                {
+                    $sn++;
+                    $bot_id = $value['id'];
+                    $url = '#';
+                    if($value['is_template'] == '1')
+                    {
+                        $child_postback_info = $this->basic->get_data('messenger_bot_postback',array('where'=>array('messenger_bot_table_id'=>$value['id'])));
+
+                        $postback_table_id = 0;
+                        if(isset($child_postback_info[0]['id'])) $postback_table_id = $child_postback_info[0]['id'];
+                        $url = base_url('messenger_bot/edit_template/').$postback_table_id;
+                    }
+                    else
+                        $url = base_url('messenger_bot/edit_bot/').$bot_id.'/postback';
+                    $response .= '<tr>
+                                <td>'.$sn.'</td>
+                                <td>'.$value['bot_name'].'</td>
+                                <td>'.$value['keywords'].'</td>
+                                <td>'.$value['keyword_type'].'</td>
+                                <td class="text-center"><a class="btn btn-outline-warning" title="'.$this->lang->line("edit").'" target="_BLANK" href="'.$url.'"><i class="fa fa-edit"></i></a></td>
+                            </tr>';
+                }
+                $response .= '</tbody>
+                     </table></div>';
+                echo $response;
+            }
+            else
+            {
+                $this->basic->delete_data('otn_postback',array('id'=>$id));
+                $this->basic->delete_data('otn_optin_subscriber',['otn_id'=>$id]);
+                echo "success";
+            }
+        }
+
+        public function get_otn_postback_dropdown()
+        {
+            if(!$_POST) exit();
+            $page_auto_id=$this->input->post('page_auto_id');// database id
+
+            $postback_id_list = $this->basic->get_data('otn_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$page_auto_id)),array('id','otn_postback_id','template_name'));
+
+            $str='';
+            $str .="<option value=''>".$this->lang->line("Select")."</option>";
+            if(!empty($postback_id_list))
+            {            
+                foreach ($postback_id_list as  $value)
+                {
+                    $array_key = $value['id'];
+                    $array_value = $value['otn_postback_id']." (".$value['template_name'].")";
+                    $str .="<option value='{$array_key}'>{$array_value}</option>";            
+
+                }
+            }
+
+            echo json_encode(array('dropdown'=>$str));
+        }
+
+        public function get_otn_reply_postback()
+        {
+            if(!$_POST) exit();
+            $page_auto_id=$this->input->post('page_auto_id');// database id
+
+            $postback_id_list = $this->basic->get_data('messenger_bot_postback',array('where'=>array('user_id'=>$this->user_id,'page_id'=>$page_auto_id,'template_for'=>'reply_message','is_template'=>'1')),array('id','postback_id','bot_name'));
+
+            $str='';
+            $str .="<option value=''>".$this->lang->line("Select")."</option>";
+            if(!empty($postback_id_list))
+            {            
+                foreach ($postback_id_list as  $value)
+                {
+                    $array_key = $value['id'];
+                    $array_value = $value['postback_id']." (".$value['bot_name'].")";
+                    $str .="<option value='{$array_key}'>{$array_value}</option>";            
+
+                }
+            }
+
+            echo json_encode(array('dropdown'=>$str));
+        }
+
+        public function get_otn_postback_refresh()
+        {
+            if(!$_POST) exit();
+            $is_from_add_button=$this->input->post('is_from_add_button');
+            $page_id=$this->input->post('page_id');// database id      
+            $order_by=$this->input->post('order_by');     
+            if($order_by=="") $order_by="id DESC";
+            else $order_by=$order_by." ASC";
+            $postback_data=$this->basic->get_data("messenger_bot_postback",array("where"=>array("page_id"=>$page_id,"is_template"=>"1",'template_for'=>'reply_message')),'','','',$start=NULL,$order_by);
+            $push_postback="";
+
+            if($is_from_add_button=='0')
+            {
+                $push_postback.="<option value=''>".$this->lang->line("Select")."</option>";
+            }
+            
+            foreach ($postback_data as $key => $value) 
+            {
+                $push_postback.="<option value='".$value['id']."'>".$value['template_name'].' ['.$value['postback_id'].']'."</option>";
+            }
+
+            if($is_from_add_button=='1' || $is_from_add_button=='')
+            {
+                $push_postback.="<option value=''>".$this->lang->line("Select")."</option>";
+            }
+
+            echo $push_postback;   
+        }
+
+        public function otn_subscribers()
+        {
+            if($this->session->userdata('user_type') != 'Admin' && !in_array(275,$this->module_access))
+            redirect('home/login_page', 'location');
+            $page_list = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("user_id"=>$this->user_id,'bot_enabled'=>'1')),array('page_name','id'));
+            $data['page_info'] = $page_list;
+            $data['body'] = 'messenger_tools/otn_manager/subscribers';
+            $data['page_title'] = $this->lang->line('OTN Subscribers');
+            $this->_viewcontroller($data);
+        }
+
+        public function otn_subscribers_data()
+        {
+            $this->ajax_check();
+            $searching = $this->input->post('searching',true);
+            $page_id = $this->input->post('page_id',true);
+            $postback_id = $this->input->post('postback_id',true);
+
+            $display_columns = array("#","page_name","first_name","last_name","otn_postback_id","subscriber_id","otn_token","optin_time");
+
+            $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $limit = isset($_POST['length']) ? intval($_POST['length']) : 10;
+            $sort_index = isset($_POST['order'][0]['column']) ? strval($_POST['order'][0]['column']) : 7;
+            $sort = isset($display_columns[$sort_index]) ? $display_columns[$sort_index] : 'optin_time';
+            $order = isset($_POST['order'][0]['dir']) ? strval($_POST['order'][0]['dir']) : 'desc';
+            $order_by=$sort." ".$order;
+
+            $where = array();
+            $where_simple = array();
+            $where_simple['otn_postback.user_id'] = $this->user_id;
+            if($page_id != '') $where_simple['otn_postback.page_id'] = $page_id;
+            if($postback_id != '') $where_simple['otn_postback_id like'] = "%".$postback_id."%";
+            $where = array('where'=>$where_simple);
+
+            $table="otn_optin_subscriber";
+            $join = array(
+                'messenger_bot_subscriber'=>'otn_optin_subscriber.subscriber_id=messenger_bot_subscriber.subscribe_id,left',
+                'otn_postback'=>'otn_optin_subscriber.otn_id=otn_postback.id,left',
+                'facebook_rx_fb_page_info'=>'otn_postback.page_id=facebook_rx_fb_page_info.id,left'
+            );
+            $select = array('otn_optin_subscriber.*','messenger_bot_subscriber.first_name','messenger_bot_subscriber.last_name','otn_postback.user_id','otn_postback.otn_postback_id','facebook_rx_fb_page_info.page_name');
+            $info = $this->basic->get_data($table,$where,$select,$join,$limit,$start,$order_by,$group_by='');
+
+            $total_rows_array=$this->basic->count_row($table,$where,$count=$table.".id",$join,$group_by='');
+            $total_result=$total_rows_array[0]['total_rows'];
+
+            $data['draw'] = (int)$_POST['draw'] + 1;
+            $data['recordsTotal'] = $total_result;
+            $data['recordsFiltered'] = $total_result;
+            $data['data'] = convertDataTableResult($info, $display_columns ,$start,$primary_key="id");
+
+            echo json_encode($data);
+        }
+
+        
 
 
 }   

@@ -32,6 +32,7 @@
 	  <div class="row">
 	    <div class="col-12">
 	        <form action="<?php echo base_url("social_apps/twitter_settings_update_action"); ?>" method="POST">
+	        <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
         	<input type="hidden" name="table_id" value="<?php echo $table_id ?>">
 	        <div class="card">
 	          <div class="card-header"><h4 class="card-title"><i class="fas fa-info-circle"></i> <?php echo $this->lang->line("App Details"); ?></h4></div>

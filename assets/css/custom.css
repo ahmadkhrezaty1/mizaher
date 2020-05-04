@@ -244,6 +244,7 @@ div.dataTables_wrapper div.dataTables_filter input{margin-left: 0 !important;pad
   .table-responsive2-md > .table-bordered {
     border: 0;
   }
+  .data-card .table-bordered:not(.table-sm) tr:first-child td{padding-top:45px;}
 }
 @media (max-width: 991.98px) {
   .table-responsive2-lg {
@@ -427,7 +428,7 @@ div.Tokenize ul.TokensContainer, div.Tokenize ul.Dropdown{border-color:#e4e6fc !
 
 /* Manual payment style */
 #manual-payment-modal #additional-info {
-  height: 248px !important;
+  height: 180px !important;
 }
 
 .mp-actions .fa {

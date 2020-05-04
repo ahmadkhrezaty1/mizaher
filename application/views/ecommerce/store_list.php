@@ -219,7 +219,13 @@
 
         <?php 
         $config_currency  = isset($ecommerce_config['currency']) ? $ecommerce_config['currency'] : "USD";
-        $store_currency = isset($currency_icons[$config_currency]) ? $currency_icons[$config_currency] : "$"; 
+        $store_currency = isset($currency_icons[$config_currency]) ? $currency_icons[$config_currency] : "$";
+        $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+        $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+        $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
+        $currency_left = $currency_right = "";
+        if($currency_position=='left') $currency_left = $store_currency;
+        if($currency_position=='right') $currency_right = $store_currency;
         ?>
 
         <div class="col-12 col-md-8 col-lg-10 colrig" id="right_column">
@@ -333,7 +339,7 @@
                               </div>
                               <div class="card-body">
                                <?php //echo $store_currency.custom_number_format($summary_earning); ?>
-                               <?php echo $store_currency.number_format((float)$summary_earning, 2, '.', ''); ?>
+                               <?php echo $currency_left.mec_number_format($summary_earning,$decimal_point,$thousand_comma).$currency_right; ?>
                               </div>
                             </div>
                           </div>

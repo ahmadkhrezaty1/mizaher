@@ -4,6 +4,7 @@ require_once("application/controllers/Home.php"); // loading home controller
 class Ecommerce extends Home
 {    
   public $currency_icon;
+  public $editor_allowed_tags;
   public function __construct()
   {
       parent::__construct();
@@ -11,7 +12,7 @@ class Ecommerce extends Home
 
       $function_name=$this->uri->segment(2);
       // $public_functions = array("order","product","store","cart","update_cart_item","update_cart","apply_coupon","proceed_checkout","paypal_action","paypal_action_main","stripe_action","cod_action","manual_action","my_orders","my_orders_data","addtional_info_modal_content","manual_payment_download_file","handle_attachment","manual_payment_display_attachment");
-      $private_functions = array("","index","store_list","copy_url","order_list","change_payment_status","order_list_data","reminder_send_status_data","reminder_response","add_store","add_store_action","edit_store","edit_store_action","product_list","product_list_data","delete_store","add_product","add_product_action","edit_product","edit_product_action","delete_product","payment_accounts","payment_accounts_action","attribute_list","attribute_list_data","ajax_create_new_attribute","ajax_get_attribute_update_info","ajax_update_attribute","delete_attribute","category_list","category_list_data","ajax_create_new_category","ajax_get_category_update_info","ajax_update_category","delete_category","coupon_list","coupon_list_data","add_coupon","add_coupon_action","edit_coupon","edit_coupon_action","delete_coupon","upload_product_thumb","delete_product_thumb","upload_store_logo","delete_store_logo","upload_store_favicon","delete_store_favicon");
+      $private_functions = array("","index","store_list","copy_url","order_list","change_payment_status","order_list_data","reminder_send_status_data","reminder_response","add_store","add_store_action","edit_store","edit_store_action","product_list","product_list_data","delete_store","add_product","add_product_action","edit_product","edit_product_action","delete_product","payment_accounts","payment_accounts_action","attribute_list","attribute_list_data","ajax_create_new_attribute","ajax_get_attribute_update_info","ajax_update_attribute","delete_attribute","category_list","category_list_data","ajax_create_new_category","ajax_get_category_update_info","ajax_update_category","delete_category","coupon_list","coupon_list_data","add_coupon","add_coupon_action","edit_coupon","edit_coupon_action","delete_coupon","upload_product_thumb","delete_product_thumb","upload_store_logo","delete_store_logo","upload_store_favicon","delete_store_favicon","download_csv","upload_featured_image","delete_featured_image");
       if(in_array($function_name, $private_functions)) 
       {
         if($this->session->userdata('logged_in')!= 1) redirect('home/login', 'location');
@@ -19,6 +20,7 @@ class Ecommerce extends Home
         $this->member_validity();
       }
       $this->currency_icon = $this->currency_icon();
+      $this->editor_allowed_tags = '<h1><h2><h3><h4><h5><h6><a><b><strong><p><i><div><span><ul><li><ol><blockquote><code><table><tr><td><th>';
   }
 
   public function index()
@@ -123,17 +125,18 @@ class Ecommerce extends Home
     $this->session->set_userdata('search_sort_by',$sort_by);
     $this->session->set_userdata('search_category_id',$category_id);
 
-    if($subscriber_id=="") // means it's being loaded inside xerochat admin panel
-    {
-      if($this->session->userdata('logged_in')!= 1)
-      {
-        echo '<br/><h1 style="text-align:center">'.$this->lang->line("Access Forbidden.").'</h1>';
-        exit();
-      }
-    }
+    // means it's being loaded inside xerochat admin panel
+    // if($subscriber_id=="") 
+    // {
+    //   if($this->session->userdata('logged_in')!= 1)
+    //   {
+    //     echo '<br/><h1 style="text-align:center">'.$this->lang->line("Access Forbidden.").'</h1>';
+    //     exit();
+    //   }
+    // }
 
     $where_simple = array("ecommerce_store.store_unique_id"=>$store_unique_id,"ecommerce_store.status"=>'1');
-    if($subscriber_id=="") $where_simple['ecommerce_store.user_id'] = $this->user_id;
+    // if($subscriber_id=="") $where_simple['ecommerce_store.user_id'] = $this->user_id;
     $where = array('where'=>$where_simple);
     $store_data = $this->basic->get_data("ecommerce_store",$where);
 
@@ -182,20 +185,21 @@ class Ecommerce extends Home
     if($product_id==0) exit();
     $subscriber_id = $this->input->get("subscriber_id",true); // if loaded via webview then we will get this
     
-    if($subscriber_id=="") // means it's being loaded inside xerochat admin panel
-    {
-      if($this->session->userdata('logged_in')!= 1)
-      {
-        echo '<br/><h1 style="text-align:center">'.$this->lang->line("Access Forbidden.").'</h1>';
-        exit();
-      }
-    }
+    // means it's being loaded inside xerochat admin panel
+    // if($subscriber_id=="") 
+    // {
+    //   if($this->session->userdata('logged_in')!= 1)
+    //   {
+    //     echo '<br/><h1 style="text-align:center">'.$this->lang->line("Access Forbidden.").'</h1>';
+    //     exit();
+    //   }
+    // }
 
     $where_simple = array("ecommerce_product.id"=>$product_id,"ecommerce_product.status"=>"1","ecommerce_store.status"=>"1");
-    if($subscriber_id=="") $where_simple['ecommerce_product.user_id'] = $this->user_id;
+    // if($subscriber_id=="") $where_simple['ecommerce_product.user_id'] = $this->user_id;
     $where = array('where'=>$where_simple);
     $join = array('ecommerce_store'=>"ecommerce_product.store_id=ecommerce_store.id,left");  
-    $select = array("ecommerce_product.*","store_name","store_unique_id","store_logo","store_favicon");   
+    $select = array("ecommerce_product.*","store_name","store_unique_id","store_logo","store_favicon","terms_use_link","refund_policy_link");   
     $product_data = $this->basic->get_data("ecommerce_product",$where,$select,$join);
 
     if(!isset($product_data[0]))
@@ -235,7 +239,7 @@ class Ecommerce extends Home
 
     $this->update_cart($id,$subscriber_id);
 
-    $select2 = array("ecommerce_cart.*","first_name","last_name","full_name","profile_pic","email","image_path","phone_number","user_location","store_name","store_email","store_favicon","store_phone","store_logo","store_address","store_zip","store_country","store_state","store_unique_id");  
+    $select2 = array("ecommerce_cart.*","first_name","last_name","full_name","profile_pic","email","image_path","phone_number","user_location","store_name","store_email","store_favicon","store_phone","store_logo","store_address","store_zip","store_country","store_state","store_unique_id","refund_policy_link","terms_use_link");  
     $join2 = array('messenger_bot_subscriber'=>"messenger_bot_subscriber.subscribe_id=ecommerce_cart.subscriber_id,left",'ecommerce_store'=>"ecommerce_store.id=ecommerce_cart.store_id,left");
     $where_simple2 = array("ecommerce_cart.id"=>$id,"action_type !="=>"checkout");
     if($subscriber_id!="") $where_simple2['ecommerce_cart.subscriber_id'] = $subscriber_id;
@@ -249,7 +253,8 @@ class Ecommerce extends Home
       echo '<br/><h1 style="text-align:center">'.$not_found.'</h1>';
       exit();
     }
-    $webhook_data_final = $webhook_data[0];      
+    $webhook_data_final = $webhook_data[0];
+    $ecommerce_config = $this->get_ecommerce_config($webhook_data_final['user_id']);      
 
     $join = array('ecommerce_product'=>"ecommerce_product.id=ecommerce_cart_item.product_id,left");
 
@@ -265,6 +270,7 @@ class Ecommerce extends Home
     $data['page_title'] = $webhook_data_final['store_name']." | ".$this->lang->line("Checkout");
     $data['body'] = "ecommerce/cart";
     $data['subscriber_id'] = $subscriber_id;
+    $data['ecommerce_config'] = $ecommerce_config;
 
     $this->load->view('ecommerce/bare-theme', $data);      
     
@@ -301,7 +307,7 @@ class Ecommerce extends Home
       }
     }
 
-    $select2 = array("ecommerce_cart.*","first_name","last_name","full_name","profile_pic","user_location","email","image_path","phone_number","store_name","store_email","store_favicon","store_phone","store_logo","store_address","store_zip","store_city","store_country","store_state","store_unique_id");  
+    $select2 = array("ecommerce_cart.*","first_name","last_name","full_name","profile_pic","user_location","email","image_path","phone_number","store_name","store_email","store_favicon","store_phone","store_logo","store_address","store_zip","store_city","store_country","store_state","store_unique_id","terms_use_link","refund_policy_link");  
     $join2 = array('messenger_bot_subscriber'=>"messenger_bot_subscriber.subscribe_id=ecommerce_cart.subscriber_id,left",'ecommerce_store'=>"ecommerce_store.id=ecommerce_cart.store_id,left");
     $where_simple2 = array("ecommerce_cart.id"=>$id);
     if($subscriber_id!="") $where_simple2['ecommerce_cart.subscriber_id'] = $subscriber_id;
@@ -319,6 +325,11 @@ class Ecommerce extends Home
     $webhook_data_final = $webhook_data[0];
     $country_names = $this->get_country_names();
     $currency_icons = $this->currency_icon();
+
+    $ecommerce_config = $this->get_ecommerce_config($webhook_data_final['user_id']);
+    $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+    $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+    $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
 
     $join = array('ecommerce_product'=>"ecommerce_product.id=ecommerce_cart_item.product_id,left");
     $product_list = $this->basic->get_data("ecommerce_cart_item",array('where'=>array("cart_id"=>$id)),array("ecommerce_cart_item.*","product_name","thumbnail","taxable"),$join);
@@ -340,6 +351,9 @@ class Ecommerce extends Home
     $coupon_amount =  $webhook_data_final['discount'];
     $subtotal =  $webhook_data_final['subtotal'];
     $payment_status = $webhook_data_final['status'];
+    $currency_left = $currency_right = "";
+    if($currency_position=='left') $currency_left = $currency_icon;
+    if($currency_position=='right') $currency_right = $currency_icon;
     
     $payment_method =  $webhook_data_final['payment_method'];
     if($payment_method!='') $payment_method =  $payment_method." ".$webhook_data_final['card_ending'];
@@ -386,8 +400,8 @@ class Ecommerce extends Home
       $price = isset($value['unit_price']) ? $value['unit_price'] : 0;
       $item_total = $price*$quantity;
       $subtotal_count+=$item_total;
-      $item_total = $this->two_decimal_place($item_total); 
-      $price =  $this->two_decimal_place($price); 
+      $item_total = mec_number_format($item_total,$decimal_point,$thousand_comma); 
+      $price =  mec_number_format($price,$decimal_point,$thousand_comma); 
       $image_url = (isset($value['thumbnail']) && !empty($value['thumbnail'])) ? base_url('upload/ecommerce/'.$value['thumbnail']) : base_url('assets/img/example-image.jpg');        
       $permalink = base_url("ecommerce/product/".$value['product_id']);
       $attribute_info = (is_array(json_decode($value["attribute_info"],true))) ? json_decode($value["attribute_info"],true) : array();
@@ -413,9 +427,9 @@ class Ecommerce extends Home
           <td data-width="40">'.$i.'</td>
           <td class="text-center" width="100px;"><a href="'.$permalink.'"><img src="'.$image_url.'" style="width:80px; height:80px;" class="rounded"></a></td>
           <td><a href="'.$permalink.'">'.$title.'</a> <span class="text-warning"> '.$off."</span>".$attribute_print.'</td>
-          <td class="text-center">'.$currency_icon.$price.'</td>
+          <td class="text-center">'.$currency_left.$price.$currency_right.'</td>
           <td class="text-center">'.$quantity.'</td>
-          <td class="text-right">'.$currency_icon.$item_total.'</td>
+          <td class="text-right">'.$currency_left.$item_total.$currency_right.'</td>
         </tr>';
     }
     $table_data .= '</tbody></table></div>';        
@@ -428,7 +442,7 @@ class Ecommerce extends Home
     $coupon_info2 = 
     '<div class="invoice-detail-item">
       <div class="invoice-detail-name">'.$this->lang->line("Discount").'</div>
-      <div class="invoice-detail-value">-'.$currency_icon.$this->two_decimal_place($coupon_amount).'</div>
+      <div class="invoice-detail-value">-'.$currency_left.mec_number_format($coupon_amount,$decimal_point,$thousand_comma).$currency_right.'</div>
     </div>';
 
     $tax_info = "";
@@ -436,7 +450,7 @@ class Ecommerce extends Home
     $tax_info = 
     '<div class="invoice-detail-item">
         <div class="invoice-detail-name">'.$this->lang->line("Tax").'</div>
-        <div class="invoice-detail-value">'.$currency_icon.$this->two_decimal_place($total_tax).'</div>
+        <div class="invoice-detail-value">'.$currency_left.mec_number_format($total_tax,$decimal_point,$thousand_comma).$currency_right.'</div>
     </div>';
 
     $shipping_info = "";
@@ -444,28 +458,28 @@ class Ecommerce extends Home
     $shipping_info = 
     '<div class="invoice-detail-item">
         <div class="invoice-detail-name">'.$this->lang->line("Delivery Fee").'</div>
-        <div class="invoice-detail-value">'.$currency_icon.$this->two_decimal_place($shipping_cost).'</div>
+        <div class="invoice-detail-value">'.$currency_left.mec_number_format($shipping_cost,$decimal_point,$thousand_comma).$currency_right.'</div>
     </div>';
 
 
     // $coupon_code." (".$currency_icon.$coupon_amount.")";      
 
     if($webhook_data_final['action_type']!='checkout') $subtotal = $subtotal_count;
-    $subtotal = $this->two_decimal_place($subtotal);
-    $checkout_amount = $this->two_decimal_place($checkout_amount);
-    $coupon_amount = $this->two_decimal_place($coupon_amount);
+    $subtotal = mec_number_format($subtotal,$decimal_point,$thousand_comma);
+    $checkout_amount = mec_number_format($checkout_amount,$decimal_point,$thousand_comma);
+    $coupon_amount = mec_number_format($coupon_amount,$decimal_point,$thousand_comma);
 
     if($subscriber_id=='')
     {
       $wc_buyer_bill_formatted = '<a href="'.base_url('subscriber_manager/bot_subscribers/'.$subscriber_id_database).'">'.$wc_buyer_bill.'</a>';
       $store_name_formatted = '<a href="'.base_url('ecommerce/store/'.$store_unique_id).'">'.$store_name.'</a>';
-      $store_image = ($webhook_data_final['store_logo']!='' && $is_ajax!='1') ? '<div class="col-lg-12 text-center"><a href="'.base_url('ecommerce/store/'.$store_unique_id).'"><img src="'.base_url("upload/ecommerce/".$webhook_data_final['store_logo']).'" style="height:50px"></a><hr></div>':'';
+      $store_image = ($webhook_data_final['store_logo']!='' && $is_ajax!='1') ? '<div class="col-lg-12 text-center"><a href="'.base_url('ecommerce/store/'.$store_unique_id).'"><img src="'.base_url("upload/ecommerce/".$webhook_data_final['store_logo']).'"></a><hr></div>':'';
     }
     else 
     {
       $wc_buyer_bill_formatted = $wc_buyer_bill;
       $store_name_formatted = '<a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'">'.$store_name.'</a>';
-      $store_image = ($webhook_data_final['store_logo']!='' && $is_ajax!='1') ? '<div class="col-lg-12 text-center"><a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'"><img src="'.base_url("upload/ecommerce/".$webhook_data_final['store_logo']).'" style="height:50px"></a><hr></div>':'';
+      $store_image = ($webhook_data_final['store_logo']!='' && $is_ajax!='1') ? '<div class="col-lg-12 text-center"><a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'"><img src="'.base_url("upload/ecommerce/".$webhook_data_final['store_logo']).'"></a><hr></div>':'';
     }
 
     if($is_ajax=='1') $order_details = '<h4>'.$order_title.' #<a href="'.$order_url.'">'.$order_no.'</a></h4>';
@@ -486,7 +500,7 @@ class Ecommerce extends Home
       <hr class="mt-2 mb-2">
       <div class="invoice-detail-item">
         <div class="invoice-detail-name">'.$this->lang->line("Total").'</div>
-        <div class="invoice-detail-value invoice-detail-value-lg">'.$currency_icon.$checkout_amount.'</div>
+        <div class="invoice-detail-value invoice-detail-value-lg">'.$currency_left.$checkout_amount.$currency_right.'</div>
       </div>';
 
       $coupon_details =
@@ -611,7 +625,7 @@ class Ecommerce extends Home
                     <div class="col-5 text-right">
                       <div class="invoice-detail-item"  style="margin-top: 20px;">
                         <div class="invoice-detail-name">'.$this->lang->line("Subtotal").'</div>
-                        <div class="invoice-detail-value">'.$currency_icon.$subtotal.'</div>
+                        <div class="invoice-detail-value">'.$currency_left.$subtotal.$currency_right.'</div>
                       </div>
                       '.$after_checkout_details.'
                     </div>
@@ -737,7 +751,7 @@ class Ecommerce extends Home
     $message = $cart_url = "";
     if($subscriber_id=='')
     {
-      echo json_encode(array('status'=>'0','message'=>$this->lang->line("Subscriber not found.")));
+      echo json_encode(array('status'=>'0','message'=>$this->lang->line("Subscriber not found. You can only purchase our products inside Facebook messenger.")));
       exit();
     }
 
@@ -752,14 +766,25 @@ class Ecommerce extends Home
       exit();
     }
 
+    $stock_item = $product_data[0]['stock_item'];
+    $stock_prevent_purchase = $product_data[0]['stock_prevent_purchase'];
+
+    if($stock_prevent_purchase=='1' && $stock_item==0 && $action=='add')
+    {
+      echo json_encode(array('status'=>'0','message'=>$this->lang->line("Sorry, this item is out of stock. We are not taking any order right now.")));
+      exit();
+    }
+
     $store_id = $product_data[0]['store_id'];
     $user_id = $product_data[0]['user_id'];
     $original_price = $product_data[0]['original_price'];
     $sell_price = $product_data[0]['sell_price'];
     $store_unique_id = $product_data[0]['store_unique_id'];
-    $price = mec_display_price($original_price,$sell_price,'','2');
     $ecommerce_config = $this->get_ecommerce_config($user_id);
     $currency = isset($ecommerce_config['currency']) ? $ecommerce_config['currency'] : "USD";
+    $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+    $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+    $price = mec_display_price($original_price,$sell_price,'','2',$currency_position,$decimal_point,'0');
 
     $cart_data = $this->basic->get_data("ecommerce_cart",array('where'=>array("ecommerce_cart.subscriber_id"=>$subscriber_id,"ecommerce_cart.store_id"=>$store_id,"action_type!="=>"checkout")));
     $cart_item_data = array();
@@ -844,16 +869,21 @@ class Ecommerce extends Home
         {
           $store_id = $cart_data[0]['store_id'];
           $user_id = $cart_data[0]['user_id'];
+
+          $ecommerce_config = $this->get_ecommerce_config($user_id);
+          $currency = isset($ecommerce_config["currency"]) ? $ecommerce_config["currency"] : "USD";
+          $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+          $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+          $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
+          $currency_icons = $this->currency_icon();
+          $currency_icon = isset($currency_icons[$currency])?$currency_icons[$currency]:'$';   
+
           $coupon_code = $cart_data[0]['coupon_code'];
           $tax_percentage = $cart_data[0]['tax_percentage'];
           $shipping_charge = $cart_data[0]['shipping_charge'];
 
           $product_list = $this->get_product_list_array($store_id);
-          $cart_item_data = $this->basic->get_data("ecommerce_cart_item",array('where'=>array("cart_id"=>$cart_id)));
-          $ecommerce_config = $this->get_ecommerce_config($user_id);
-          $currency = isset($ecommerce_config["currency"]) ? $ecommerce_config["currency"] : "USD";
-          $currency_icons = $this->currency_icon();
-          $currency_icon = isset($currency_icons[$currency])?$currency_icons[$currency]:'$';   
+          $cart_item_data = $this->basic->get_data("ecommerce_cart_item",array('where'=>array("cart_id"=>$cart_id)));         
 
           $product_list_assoc = array();
           $cart_item_data_assoc = array();
@@ -888,17 +918,20 @@ class Ecommerce extends Home
             $product_id = $value['product_id'];
             if(array_key_exists($product_id, $product_list_assoc))
             {
-              $new_price = mec_display_price($product_list_assoc[$product_id]["original_price"],$product_list_assoc[$product_id]["sell_price"],'','2');
+              $new_price = mec_display_price($product_list_assoc[$product_id]["original_price"],$product_list_assoc[$product_id]["sell_price"],'','2',$currency_position,$decimal_point,'0');
              
               $coupon_info = "";
 
               if(!empty($coupon_data) && $coupon_amount>0 && ($coupon_product_ids=="0" || in_array($product_id, $coupon_product_ids_array)))
               {
                 $new_price = $product_list_assoc[$product_id]["original_price"];
+                $new_price = mec_number_format($new_price,$decimal_point,'0');
                 if($coupon_type=="percent")
                 {
                   $disc = ($new_price*$coupon_amount)/100;
-                  if($disc<0) $disc=0;                    
+                  if($disc<0) $disc=0;
+                  $disc = mec_number_format($disc,$decimal_point,'0');
+
                   $discount+=$disc;
 
                   $coupon_info = $coupon_amount."%";
@@ -911,10 +944,13 @@ class Ecommerce extends Home
                    if($new_price<0) $new_price =0;
                    $coupon_info = $currency_icon.$coupon_amount;                     
                    $discount+=$coupon_amount;
+                   $discount = mec_number_format($discount,$decimal_point,'0');
                 }
+                $new_price = mec_number_format($new_price,$decimal_point,'0');
               }
 
-              if($new_price!=$value['unit_price']) 
+
+              if($new_price!=mec_number_format($value['unit_price'],$decimal_point,'0')) 
               $this->basic->update_data("ecommerce_cart_item",array("id"=>$value['id']),array("unit_price"=>$new_price,"coupon_info"=>$coupon_info));
 
               $total_price = $new_price*$value["quantity"];
@@ -927,17 +963,24 @@ class Ecommerce extends Home
               $this->basic->delete_data("ecommerce_cart_item",array("id"=>$value['id']));
             }
           }
+          $subtotal = mec_number_format($subtotal,$decimal_point,'0');
           
-          if($tax_percentage>0) $tax = ($tax_percentage*$taxable_amount)/100;
-          if($free_shipping_enabled=='0') $shipping = $shipping_charge;
+          if($tax_percentage>0) 
+          {
+            $tax = ($tax_percentage*$taxable_amount)/100;
+            $tax = mec_number_format($tax,$decimal_point,'0');
+          }
+          if($free_shipping_enabled=='0') $shipping = mec_number_format($shipping_charge,$decimal_point,'0');
           $payment_amount = $subtotal + $shipping + $tax;
 
           if(!empty($coupon_data) && $coupon_amount>0 && $coupon_type=="fixed cart")
           {
             $discount = $coupon_amount;
+            $discount = mec_number_format($discount,$decimal_point,'0');
             $payment_amount = $payment_amount - $discount;
             if($payment_amount<0) $payment_amount = 0;
           }
+          $payment_amount = mec_number_format($payment_amount,$decimal_point,'0');
 
           $update_data = array
           (
@@ -1095,7 +1138,7 @@ class Ecommerce extends Home
   		"buyer_mobile"=>$buyer_mobile,
   		"buyer_country"=>$buyer_country,
   		"buyer_state"=>$buyer_state,
-      "buyer_city"=>$buyer_city,
+      	"buyer_city"=>$buyer_city,
   		"buyer_address"=>$buyer_address,
   		"buyer_zip"=>$buyer_zip,
   		"updated_at"=>$curtime,
@@ -1117,7 +1160,7 @@ class Ecommerce extends Home
   	$product_name  = $store_name." : ".$this->lang->line("Order")." #".$cart_id;
     if($paypal_enabled=="1")
     { 
-    		$this->load->library('paypal_class_ecommerce');
+    	$this->load->library('paypal_class_ecommerce');
   		$cancel_url=base_url()."ecommerce/order/".$cart_id."?subscriber_id=".$subscriber_id."&action=cancel";
 	    $success_url=base_url()."ecommerce/order/".$cart_id."?subscriber_id=".$subscriber_id."&action=success";    
 	    
@@ -1162,12 +1205,12 @@ class Ecommerce extends Home
 
 		if($manual_enabled=='1')
 		{
-			$manual_button = '<div class="col-12 col-md-3 text-center"><br><button id="manual-payment-button" class="btn btn-info btn-lg">Pay Manually</button><br><a href="#" id="show_manual_payment_instructions" class="pointer text-danger font-weight-bold" data-toggle="modal" data-target="#manual-payment-ins-modal"><i class="fas fa-exclamation-circle"></i> '.$this->lang->line("Manual Payment Instructions").'</a></div>';
+			$manual_button = '<div class="col-12 col-md-3 text-center"><br><button id="manual-payment-button" class="btn btn-info btn-lg">'.$this->lang->line("Pay Manually").'</button><br><a href="#" id="show_manual_payment_instructions" class="pointer text-danger font-weight-bold" data-toggle="modal" data-target="#manual-payment-ins-modal"><i class="fas fa-exclamation-circle"></i> '.$this->lang->line("Manual Payment Instructions").'</a></div>';
 		} 
 
 		if($cod_enabled=='1')
 		{
-			$cod_button = '<div class="col-12 col-md-3"><br><button id="cod-payment-button" class="btn btn-info btn-lg">Pay on Delivery</button></div>';
+			$cod_button = '<div class="col-12 col-md-3"><br><button id="cod-payment-button" class="btn btn-info btn-lg">'.$this->lang->line("Pay on Delivery").'</button></div>';
 		}          
 
 	  $html ='<div class="section-title m-0">'.$this->lang->line("Payment Options").'</div><div class="row">'.$paypal_button.$stripe_button.$cod_button.$manual_button.'</div>';
@@ -1213,7 +1256,7 @@ class Ecommerce extends Home
       if ($_FILES['manual-payment-file']['size'] != 0) {
 
           $base_path = FCPATH.'upload/ecommerce';
-          $filename = "payment_" . time() . substr(uniqid(mt_rand(), true), 0, 6).$_FILES['manual-payment-file']['name'];
+          $filename = "payment_" . time() . substr(uniqid(mt_rand(), true), 0, 6).'_'.$_FILES['manual-payment-file']['name'];
           $config = array(
             "allowed_types" => 'pdf|doc|txt|png|jpg|jpeg|zip',
             "upload_path" => $base_path,
@@ -1230,6 +1273,11 @@ class Ecommerce extends Home
             $message = $this->upload->display_errors();
             echo json_encode(['error' => $message]); exit;
           }
+      }
+      else
+      {
+      	$message =$this->lang->line('Payment File is Required.');
+        echo json_encode(['error' => $message]); exit;
       }
 
       $curtime  = date('Y-m-d H:i:s');
@@ -1254,8 +1302,8 @@ class Ecommerce extends Home
           $message .= "<a href='".$invoice_link."'>".$invoice_link."</a>";
           $this->session->set_userdata('payment_status','1');
           $this->session->set_userdata('payment_status_message',$message);
-          echo json_encode(['success' => $message,'redirect'=>$invoice_link]);
           $this->confirmation_message_sender($cart_id,$subscriber_id);
+          echo json_encode(['success' => $message,'redirect'=>$invoice_link]);
           exit;
       }
 
@@ -1303,6 +1351,8 @@ class Ecommerce extends Home
       $stripe_secret_key = isset($ecommerce_config['stripe_secret_key']) ? $ecommerce_config['stripe_secret_key'] : '';
       $this->stripe_class_ecommerce->secret_key=$stripe_secret_key;
   		$response= $this->stripe_class_ecommerce->stripe_payment_action();
+
+      // pre($response); exit();
 
   		if($response['status']=='Error'){
   			echo $response['message'];
@@ -1512,7 +1562,7 @@ class Ecommerce extends Home
   private function confirmation_message_sender($cart_id=0,$subscriber_id="")
   {
     if($cart_id==0 || $subscriber_id=="") return false;
-    $cart_select = array("ecommerce_cart.*","store_unique_id","page_id","messenger_content","sms_content","sms_api_id","email_content","email_api_id","email_subject","configure_email_table","label_ids");
+    $cart_select = array("ecommerce_cart.*","store_unique_id","page_id","messenger_content","sms_content","sms_api_id","email_content","email_api_id","email_subject","configure_email_table","label_ids","store_name");
     $cart_join = array('ecommerce_store'=>"ecommerce_cart.store_id=ecommerce_store.id,left");
     $cart_where = array('where'=>array("ecommerce_cart.subscriber_id"=>$subscriber_id,"ecommerce_cart.id"=>$cart_id,"ecommerce_store.status"=>"1"));      
     $cart_data_2d = $this->basic->get_data("ecommerce_cart",$cart_where,$cart_select,$cart_join);
@@ -1549,6 +1599,7 @@ class Ecommerce extends Home
     $coupon_code = isset($cart_data['coupon_code'])?$cart_data['coupon_code']:"";
     $discount = isset($cart_data['discount'])?$cart_data['discount']:0;
     $payment_method = isset($cart_data['payment_method'])?$cart_data['payment_method']:"Cash on Delivery";
+    $ecom_store_name = isset($cart_data['store_name'])?$cart_data['store_name']:'';
 
     $checkout_url = base_url("ecommerce/cart/".$cart_id."?subscriber_id=".$subscriber_id);
     $order_url = base_url("ecommerce/order/".$cart_id."?subscriber_id=".$subscriber_id);
@@ -1587,6 +1638,8 @@ class Ecommerce extends Home
         $i++;
         $update_sales_count_sql = "UPDATE ecommerce_product SET sales_count=sales_count+".$value["quantity"]." WHERE id=".$value["product_id"];
         $this->basic->execute_complex_query($update_sales_count_sql);
+        $update_stock_count_sql = "UPDATE ecommerce_product SET stock_item=stock_item-".$value["quantity"]." WHERE stock_item>0 AND id=".$value["product_id"];
+        $this->basic->execute_complex_query($update_stock_count_sql);
       }        
 	    $address = array
 	    (
@@ -1809,12 +1862,40 @@ class Ecommerce extends Home
 
     }
 
+    // Email Send to Seller 
+
+    $product_short_name = $this->config->item('product_short_name');
+    $from = $this->config->item('institute_email');
+    $mask = $this->config->item('product_name');
+    $where = array();
+    $where['where'] = array('id'=>$user_id);
+    $user_email = $this->basic->get_data('users',$where,$select='');
+
+    // echo $this->db->last_query();
+    $order_confirmation_email_template = $this->basic->get_data("email_template_management",array('where'=>array('template_type'=>'emcommerce_sale_admin')),array('subject','message'));
+    if(isset($order_confirmation_email_template[0]) && $order_confirmation_email_template[0]['subject'] != '' && $order_confirmation_email_template[0]['message'] != '')
+    {
+
+      $to = $user_email[0]['email'];
+      $url = base_url();
+
+      $subject = str_replace(array('#APP_NAME#','#APP_URL#','#STORE_NAME#','#INVOICE_URL#'),array($mask,$url,$ecom_store_name,$order_url),$order_confirmation_email_template[0]['subject']);
+
+      $message = str_replace(array('#APP_NAME#','#APP_URL#','#STORE_NAME#','#INVOICE_URL#'),array($mask,$url,$ecom_store_name,$order_url),$order_confirmation_email_template[0]['message']);
+
+      //send mail to user
+      $this->_mail_sender($from, $to, $subject, $message, $mask, $html=1);
+    }
+    // End of Email Send to Seller
+
+
+
   }
 
   public function my_orders($store_id=0)
   {
     $subscriber_id = $this->input->get("subscriber_id",true);
-    $store_data = $this->basic->get_data("ecommerce_store",array("where"=>array("id"=>$store_id)),"store_name,store_unique_id,store_logo");
+    $store_data = $this->basic->get_data("ecommerce_store",array("where"=>array("id"=>$store_id)),"store_name,store_unique_id,store_logo,terms_use_link,refund_policy_link");
     if($store_id==0 || $subscriber_id=="" || !isset($store_data[0]))
     {
     	$not_found = $this->lang->line("Order data not found.");
@@ -1835,6 +1916,10 @@ class Ecommerce extends Home
   { 
       $this->ajax_check();
       $ecommerce_config = $this->get_ecommerce_config();
+      $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+      $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+      $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
+
 
       $search_value = $this->input->post("search_value");
       $subscriber_id = $this->input->post("search_subscriber_id");        
@@ -1851,6 +1936,7 @@ class Ecommerce extends Home
         'status',
         'discount',
         'payment_amount',
+        'currency',
         'payment_method',
         'transaction_id',
         'invoice',
@@ -1858,7 +1944,7 @@ class Ecommerce extends Home
         'updated_at',
         'paid_at'
       );
-      $search_columns = array('subscriber_id','coupon_code','buyer_zip','transaction_id','card_ending');
+      $search_columns = array('coupon_code','transaction_id');
 
       $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
       $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
@@ -1868,7 +1954,8 @@ class Ecommerce extends Home
       $order = isset($_POST['order'][0]['dir']) ? strval($_POST['order'][0]['dir']) : 'desc';
       $order_by=$sort." ".$order;
 
-      $where_custom="ecommerce_cart.subscriber_id = ".$subscriber_id;
+      if($search_status!="") $this->db->where(array("ecommerce_cart.status"=>$search_status));    
+      $where_custom="ecommerce_cart.subscriber_id = '".$subscriber_id."' AND store_id=".$store_id;
 
       if ($search_value != '') 
       {
@@ -1885,18 +1972,16 @@ class Ecommerce extends Home
           if($from_date!="Invalid date" && $to_date!="Invalid date")
           $where_custom .= " AND ecommerce_cart.updated_at >= '{$from_date}' AND ecommerce_cart.updated_at <='{$to_date}'";
       }
-      $this->db->where($where_custom);
-
-      $this->db->where(array("store_id"=>$store_id));    
-      if($search_status!="") $this->db->where(array("ecommerce_cart.status"=>$search_status));    
+      $this->db->where($where_custom);      
       
       $table="ecommerce_cart";
-      $select = "ecommerce_cart.id,action_type,ecommerce_cart.user_id,store_id,subscriber_id,coupon_code,coupon_type,discount,payment_amount,currency,ordered_at,transaction_id,card_ending,payment_method,manual_additional_info,manual_filename,paid_at,ecommerce_cart.status,ecommerce_cart.updated_at,ecommerce_store.store_name";
+      $select = "ecommerce_cart.id,action_type,ecommerce_cart.user_id,store_id,subscriber_id,coupon_code,coupon_type,discount,payment_amount,currency,ordered_at,transaction_id,card_ending,payment_method,manual_additional_info,manual_filename,paid_at,ecommerce_cart.status,ecommerce_cart.updated_at,ecommerce_store.store_name,status_changed_note";
       // $select = "ecommerce_cart.*,ecommerce_store.store_name";
       $join = array('ecommerce_store'=>"ecommerce_store.id=ecommerce_cart.store_id,left");
       $info=$this->basic->get_data($table,$where='',$select,$join,$limit,$start,$order_by,$group_by='');
       // echo $this->db->last_query();
       
+      if($search_status!="") $this->db->where(array("ecommerce_cart.status"=>$search_status));
       $this->db->where($where_custom);
       $total_rows_array=$this->basic->count_row($table,$where='',$count=$table.".id",$join,$group_by='');
 
@@ -1907,13 +1992,13 @@ class Ecommerce extends Home
       foreach($info as $key => $value) 
       {
           $config_currency = isset($value['currency']) ? $value['currency'] : "USD";
-          $info[$key]['currency']= isset($this->currency_icon[$config_currency]) ? $this->currency_icon[$config_currency] : "$";
+          // $info[$key]['currency']= isset($this->currency_icon[$config_currency]) ? $this->currency_icon[$config_currency] : "$";
 
           if($value['coupon_code']!='')
-          $info[$key]['discount']= $info[$key]['currency'].$this->two_decimal_place($info[$key]['discount']);
+          $info[$key]['discount']= mec_number_format($info[$key]['discount'],$decimal_point,$thousand_comma);
           else $info[$key]['discount'] = "";
 
-          $info[$key]['payment_amount'] = $info[$key]['currency'].$this->two_decimal_place($info[$key]['payment_amount']);
+          $info[$key]['payment_amount'] = mec_number_format($info[$key]['payment_amount'],$decimal_point,$thousand_comma);
 
           if($info[$key]['payment_method'] == 'Cash on Delivery') $pay = "Cash";
           else $pay = $info[$key]['payment_method'];
@@ -1938,14 +2023,29 @@ class Ecommerce extends Home
           $st1 = ($value['payment_method']=='Manual') ? $this->handle_attachment($value['id'], $file):"";
           
           if($value['payment_method']=='Manual')
-          $st2 = ' <a data-id="'.$value['id'].'" href="#"  class="btn btn-outline-primary additional_info" data-toggle="tooltip" title="" data-original-title="'.$this->lang->line("Additional Info").'"><i class="fas fa-info-circle"></i></a>';            
+          $st2 = ' <a data-id="'.$value['id'].'" href="#"  class="btn btn-outline-primary additional_info" data-toggle="tooltip" title="" data-original-title="'.$this->lang->line("Additional Info").'"><i class="fas fa-info-circle"></i></a>';
 
           $info[$key]['manual_filename'] = ($st1=="" && $st2=="") ? "x" : "<div style='width:100px;'>".$st1.$st2."</div>"; 
           
           if($value["action_type"]=="checkout") $info[$key]['invoice'] =  "<a class='btn btn-outline-primary' data-toggle='tooltip' title='".$this->lang->line("Invoice")."' href='".base_url("ecommerce/order/".$value['id']."?subscriber_id=".$subscriber_id)."'><i class='fas fa-receipt'></i></a>";
-          else $info[$key]['invoice'] =  "<a class='btn btn-outline-primary' data-toggle='tooltip' title='".$this->lang->line("Checkout")."' href='".base_url("ecommerce/cart/".$value['id']."?subscriber_id=".$subscriber_id)."'><i class='fas fa-credit-card'></i></a>";
+          else $info[$key]['invoice'] =  "<a class='btn btn-outline-warning' data-toggle='tooltip' title='".$this->lang->line("Checkout")."' href='".base_url("ecommerce/cart/".$value['id']."?subscriber_id=".$subscriber_id)."'><i class='fas fa-shopping-cart'></i></a>";
 
           $info[$key]["invoice"] .= '<script>$(\'[data-toggle="tooltip"]\').tooltip();</script>';
+          $info[$key]["invoice"] .= '<script>$(\'[data-toggle="popover"]\').popover();</script>';
+
+          $payment_status = $info[$key]['status'];
+
+          if($payment_status=='pending') $payment_status_badge = "<span class='text-danger'><i class='fas fa-spinner'></i> ".$this->lang->line("Pending")."</span>";
+          else if($payment_status=='approved') $payment_status_badge = "<span class='text-primary'><i class='fas fa-thumbs-up'></i> ".$this->lang->line("Approved")."</span>";
+          else if($payment_status=='rejected') $payment_status_badge = "<span class='text-danger'><i class='fas fa-thumbs-down'></i> ".$this->lang->line("Rejected")."</span>";
+          else if($payment_status=='shipped') $payment_status_badge = "<span class='text-info'><i class='fas fa-truck'></i> ".$this->lang->line("Shipped")."</span>";
+          else if($payment_status=='delivered') $payment_status_badge = "<span class='text-info'><i class='fas fa-truck-loading'></i> ".$this->lang->line("Delivered")."</span>";
+          else if($payment_status=='completed') $payment_status_badge = "<span class='text-success'><i class='fas fa-check-circle'></i> ".$this->lang->line("Completed")."</span>";
+
+          if($info[$key]['status_changed_note']!='')$payment_status_badge.='&nbsp;&nbsp;&nbsp;<a href="#" data-placement="bottom" data-toggle="popover" data-trigger="focus" title="'.$this->lang->line("Note").'" data-content="'.htmlspecialchars($info[$key]['status_changed_note']).'"><i class="fas fa-comment text-primary"></i> </a>';
+
+          $info[$key]['status'] = "<div style='min-width:120px;'>".$payment_status_badge."</div>";
+          
 
       }
       $data['draw'] = (int)$_POST['draw'] + 1;
@@ -1973,6 +2073,9 @@ class Ecommerce extends Home
   { 
     $this->ajax_check();
     $ecommerce_config = $this->get_ecommerce_config();
+    $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+    $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+    $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
 
     $search_value = $this->input->post("search_value");
     $store_id = $this->input->post("search_store_id");        
@@ -1988,14 +2091,15 @@ class Ecommerce extends Home
       'status',
       'discount',
       'payment_amount',
-      'payment_method',
-      'transaction_id',
+      'currency',
       'invoice',
+      'transaction_id',
+      'payment_method',
       'manual_filename',
       'updated_at',
       'paid_at'
     );
-    $search_columns = array('subscriber_id','coupon_code','buyer_zip','transaction_id','card_ending');
+    $search_columns = array('subscriber_id','coupon_code','transaction_id');
 
     $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
     $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
@@ -2005,6 +2109,8 @@ class Ecommerce extends Home
     $order = isset($_POST['order'][0]['dir']) ? strval($_POST['order'][0]['dir']) : 'desc';
     $order_by=$sort." ".$order;
 
+    if($store_id!="") $this->db->where(array("store_id"=>$store_id));    
+    if($search_status!="") $this->db->where(array("ecommerce_cart.status"=>$search_status));  
     $where_custom="ecommerce_cart.user_id = ".$this->user_id;
 
     if ($search_value != '') 
@@ -2022,18 +2128,22 @@ class Ecommerce extends Home
         if($from_date!="Invalid date" && $to_date!="Invalid date")
         $where_custom .= " AND ecommerce_cart.updated_at >= '{$from_date}' AND ecommerce_cart.updated_at <='{$to_date}'";
     }
-    $this->db->where($where_custom);
-
-    if($store_id!="") $this->db->where(array("store_id"=>$store_id));    
-    if($search_status!="") $this->db->where(array("ecommerce_cart.status"=>$search_status));    
+    $this->db->where($where_custom);      
     
     $table="ecommerce_cart";
     $select = "ecommerce_cart.id,ecommerce_cart.user_id,store_id,subscriber_id,coupon_code,coupon_type,discount,payment_amount,currency,ordered_at,transaction_id,card_ending,payment_method,manual_additional_info,manual_filename,paid_at,ecommerce_cart.status,ecommerce_cart.updated_at,ecommerce_store.store_name";
     // $select = "ecommerce_cart.*,ecommerce_store.store_name";
     $join = array('ecommerce_store'=>"ecommerce_store.id=ecommerce_cart.store_id,left");
     $info=$this->basic->get_data($table,$where='',$select,$join,$limit,$start,$order_by,$group_by='');
-    // echo $this->db->last_query();
     
+    $last_query = $this->db->last_query();
+    $xp1 = explode('WHERE', $last_query);
+    $xp2 = isset($xp1[1]) ? explode('ORDER', $xp1[1]) : array();
+    $latest_order_list_sql = isset($xp2[0]) ? $xp2[0] : "";
+    $this->session->set_userdata("latest_order_list_sql",$latest_order_list_sql);
+    
+    if($store_id!="") $this->db->where(array("store_id"=>$store_id));    
+    if($search_status!="") $this->db->where(array("ecommerce_cart.status"=>$search_status));  
     $this->db->where($where_custom);
     $total_rows_array=$this->basic->count_row($table,$where='',$count=$table.".id",$join,$group_by='');
 
@@ -2044,15 +2154,15 @@ class Ecommerce extends Home
     foreach($info as $key => $value) 
     {
         $config_currency = isset($value['currency']) ? $value['currency'] : "USD";
-        $info[$key]['currency']= isset($this->currency_icon[$config_currency]) ? $this->currency_icon[$config_currency] : "$";
+        // $info[$key]['currency']= isset($this->currency_icon[$config_currency]) ? $this->currency_icon[$config_currency] : "$";
 
         $info[$key]['subscriber_id']= "<a target='_BLANK' href='".base_url("subscriber_manager/bot_subscribers/".$info[$key]['subscriber_id'])."'>".$info[$key]['subscriber_id']."</a>";
 
         if($value['coupon_code']!='')
-        $info[$key]['discount']= $info[$key]['currency'].$this->two_decimal_place($info[$key]['discount']);
+        $info[$key]['discount']= mec_number_format($info[$key]['discount'],$decimal_point,$thousand_comma);
         else $info[$key]['discount'] = "";
 
-        $info[$key]['payment_amount'] = $info[$key]['currency'].$this->two_decimal_place($info[$key]['payment_amount']);
+        $info[$key]['payment_amount'] = mec_number_format($info[$key]['payment_amount'],$decimal_point,$thousand_comma);
         $info[$key]['payment_method'] = $info[$key]['payment_method']." ".$info[$key]['card_ending'];
         if(trim($info[$key]['payment_method'])=="") $info[$key]['payment_method'] = "x";
 
@@ -2075,7 +2185,7 @@ class Ecommerce extends Home
         if($value['payment_method']=='Manual')
         $st2 = ' <a data-id="'.$value['id'].'" href="#"  class="btn btn-outline-primary additional_info" data-toggle="tooltip" title="" data-original-title="'.$this->lang->line("Additional Info").'"><i class="fas fa-info-circle"></i></a>';            
 
-    	$info[$key]['manual_filename'] = ($st1=="" && $st2=="") ? "x" : "<div style='width:100px;'>".$st1.$st2."</div>"; 
+    	  $info[$key]['manual_filename'] = ($st1=="" && $st2=="") ? "x" : "<div style='width:100px;'>".$st1.$st2."</div>"; 
         
         $info[$key]['status'] = form_dropdown('payment_status', $payment_status, $value["status"],'class="select2 payment_status" style="width:120px !important;" data-id="'.$value["id"].'" id="payment_status'.$value['id'].'"').'<script>$("#payment_status'.$value['id'].'").select2();$(\'[data-toggle="tooltip"]\').tooltip();</script>';
         
@@ -2093,17 +2203,23 @@ class Ecommerce extends Home
   {
   	$this->ajax_check();
   	$cart_id = $this->input->post("cart_id",true);
-  	$cart_data = $this->basic->get_data("ecommerce_cart",array("where"=>array("id"=>$cart_id)),"manual_additional_info,manual_currency,manual_amount,paid_at");
+  	$cart_data = $this->basic->get_data("ecommerce_cart",array("where"=>array("id"=>$cart_id)),"manual_additional_info,manual_currency,manual_amount,paid_at,user_id");
   	$currency = isset($cart_data[0]["manual_currency"]) ? $cart_data[0]["manual_currency"] : "";
   	$manual_amount = isset($cart_data[0]["manual_amount"]) ? $cart_data[0]["manual_amount"] : "0";
+    $user_id = isset($cart_data[0]["user_id"]) ? $cart_data[0]["user_id"] : "";
   	$manual_additional_info = isset($cart_data[0]["manual_additional_info"]) ? $cart_data[0]["manual_additional_info"] : "";
   	$paid_at = isset($cart_data[0]["paid_at"]) ? date("M j, y H:i",strtotime($cart_data[0]["paid_at"])) : "";
   	// echo $this->db->last_query();
 
+    $ecommerce_config = $this->get_ecommerce_config($user_id);
+    $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+    $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+    $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
+
   	echo '<div class="list-group">
             <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
               <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">'.$this->lang->line("Paid Amount").' : '.$currency.' '.$this->two_decimal_place($manual_amount).'</h5>
+                <h5 class="mb-1">'.$this->lang->line("Paid Amount").' : '.$currency.' '.mec_number_format($manual_amount,$decimal_point,$thousand_comma).'</h5>
               </div>
             </a>
             <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
@@ -2125,8 +2241,43 @@ class Ecommerce extends Home
     $this->ajax_check();
     $id = $this->input->post("table_id",true);
     $payment_status = $this->input->post("payment_status",true);
-    if($this->basic->update_data("ecommerce_cart",array("id"=>$id,"user_id"=>$this->user_id),array("status"=>$payment_status,"status_changed_at"=>date("Y-m-d H:i:s"))))
-    echo json_encode(array('status'=>'1','message'=>$this->lang->line("Payment status has been updated successfully.")));
+    $status_changed_note = strip_tags($this->input->post("status_changed_note",true));
+    $update_data = array("status"=>$payment_status,"status_changed_at"=>date("Y-m-d H:i:s"));
+    $update_data['status_changed_note'] = $status_changed_note;
+
+    $join = array('ecommerce_store'=>"ecommerce_store.id=ecommerce_cart.store_id,left");;
+    $cart_data = $this->basic->get_data('ecommerce_cart',array("where"=>array("ecommerce_cart.id"=>$id)),"buyer_email,buyer_first_name,buyer_last_name,ecommerce_cart.id,subscriber_id,store_name,store_unique_id",$join);
+    if(!isset($cart_data[0]))
+    {
+      echo json_encode(array('status'=>'1','message'=>$this->lang->line("Order data not found.")));
+      exit();
+    }
+
+    if($this->basic->update_data("ecommerce_cart",array("id"=>$id,"user_id"=>$this->user_id),$update_data))
+    {      
+      $order_confirmation_email_template = $this->basic->get_data("email_template_management",array('where'=>array('template_type'=>'emcommerce_order_status_update')),array('subject','message'));
+      if(isset($order_confirmation_email_template[0]) && $order_confirmation_email_template[0]['subject'] != '' && $order_confirmation_email_template[0]['message'] != '')
+      {
+
+        $to = $cart_data[0]['buyer_email'];
+        $first_name = $cart_data[0]['buyer_first_name'];
+        $last_name = $cart_data[0]['buyer_last_name'];
+        $store_name = $cart_data[0]['store_name'];
+        $store_url = base_url("ecommerce/store/".$cart_data[0]['store_unique_id']."?subscriber_id=".$cart_data[0]['subscriber_id']);
+        $invoice_url = base_url("ecommerce/order/".$id."?subscriber_id=".$cart_data[0]['subscriber_id']);
+        if($to!='')
+        {          
+          $url = base_url();
+          $array1 = array('#STORE_NAME#','#STORE_URL#','#ORDER_NO#','#ORDER_STATUS#','#INVOICE_URL#','#UPDATE_NOTE#','#LAST_NAME#','#FIRST_NAME#');
+          $array2 = array($store_name,$store_url,$id,strtoupper($payment_status),$invoice_url,$status_changed_note,$last_name,$first_name);
+          $subject = str_replace($array1,$array2,$order_confirmation_email_template[0]['subject']);
+          $message = str_replace($array1,$array2,$order_confirmation_email_template[0]['message']);
+          $this->_mail_sender($from='', $to, $subject, $message, $mask=$store_name, $html=1);
+        }
+      }
+
+      echo json_encode(array('status'=>'1','message'=>$this->lang->line("Payment status has been updated successfully and buyer has been notified through email.")));
+    }
     else echo json_encode(array('status'=>'1','message'=>$this->lang->line("Something went wrong, please try again.")));
   }
 
@@ -2156,7 +2307,7 @@ class Ecommerce extends Home
       'response',
       'cart_id'
     );
-    $search_columns = array('first_name','last_name','email','subscriber_id');
+    $search_columns = array('first_name','last_name','subscriber_id');
 
     $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
     $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
@@ -2183,7 +2334,7 @@ class Ecommerce extends Home
     // echo $this->db->last_query();
 
     $this->db->where($where_custom);
-    $total_rows_array=$this->basic->count_row($table,$where='',$count=$table.".id",$join,$group_by='');
+    $total_rows_array=$this->basic->count_row($table,$where='',$count=$table.".id",$join='',$group_by='');
 
     $total_result=$total_rows_array[0]['total_rows'];
 
@@ -2289,7 +2440,9 @@ class Ecommerce extends Home
     }
 
     $post=$_POST;
-    $tag_allowed = array("email_reminder_text_checkout_next");
+
+    $tag_allowed = array("email_reminder_text_checkout_next","terms_use_link","refund_policy_link");
+    // $xss_allowed = array("terms_use_link","refund_policy_link");
     foreach ($post as $key => $value) 
     {
       //$$key=$this->input->post($key,true);
@@ -2406,6 +2559,8 @@ class Ecommerce extends Home
       "stripe_enabled"=> $stripe_enabled,
       "manual_enabled"=> $manual_enabled,
       "cod_enabled"=> $cod_enabled,
+      "refund_policy_link"=> strip_tags($refund_policy_link,$this->editor_allowed_tags),
+      "terms_use_link"=> strip_tags($terms_use_link,$this->editor_allowed_tags),
       "status"=> $status,
       "label_ids"=>implode(',',$label_ids),
     );
@@ -2458,7 +2613,9 @@ class Ecommerce extends Home
   {
     $this->ajax_check();
     $post=$_POST;
-    $tag_allowed = array("email_reminder_text_checkout_next");
+
+    $tag_allowed = array("email_reminder_text_checkout_next","terms_use_link","refund_policy_link");
+    // $xss_allowed = array("terms_use_link","refund_policy_link");
     foreach ($post as $key => $value) 
     {
       //$$key=$this->input->post($key,true);
@@ -2466,6 +2623,7 @@ class Ecommerce extends Home
       else $temp = $value;
       $$key=$this->security->xss_clean($temp);
     }
+
 
     if($paypal_enabled=='0' && $stripe_enabled=='0' && $manual_enabled=='0' && $cod_enabled=='0')
     {
@@ -2569,6 +2727,8 @@ class Ecommerce extends Home
       "stripe_enabled"=> $stripe_enabled,
       "cod_enabled"=> $cod_enabled,
       "manual_enabled"=> $manual_enabled,
+      "refund_policy_link"=> strip_tags($refund_policy_link,$this->editor_allowed_tags),
+      "terms_use_link"=> strip_tags($terms_use_link,$this->editor_allowed_tags),
       "status"=> $status,
       "label_ids"=>implode(',',$label_ids),
     );
@@ -2617,6 +2777,10 @@ class Ecommerce extends Home
   { 
     $this->ajax_check();
     $ecommerce_config = $this->get_ecommerce_config();
+    $currency_position = isset($ecommerce_config['currency_position']) ? $ecommerce_config['currency_position'] : "left";
+    $decimal_point = isset($ecommerce_config['decimal_point']) ? $ecommerce_config['decimal_point'] : 0;
+    $thousand_comma = isset($ecommerce_config['thousand_comma']) ? $ecommerce_config['thousand_comma'] : '0';
+
 
     $search_value = $this->input->post("search_value");
     $store_id = $this->input->post("search_store_id");        
@@ -2632,11 +2796,11 @@ class Ecommerce extends Home
       'store_name',
       'status',
       'actions',
-      'taxable',
+      'stock_item',
       'category_name',
       'updated_at',
     );
-    $search_columns = array('product_name','original_price','sell_price');
+    $search_columns = array('product_name');
 
     $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
     $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
@@ -2674,21 +2838,39 @@ class Ecommerce extends Home
     // echo $this->db->last_query(); exit();
     
     $this->db->where($where_custom);
+    if($store_id!="") $this->db->where(array("ecommerce_product.store_id"=>$store_id)); 
     $total_rows_array=$this->basic->count_row($table,$where='',$count=$table.".id",$join,$group_by='');
 
     $total_result=$total_rows_array[0]['total_rows'];
     $config_currency = isset($ecommerce_config['currency']) ? $ecommerce_config['currency'] : "USD";
     $config_currency_icon = isset($this->currency_icon[$config_currency]) ? $this->currency_icon[$config_currency] : "$";
+    $currency_left = $currency_right = "";
+    if($currency_position=='left') $currency_left = $config_currency_icon;
+    if($currency_position=='right') $currency_right = $config_currency_icon;
 
     foreach($info as $key => $value) 
     {
         $updated_at = date("M j, y H:i",strtotime($info[$key]['updated_at']));
         $info[$key]['updated_at'] =  "<div style='min-width:110px;'>".$updated_at."</div>";
 
-        $info[$key]['actions'] = "<div style='min-width:150px'><a target='_BLANK' href='".base_url("ecommerce/product/".$info[$key]['id'])."' title='".$this->lang->line("Product Page")."' data-toggle='tooltip' class='btn btn-circle btn-outline-info'><i class='fa fa-eye'></i></a>&nbsp;&nbsp;";
-        $info[$key]['actions'] .= "<a href='".base_url("ecommerce/edit_product/".$info[$key]['id'])."' title='".$this->lang->line("Edit")."' data-toggle='tooltip' class='btn btn-circle btn-outline-warning edit_row' table_id='".$info[$key]['id']."'><i class='fa fa-edit'></i></a>&nbsp;&nbsp;";
-        $info[$key]['actions'] .= "<a href='#' title='".$this->lang->line("Delete")."' data-toggle='tooltip' class='btn btn-circle btn-outline-danger delete_row' table_id='".$info[$key]['id']."'><i class='fa fa-trash-alt'></i></a></div>
-            <script>$('[data-toggle=\"tooltip\"]').tooltip();</script>";
+        $actions = "<a target='_BLANK' href='".base_url("ecommerce/product/".$info[$key]['id'])."' title='".$this->lang->line("Product Page")."' data-toggle='tooltip' class='btn btn-circle btn-outline-info'><i class='fas fa-eye'></i></a>&nbsp;&nbsp;";
+        $actions .= "<a href='".base_url("ecommerce/edit_product/".$info[$key]['id'])."' title='".$this->lang->line("Edit")."' data-toggle='tooltip' class='btn btn-circle btn-outline-warning edit_row' table_id='".$info[$key]['id']."'><i class='fas fa-edit'></i></a>&nbsp;&nbsp;";
+        $actions .= "<a href='".base_url("ecommerce/edit_product/".$info[$key]['id'])."/clone' title='".$this->lang->line("Clone")."' data-toggle='tooltip' class='btn btn-circle btn-outline-primary edit_row' table_id='".$info[$key]['id']."'><i class='fas fa-clone'></i></a>&nbsp;&nbsp;";
+        $actions .= "<a href='#' title='".$this->lang->line("Delete")."' data-toggle='tooltip' class='btn btn-circle btn-outline-danger delete_row' table_id='".$info[$key]['id']."'><i class='fas fa-trash-alt'></i></a>";
+
+        $action_width = (4*47)+20;
+        $info[$key]['actions'] ='
+        <div class="dropdown d-inline dropright">
+          <button class="btn btn-outline-primary dropdown-toggle no_caret" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-briefcase"></i>
+          </button>
+          <div class="dropdown-menu mini_dropdown text-center" style="width:'.$action_width.'px !important">
+           '.$actions.'
+          </div>
+        </div>
+        <script>
+        $(\'[data-toggle="tooltip"]\').tooltip();
+        </script>';
 
         if($info[$key]['status'] == 1) $info[$key]['status'] = "<span class='badge badge-status text-success'><i class='fa fa-check-circle green'></i> ".$this->lang->line('Active')."</span>";
         else $info[$key]['status'] = "<span class='badge badge-status text-danger'><i class='fa fa-times-circle red'></i> ".$this->lang->line('Inactive')."</span>"; 
@@ -2696,8 +2878,8 @@ class Ecommerce extends Home
         if($info[$key]['taxable'] == 1) $info[$key]['taxable'] = "<span class='badge badge-status text-success'><i class='fa fa-check-circle green'></i> ".$this->lang->line('Yes')."</span>";
         else $info[$key]['taxable'] = "<span class='badge badge-status text-danger'><i class='fa fa-times red'></i> ".$this->lang->line('No')."</span>";
 
-        if($info[$key]['sell_price']>0) $info[$key]['original_price'] = "<span style='text-decoration: line-through;' class='text-muted'>".$config_currency_icon.$this->two_decimal_place($info[$key]['original_price']) ."</span> <b class='text-warning'>".$config_currency_icon.$this->two_decimal_place($info[$key]['sell_price'])."</b>";
-        else $info[$key]['original_price'] = "<b>".$config_currency_icon.$this->two_decimal_place($info[$key]['original_price'])."</b>";
+        if($info[$key]['sell_price']>0) $info[$key]['original_price'] = "<span style='text-decoration: line-through;' class='text-muted'>".$currency_left.mec_number_format($info[$key]['original_price'],$decimal_point,$thousand_comma).$currency_right."</span> <b class='text-warning'>".$currency_left.mec_number_format($info[$key]['sell_price'],$decimal_point,$thousand_comma).$currency_right."</b>";
+        else $info[$key]['original_price'] = "<b>".$currency_left.mec_number_format($info[$key]['original_price'],$decimal_point,$thousand_comma).$currency_right."</b>";
 
         if($info[$key]['thumbnail']=='') $url = base_url('assets/img/products/product-1.jpg');
         else $url = base_url('upload/ecommerce/'.$info[$key]['thumbnail']);
@@ -2793,6 +2975,7 @@ class Ecommerce extends Home
         $this->form_validation->set_rules('product_description', '<b>'.$this->lang->line("Product description").'</b>', 'trim');      
         $this->form_validation->set_rules('purchase_note', '<b>'.$this->lang->line("Purchase note").'</b>', 'trim');      
         $this->form_validation->set_rules('thumbnail', '<b>'.$this->lang->line("Thumbnail").'</b>', 'trim');      
+        $this->form_validation->set_rules('stock_item', '<b>'.$this->lang->line("Item in stock").'</b>', 'trim|numeric');   
             
         if ($this->form_validation->run() == FALSE)
         {
@@ -2806,14 +2989,20 @@ class Ecommerce extends Home
             $product_name=strip_tags($this->input->post('product_name',true));
             $original_price=$this->input->post('original_price',true);
             $sell_price=$this->input->post('sell_price',true);
-            $product_description=$this->input->post('product_description',true);
-            $purchase_note=$this->input->post('purchase_note',true);
+            $product_description=strip_tags($this->input->post('product_description',true),$this->editor_allowed_tags);
+            $purchase_note=strip_tags($this->input->post('purchase_note',true),$this->editor_allowed_tags);
             $thumbnail=$this->input->post('thumbnail',true);
+            $featured_images=$this->input->post('featured_images',true);
             $taxable=$this->input->post('taxable',true);
             $status=$this->input->post('status',true);
+            $stock_item=$this->input->post('stock_item',true);
+            $stock_display=$this->input->post('stock_display',true);
+            $stock_prevent_purchase=$this->input->post('stock_prevent_purchase',true);
 
             if($status=='') $status='0';
             if($taxable=='') $taxable='0';
+            if($stock_display=='') $stock_display='0';
+            if($stock_prevent_purchase=='') $stock_prevent_purchase='0';
             if(!isset($attribute_ids) || !is_array($attribute_ids) || empty($attribute_ids)) $attribute_ids = '';
             else $attribute_ids = implode(',', $attribute_ids);
                                                    
@@ -2828,8 +3017,12 @@ class Ecommerce extends Home
                 'product_description'=>$product_description,
                 'purchase_note'=>$purchase_note,
                 'thumbnail'=>$thumbnail,
+                'featured_images'=>$featured_images,
                 'taxable' => $taxable,
                 'status'=> $status,
+                'stock_item'=> $stock_item,
+                'stock_display'=> $stock_display,
+                'stock_prevent_purchase'=> $stock_prevent_purchase,
                 'user_id'=> $this->user_id,
                 'deleted'=>'0',
                 'updated_at'=>date("Y-m-d H:i:s")
@@ -2845,7 +3038,7 @@ class Ecommerce extends Home
   }
 
 
-  public function edit_product($id='0')
+  public function edit_product($id='0',$operation='edit')
   {       
     if($id=='0') exit();
     $data['body']='ecommerce/product_edit';     
@@ -2861,6 +3054,7 @@ class Ecommerce extends Home
 
     $attribute_list = $this->get_attribute_list();
     $data['attribute_list'] = $attribute_list;
+    $data['operation'] = $operation;
 
     $data['ecommerce_config'] = $this->get_ecommerce_config();
 
@@ -2887,7 +3081,9 @@ class Ecommerce extends Home
         $this->form_validation->set_rules('sell_price', '<b>'.$this->lang->line("Sell price").'</b>', 'trim|numeric');
         $this->form_validation->set_rules('product_description', '<b>'.$this->lang->line("Product description").'</b>', 'trim');      
         $this->form_validation->set_rules('purchase_note', '<b>'.$this->lang->line("Purchase note").'</b>', 'trim');      
-        $this->form_validation->set_rules('thumbnail', '<b>'.$this->lang->line("Thumbnail").'</b>', 'trim');      
+        $this->form_validation->set_rules('thumbnail', '<b>'.$this->lang->line("Thumbnail").'</b>', 'trim');        
+        $this->form_validation->set_rules('stock_item', '<b>'.$this->lang->line("Item in stock").'</b>', 'trim|numeric'); 
+
             
         if ($this->form_validation->run() == FALSE)
         {
@@ -2897,6 +3093,7 @@ class Ecommerce extends Home
         {   
             $xdata = $this->basic->get_data("ecommerce_product",array('where'=>array('id'=>$id,"user_id"=>$this->user_id)));
             $xthumbnail = isset($xdata[0]['thumbnail']) ? $xdata[0]['thumbnail'] : "";
+            $xfeatured_images = isset($xdata[0]['featured_images']) ? $xdata[0]['featured_images'] : "";
 
             // $store_id=$this->input->post('store_id',true);
             $category_id=$this->input->post('category_id',true);
@@ -2904,14 +3101,20 @@ class Ecommerce extends Home
             $product_name=strip_tags($this->input->post('product_name',true));
             $original_price=$this->input->post('original_price',true);
             $sell_price=$this->input->post('sell_price',true);
-            $product_description=$this->input->post('product_description',true);
-            $purchase_note=$this->input->post('purchase_note',true);
+            $product_description=strip_tags($this->input->post('product_description',true),$this->editor_allowed_tags);
+            $purchase_note=strip_tags($this->input->post('purchase_note',true),$this->editor_allowed_tags);
             $thumbnail=$this->input->post('thumbnail',true);
+            $featured_images=$this->input->post('featured_images',true);
             $taxable=$this->input->post('taxable',true);
             $status=$this->input->post('status',true);
+            $stock_item=$this->input->post('stock_item',true);
+            $stock_display=$this->input->post('stock_display',true);
+            $stock_prevent_purchase=$this->input->post('stock_prevent_purchase',true);
 
             if($status=='') $status='0';
             if($taxable=='') $taxable='0';
+            if($stock_display=='') $stock_display='0';
+            if($stock_prevent_purchase=='') $stock_prevent_purchase='0';
             if(!isset($attribute_ids) || !is_array($attribute_ids) || empty($attribute_ids)) $attribute_ids = '';
             else $attribute_ids = implode(',', $attribute_ids);
                                                    
@@ -2926,12 +3129,26 @@ class Ecommerce extends Home
                 'purchase_note'=>$purchase_note,
                 'taxable' => $taxable,
                 'status'=> $status,
+                'stock_item'=> $stock_item,
+                'stock_display'=> $stock_display,
+                'stock_prevent_purchase'=> $stock_prevent_purchase,
                 'updated_at'=>date("Y-m-d H:i:s")
             );
             if($thumbnail!='') 
             {
               $data['thumbnail'] = $thumbnail;
               if($xthumbnail!='') @unlink('upload/ecommerce/'.$xthumbnail);
+            }
+            if($featured_images!='') 
+            {
+              $data['featured_images'] = $featured_images;
+              if($xfeatured_images!='')
+              {
+                $exp = explode(',', $xfeatured_images);
+                foreach ($exp as $key => $value) {
+                  @unlink('upload/ecommerce/'.$value);
+                }
+              }
             }
             
             if($this->basic->update_data('ecommerce_product',array("id"=>$id,"user_id"=>$this->user_id),$data)) $this->session->set_flashdata('success_message',1);   
@@ -2948,13 +3165,14 @@ class Ecommerce extends Home
     $this->ajax_check();
     $table_id = $this->input->post("table_id");
 
-    $xdata=$this->basic->get_data("ecommerce_product",array("where"=>array("id"=>$table_id,"user_id"=>$this->user_id)));
+    $xdata=$this->basic->get_data("ecommerce_product",array("where"=>array("id"=>$table_id,"user_id"=>$this->user_id)),"thumbnail,featured_images");
     if(!isset($xdata[0]))
     {
         $response['status'] = '0';
         $response['message'] = $this->lang->line('Something went wrong, please try once again.');
     }
     $xthumbnail = isset($xdata[0]['thumbnail']) ? $xdata[0]['thumbnail'] : "";
+    $xfeatured_images = isset($xdata[0]['featured_images']) ? $xdata[0]['featured_images'] : "";
 
 
     $result = array('status'=>'0','message'=>$this->lang->line("Something went wrong, please try once again."));
@@ -2966,7 +3184,14 @@ class Ecommerce extends Home
     if($this->basic->update_data("ecommerce_product", array("id"=>$table_id,'user_id'=>$this->user_id),array('deleted'=>'1')))
     {
       echo json_encode(array('message' => $this->lang->line("Product has been deleted successfully."),'status'=>'1'));
-      if($xthumbnail!='') @unlink('upload/ecommerce/'.$xthumbnail);     
+      if($xthumbnail!='') @unlink('upload/ecommerce/'.$xthumbnail); 
+      if($xfeatured_images!='')
+      {
+        $exp = explode(',', $xfeatured_images);
+        foreach ($exp as $key => $value) {
+          @unlink('upload/ecommerce/'.$value);
+        }
+      }
     }       
     else echo json_encode($result);  
   }  
@@ -3001,6 +3226,9 @@ class Ecommerce extends Home
         $this->form_validation->set_rules('stripe_publishable_key','<b>'.$this->lang->line("Stripe Publishable Key").'</b>','trim');
         $this->form_validation->set_rules('currency','<b>'.$this->lang->line("Currency").'</b>',  'trim');
         $this->form_validation->set_rules('manual_payment_instruction','<b>'.$this->lang->line("Manual Payment Instruction").'</b>',  'trim');            
+        $this->form_validation->set_rules('currency_position','<b>'.$this->lang->line("Currency Position").'</b>',  'trim');
+        $this->form_validation->set_rules('decimal_point','<b>'.$this->lang->line("Decimal Point").'</b>',  'trim|integer');
+        $this->form_validation->set_rules('thousand_comma','<b>'.$this->lang->line("Thousand Comma").'</b>',  'trim');
 
         // go to config form page if validation wrong
         if ($this->form_validation->run() == false) 
@@ -3016,12 +3244,18 @@ class Ecommerce extends Home
             $stripe_secret_key=strip_tags($this->input->post('stripe_secret_key',true));
             $stripe_publishable_key=strip_tags($this->input->post('stripe_publishable_key',true));
             $currency=strip_tags($this->input->post('currency',true));
+            $currency_position=strip_tags($this->input->post('currency_position',true));
+            $decimal_point=strip_tags($this->input->post('decimal_point',true));
+            $thousand_comma=strip_tags($this->input->post('thousand_comma',true));
             // $manual_payment=$this->input->post('manual_payment');
             $manual_payment='1';
             $manual_payment_instruction=$this->input->post('manual_payment_instruction',true);
 
             if($paypal_mode=="") $paypal_mode="live";
             if($manual_payment=="") $manual_payment="0";
+            if($currency_position=="") $currency_position="left";
+            if($thousand_comma=="") $thousand_comma="0";
+            if($decimal_point=="") $decimal_point="0";
 
             $update_data = 
             array
@@ -3034,6 +3268,9 @@ class Ecommerce extends Home
                 'manual_payment'=> $manual_payment,
                 'manual_payment_instruction'=>$manual_payment_instruction,
                 'user_id'=>$this->user_id,
+                'currency_position'=>$currency_position,
+                'decimal_point'=>$decimal_point,
+                'thousand_comma'=>$thousand_comma,
                 'updated_at'=>date("Y-m-d H:i:s")
             );
 
@@ -3064,7 +3301,7 @@ class Ecommerce extends Home
   {
     $search_value = $_POST['search']['value'];
     $display_columns = array("#",'CHECKBOX','attribute_name','attribute_values','status','actions','store_name','updated_at');
-    $search_columns = array('attribute_name', 'attribute_values','store_name');
+    $search_columns = array('attribute_name','store_name');
 
     $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
     $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
@@ -3538,6 +3775,7 @@ class Ecommerce extends Home
     // echo $this->db->last_query(); exit();
     
     $this->db->where($where_custom);
+    if($store_id!="") $this->db->where(array("store_id"=>$store_id)); 
     $total_rows_array=$this->basic->count_row($table,$where='',$count=$table.".id",$join,$group_by='');
 
     $total_result=$total_rows_array[0]['total_rows'];
@@ -3850,6 +4088,101 @@ class Ecommerce extends Home
 
     echo json_encode(['deleted' => 'no']);
   }
+
+  public function upload_featured_image() 
+  {
+      // Kicks out if not a ajax request
+      $this->ajax_check();
+
+      if ('get' == strtolower($_SERVER['REQUEST_METHOD'])) {
+          exit();
+      }
+
+      $upload_dir = APPPATH . '../upload/ecommerce';
+
+      // Makes upload directory
+      if( ! file_exists($upload_dir)) {
+          mkdir($upload_dir, 0777, true);
+      }
+
+      if (isset($_FILES['file'])) {
+
+        $file_size = $_FILES['file']['size'];
+        if ($file_size > 1048576) {
+            $message = $this->lang->line('The file size exceeds the limit. Please remove the file and upload again.');
+            echo json_encode(['error' => $message]);
+            exit;
+        }
+        
+        // Holds tmp file
+        $tmp_file = $_FILES['file']['tmp_name'];
+
+          if (is_uploaded_file($tmp_file)) {
+
+            $post_fileName = $_FILES['file']['name'];
+            $post_fileName_array = explode('.', $post_fileName);
+            $ext = array_pop($post_fileName_array);
+
+            $allow_ext = ['png', 'jpg', 'jpeg'];
+            if(! in_array(strtolower($ext), $allow_ext)) {
+                $message = $this->lang->line('Invalid file type');
+                echo json_encode(['error' => $message]);
+                exit;
+            }
+
+            $filename = implode('.', $post_fileName_array);
+            $filename = strtolower(strip_tags(str_replace(' ', '-', $filename)));
+            $filename = "fproduct_".$this->user_id . '_' . time() . substr(uniqid(mt_rand(), true), 0, 6) . '.' . $ext;
+
+            // Moves file to the upload dir
+            $dest_file = $upload_dir . DIRECTORY_SEPARATOR . $filename;
+            if (! @move_uploaded_file($tmp_file, $dest_file)) {
+                $message = $this->lang->line('That was not a valid upload file.');
+                echo json_encode(['error' => $message]);
+                exit;
+            }
+
+            // Returns response
+            echo json_encode([ 'filename' => $filename]);
+        }
+     }        
+  }
+
+  public function delete_featured_image() 
+  {
+    // Kicks out if not a ajax request
+    $this->ajax_check();
+
+    if ('get' == strtolower($_SERVER['REQUEST_METHOD'])) {
+        exit();
+    }
+
+    // Upload dir path
+    $upload_dir = APPPATH . '../upload/ecommerce';
+
+    // Grabs filename
+    $filename = (string) $this->input->post('filename');
+    $filename_exp = explode('_', $filename);
+    if(!isset($filename_exp['1']) || $filename_exp['1']!=$this->user_id) exit();
+
+    // Prepares file path
+    $filepath = $upload_dir . DIRECTORY_SEPARATOR . $filename;
+    
+    // Tries to remove file
+    if (file_exists($filepath)) {
+        // Deletes file from disk
+        unlink($filepath);
+
+        // Clears the file from cache 
+        clearstatcache();
+
+        echo json_encode(['deleted' => 'yes']);
+        exit();
+    }
+
+    echo json_encode(['deleted' => 'no']);
+  }
+
 
   public function upload_store_logo() 
   {
@@ -4203,7 +4536,7 @@ class Ecommerce extends Home
   private function get_current_cart($subscriber_id="",$store_id=0)
   {
     $current_cart = array("cart_count"=>0,"cart_id"=>0,"cart_data"=>array());
-    if($store_id!=0)
+    if($store_id!=0 && $subscriber_id!="")
     {          
         $join = array('ecommerce_cart_item'=>"ecommerce_cart.id=ecommerce_cart_item.cart_id,right");
         $where_simple = array("ecommerce_cart.store_id"=>$store_id,"action_type!="=>"checkout");
@@ -4345,10 +4678,6 @@ class Ecommerce extends Home
     else return TRUE;       
   }
 
-  private function two_decimal_place($number=0)
-  {
-      return number_format((float)$number, 2, '.', '');
-  }
 
   public function get_template_label_dropdown()
   {
@@ -4638,6 +4967,85 @@ class Ecommerce extends Home
 
       return $output;
   }
+
+  public function terms_of_service($store_unique_id=0,$subscriber_id="")
+  {    
+    $store_data=$this->basic->get_data("ecommerce_store",array("where"=>array("store_unique_id"=>$store_unique_id)),'store_favicon,store_logo,store_name,store_name,id,terms_use_link,refund_policy_link,store_unique_id');
+
+    if(!isset($store_data[0]))
+    {
+      $not_found = $this->lang->line("Store not found.");
+      echo '<br/><h1 style="text-align:center">'.$not_found.'</h1>';
+      exit();
+    }
+    $page_title = $store_data[0]['store_name']." | ".$this->lang->line("Terms of service");
+    $data=array("body"=>"ecommerce/terms_of_service","page_title"=>$page_title,"store_data"=>$store_data[0]);
+    $data["fb_app_id"] = $this->get_app_id();
+    $data["subscriber_id"] = $subscriber_id;
+    $data["favicon"] = base_url('upload/ecommerce/'.$store_data[0]['store_favicon']);
+    $this->load->view('ecommerce/bare-theme', $data);
+  }
+
+  public function refund_policy($store_unique_id=0,$subscriber_id="")
+  {    
+    $store_data=$this->basic->get_data("ecommerce_store",array("where"=>array("store_unique_id"=>$store_unique_id)),'store_favicon,store_logo,store_name,store_name,id,terms_use_link,refund_policy_link,store_unique_id');
+
+    if(!isset($store_data[0]))
+    {
+      $not_found = $this->lang->line("Store not found.");
+      echo '<br/><h1 style="text-align:center">'.$not_found.'</h1>';
+      exit();
+    }
+    $page_title = $store_data[0]['store_name']." | ".$this->lang->line("Refund policy");
+    $data=array("body"=>"ecommerce/refund_policy","page_title"=>$page_title,"store_data"=>$store_data[0]);
+    $data["fb_app_id"] = $this->get_app_id();
+    $data["subscriber_id"] = $subscriber_id;
+    $data["favicon"] = base_url('upload/ecommerce/'.$store_data[0]['store_favicon']);
+    $this->load->view('ecommerce/bare-theme', $data);
+  }
+
+  public function download_csv() // order or contact
+  {        
+      if($this->is_demo == '1')
+      {
+          if($this->session->userdata('user_type') == "Admin")
+          {
+              echo "<div class='alert alert-danger text-center'><i class='fa fa-ban'></i> This function is disabled from admin account in this demo!!</div>";
+              exit();
+          }
+      }
+
+      $latest_order_list_sql = $this->session->userdata("latest_order_list_sql");
+      if(empty($latest_order_list_sql)) exit();
+
+      $table="ecommerce_cart";
+      $select = "ecommerce_cart.id as order_id,subscriber_id,buyer_first_name,buyer_last_name,buyer_email,buyer_mobile,buyer_country,buyer_city,buyer_state,buyer_address,buyer_zip,coupon_code,coupon_type,discount,payment_amount,currency,ordered_at,transaction_id,card_ending,payment_method,manual_additional_info,paid_at,ecommerce_cart.status as payment_status";
+      // $join = array('ecommerce_store'=>"ecommerce_store.id=ecommerce_cart.store_id,left");
+      $join='';
+      if(!empty($latest_order_list_sql)) $this->db->where($latest_order_list_sql);
+      $info=$this->basic->get_data($table,$where='',$select,$join,$limit='',$start=NULL,$order_by='id asc');
+      // echo $this->db->last_query(); exit();
+
+      $head = isset($info[0]) ? array_keys($info[0]) : array();
+      if(empty($head)) exit();
+
+      $filename="exported_order_list_".time()."_".$this->user_id.".csv";
+      $f = fopen('php://memory', 'w');
+      fputs( $f, "\xEF\xBB\xBF" );
+      fputcsv($f,$head, ",");
+
+      foreach ($info as $value) 
+      {
+          $write_info=$value;        
+          fputcsv($f, $write_info,',');  
+      }
+
+      fseek($f, 0);
+      header('Content-Type: application/csv');
+      header('Content-Disposition: attachment; filename="'.$filename.'";');
+      fpassthru($f);         
+  }
+
 
 
 
