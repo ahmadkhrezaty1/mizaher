@@ -29,9 +29,7 @@ class Admin extends Home
     }
 
     public function general_settings()
-    {        
-        $this->is_broadcaster_exist=$this->broadcaster_exist();
-        $this->is_group_posting_exist=$this->group_posting_exist();       
+    {               
         $data['body'] = "admin/settings/general";
         $data['time_zone'] = $this->_time_zone_list();        
         $data['language_info'] = $this->_language_list();
@@ -123,9 +121,6 @@ class Admin extends Home
         }
         if ($_POST) 
         {
-
-            $this->csrf_token_check();
-
             // validation
             $this->form_validation->set_rules('institute_name',       '<b>'.$this->lang->line("company name").'</b>',             'trim');
             $this->form_validation->set_rules('institute_address',    '<b>'.$this->lang->line("company address").'</b>',          'trim');
@@ -143,7 +138,6 @@ class Admin extends Home
             $this->form_validation->set_rules('force_https',  '<b>'.$this->lang->line("Force HTTPS").'</b>','trim');
             $this->form_validation->set_rules('enable_support',  '<b>'.$this->lang->line("Enable Suppordesk").'</b>','trim');
             $this->form_validation->set_rules('enable_signup_form',  '<b>'.$this->lang->line("Enable Signup Form").'</b>','trim');
-            $this->form_validation->set_rules('enable_signup_activation',  '<b>'.$this->lang->line("Signup Email Activation").'</b>','trim');
 
             $this->form_validation->set_rules('facebook_poster_image_upload_limit',  '<b>'.$this->lang->line("Facebook poster image upload limit").'</b>','trim');
             $this->form_validation->set_rules('facebook_poster_video_upload_limit',  '<b>'.$this->lang->line("Facebook poster video upload limit").'</b>','trim');
@@ -199,8 +193,6 @@ class Admin extends Home
              $this->form_validation->set_rules('activecampaign_list_id','<b>'.$this->lang->line("Activecampaign List").'</b>','trim');
              $this->form_validation->set_rules('delete_junk_data_after_how_many_days','<b>'.$this->lang->line("Delete Junk Data").'</b>','trim');
 
-             $this->form_validation->set_rules('enable_tracking_subscribers_last_interaction',  '<b>'.$this->lang->line("Enable Tracking of Subscribers Last Interaction").'</b>','trim');
-
 
 
             // go to config form page if validation wrong
@@ -227,9 +219,7 @@ class Admin extends Home
                 $force_https=addslashes(strip_tags($this->input->post('force_https', true)));
                 $enable_support=addslashes(strip_tags($this->input->post('enable_support', true)));
                 $enable_signup_form=addslashes(strip_tags($this->input->post('enable_signup_form', true)));
-                $enable_signup_activation=addslashes(strip_tags($this->input->post('enable_signup_activation', true)));
 
-                $enable_tracking_subscribers_last_interaction=addslashes(strip_tags($this->input->post('enable_tracking_subscribers_last_interaction', true)));
                 $messengerbot_subscriber_avatar_download_limit_per_cron_job=addslashes(strip_tags($this->input->post('messengerbot_subscriber_avatar_download_limit_per_cron_job', true)));
                 $messengerbot_subscriber_profile_update_limit_per_cron_job=addslashes(strip_tags($this->input->post('messengerbot_subscriber_profile_update_limit_per_cron_job', true)));
 
@@ -309,7 +299,6 @@ class Admin extends Home
 
                 if($force_https=='') $force_https='0';
                 if($enable_signup_form=='') $enable_signup_form='0';
-                if($enable_signup_activation=='') $enable_signup_activation='0';
                 if($enable_support=='') $enable_support='0';
                 if($backup_mode=='') $backup_mode='0';
                 if($facebook_poster_botenabled_pages=='') $facebook_poster_botenabled_pages='0';
@@ -401,15 +390,8 @@ class Admin extends Home
                 // }
                 $app_my_config_data.= "\$config['email_sending_option'] = '".$email_sending_option."';\n";
 
-                if($enable_tracking_subscribers_last_interaction != '')
-                $app_my_config_data.= "\$config['enable_tracking_subscribers_last_interaction'] = '".$enable_tracking_subscribers_last_interaction."';\n";
-                else
-                $app_my_config_data.= "\$config['enable_tracking_subscribers_last_interaction'] = 'no';\n";
-
-
                 $app_my_config_data.= "\$config['force_https'] = '".$force_https."';\n";
                 $app_my_config_data.= "\$config['enable_signup_form'] = '".$enable_signup_form."';\n";
-                $app_my_config_data.= "\$config['enable_signup_activation'] = '".$enable_signup_activation."';\n";
                 $app_my_config_data.= "\$config['enable_support'] = '".$enable_support."';\n\n";
 
                 if($master_password=='******')
@@ -519,9 +501,6 @@ class Admin extends Home
 
         if ($_POST) 
         {
-        
-            $this->csrf_token_check();
-
             $post=$_POST;
             foreach ($post as $key => $value) 
             {
@@ -631,7 +610,6 @@ class Admin extends Home
         }
         if ($_POST) 
         {
-
             // validation
             $this->form_validation->set_rules('email_address',   '<b>'.$this->lang->line("Email Address").'</b>',    'trim');
             $this->form_validation->set_rules('smtp_host',       '<b>'.$this->lang->line("SMTP Host").'</b>',        'trim');
@@ -648,12 +626,11 @@ class Admin extends Home
             } 
             else 
             {
-                $this->csrf_token_check();
                 // assign
-                $email_address=strip_tags($this->input->post('email_address', true));
-                $smtp_host=strip_tags($this->input->post('smtp_host', true));
-                $smtp_port=strip_tags($this->input->post('smtp_port', true));
-                $smtp_user=strip_tags($this->input->post('smtp_user', true));
+                $email_address=$this->input->post('email_address', true);
+                $smtp_host=$this->input->post('smtp_host', true);
+                $smtp_port=$this->input->post('smtp_port', true);
+                $smtp_user=$this->input->post('smtp_user', true);
                 $smtp_password=$this->input->post('smtp_password', true);
                 $smtp_type=$this->input->post('smtp_type', true);
 
@@ -697,10 +674,7 @@ class Admin extends Home
             exit();
         }
 
-        $this->load->helper('file'); 
-
-        $this->csrf_token_check();
-
+        $this->load->helper('file');        
         $pixel_code = $this->input->post('pixel_code');
         $google_code = $this->input->post('google_code');
 
@@ -734,8 +708,7 @@ class Admin extends Home
         }
 
         if ($_POST) 
-        {      
-
+        {
             // validation
             $this->form_validation->set_rules('section1_html',          '<b>Section - 1 (970x90)</b>',              'trim');
             $this->form_validation->set_rules('section1_html_mobile',   '<b>Section - 1 : Mobile  (320x100)</b>',   'trim');
@@ -750,8 +723,6 @@ class Admin extends Home
             } 
             else 
             {
-                $this->csrf_token_check();
-
                 // assign
                 $section1_html=htmlspecialchars($this->input->post('section1_html', false),ENT_QUOTES);
                 $section1_html_mobile=htmlspecialchars($this->input->post('section1_html_mobile', false),ENT_QUOTES);
@@ -842,15 +813,9 @@ class Admin extends Home
             $user_id = $info[$i]["id"];
             $str="";   
             
-
             $str=$str."<a class='btn btn-circle btn-outline-warning' data-toggle='tooltip' title='".$this->lang->line('Edit')."' href='".$base_url.'admin/edit_user/'.$info[$i]["user_id"]."'>".'<i class="fas fa-edit"></i>'."</a>";
-
-
-            $str=$str."<a class='btn btn-circle btn-outline-success' data-toggle='tooltip' title='".$this->lang->line('Edit Package')."' href='".$base_url.'payment/edit_user_package/'.$info[$i]["user_id"]."'>".'<i class="fas fa-edit"></i>'."</a>";
-
-
             $str=$str."&nbsp;<a class='btn btn-circle btn-outline-dark change_password' href='' data-toggle='tooltip' title='".$this->lang->line('Change Password')."' data-id='".$user_id."' data-user='".htmlspecialchars($user_name)."'>".'<i class="fas fa-key"></i>'."</a>";
-            $str=$str."&nbsp;<a href='".$base_url.'home/user_delete_action/'.$info[$i]["user_id"]."' class='are_you_sure_datatable btn btn-circle btn-outline-danger' csrf_token='".$this->session->userdata('csrf_token_session')."' data-toggle='tooltip' title='".$this->lang->line('Delete')."'>".'<i class="fa fa-trash"></i>'."</a>";
+            $str=$str."&nbsp;<a href='".$base_url.'home/user_delete_action/'.$info[$i]["user_id"]."' class='are_you_sure_datatable btn btn-circle btn-outline-danger' data-toggle='tooltip' title='".$this->lang->line('Delete')."'>".'<i class="fa fa-trash"></i>'."</a>";
 
             if($this->session->userdata('license_type') == 'double')
                 $str=$str."&nbsp;<a target='_BLANK' href='".$base_url.'dashboard/index/'.$info[$i]["user_id"]."' class='btn btn-circle btn-outline-info' data-toggle='tooltip' title='".$this->lang->line('Activity')."'>".'<i class="fas fa-bolt"></i>'."</a>";
@@ -886,7 +851,7 @@ class Admin extends Home
         echo json_encode($data);
     }
 
-    public function manager_logs()
+     public function manager_logs()
     {
         $data['body']='admin/manager/manager_logs';
         $data['page_title']=$this->lang->line("Manager Logs");
@@ -995,20 +960,18 @@ class Admin extends Home
             }
             else
             {   
-                $users = 0;  
-               $this->csrf_token_check();
-
-                $name=strip_tags($this->input->post('name',true));
-                $email=strip_tags($this->input->post('email',true));
-                $mobile=strip_tags($this->input->post('mobile',true));
-                $password=md5($this->input->post('password',true));
-                $confirm_password=$this->input->post('confirm_password',true);
-                $address=strip_tags($this->input->post('address',true));
-                $user_type=$this->input->post('user_type',true);
-																 
-                $status=$this->input->post('status',true);
-                $package_id=$this->input->post('package_id',true);
-                $expired_date=$this->input->post('expired_date',true);
+                $users = 0;                  
+                $name=$this->input->post('name');
+                $email=$this->input->post('email');
+                $mobile=$this->input->post('mobile');
+                $password=md5($this->input->post('password'));
+                $confirm_password=$this->input->post('confirm_password');
+                $address=$this->input->post('address');
+                $user_type=$this->input->post('user_type');
+                $manager_type=$this->input->post('manager_type');
+                $status=$this->input->post('status');
+                $package_id=$this->input->post('package_id');
+                $expired_date=$this->input->post('expired_date');
                 if($status=='') $status='0';
                 if($manager_type == null) $manager_type ='';
                 if($manager_type == 'Manager 2') $users =$this->input->post('users');
@@ -1107,19 +1070,17 @@ class Admin extends Home
                 $this->edit_user($id); 
             }
             else
-            {      
+            {               
                 $users = 0;  
-               $this->csrf_token_check();
-
-                $name=strip_tags($this->input->post('name',true));
-                $email=strip_tags($this->input->post('email',true));
-                $mobile=strip_tags($this->input->post('mobile',true));                
-                $address=strip_tags($this->input->post('address',true));
-                $user_type=$this->input->post('user_type',true);
-																 
-                $status=$this->input->post('status',true);
-                $package_id=$this->input->post('package_id',true);
-                $expired_date=$this->input->post('expired_date',true);
+                $name=$this->input->post('name');
+                $email=$this->input->post('email');
+                $mobile=$this->input->post('mobile');                
+                $address=$this->input->post('address');
+                $user_type=$this->input->post('user_type');
+                $manager_type=$this->input->post('manager_type');
+                $status=$this->input->post('status');
+                $package_id=$this->input->post('package_id');
+                $expired_date=$this->input->post('expired_date');
                 if($status=='') $status='0';
                 if($manager_type == null) $manager_type ='';
                 if($manager_type == 'Manager 2') $users =$this->input->post('users');
@@ -1167,7 +1128,7 @@ class Admin extends Home
             }
         }   
     }
-  
+ 
 
     public function login_log()
     {        
@@ -1233,10 +1194,8 @@ class Admin extends Home
         } 
         else 
         {
-            $this->csrf_token_check();
-
-            $new_password = $this->input->post('password',true);
-            $new_confirm_password = $this->input->post('confirm_password',true);
+            $new_password = $this->input->post('password');
+            $new_confirm_password = $this->input->post('confirm_password');
 
             $table_change_password = 'users';
             $where_change_passwor = array('id' => $id);
@@ -1285,10 +1244,9 @@ class Admin extends Home
 
         if($_POST) {
 
-            $this->csrf_token_check();
-            $email= strip_tags($this->input->post('email',true));
-            $subject= strip_tags($this->input->post('subject',true));
-            $message= $this->input->post('message',true);
+            $email= $this->input->post('email');
+            $subject= $this->input->post('subject');
+            $message= $this->input->post('message');
             $user_ids=$this->input->post('user_ids');
             $from=$this->config->item('institute_email');
             $to = $email;
@@ -1297,7 +1255,7 @@ class Admin extends Home
             $test_mail = 1;
             $smtp = 1;
             
-            $response = $this->_mail_sender($from, $to, $subject, $message, $mask, $html,$smtp,'',$test_mail);
+            $response = @$this->_mail_sender($from, $to, $subject, $message, $mask, $html,$smtp,'',$test_mail);
             echo $response;
   
         }
@@ -1317,9 +1275,8 @@ class Admin extends Home
         }
         if($_POST)
         {
-            $this->csrf_token_check();
-            $subject= strip_tags($this->input->post('subject',true));
-            $message= $this->input->post('message',true);
+            $subject= $this->input->post('subject');
+            $message= $this->input->post('message');
             $user_ids=$this->input->post('user_ids');
             $count=0;
 
@@ -1348,7 +1305,7 @@ class Admin extends Home
    public function email_template_settings()
    {
        $data['emailTemplatetabledata'] = $this->basic->get_data("email_template_management");
-    
+
        $data['default_values'] = array(
            array(// account activation
                'subject' => "#APP_NAME# | Account Activation",
@@ -1421,33 +1378,7 @@ Thank you,<br/>
            array( // stripe new payment made email
                'subject' => 'New Payment Made',
                'message' => 'New payment has been made by #PAID_USER_NAME#'
-           ),           
-           array( // New order has been submitted
-               'subject' => '#STORE_NAME# | A New Order Has Been Submitted',
-               'message' => 'Congratulations,<br/>
-You have got an new order on your store #STORE_NAME#.<br>
-Invoice : #INVOICE_URL# <br/><br/>
-
-Thank you,<br/>
-<a href="#APP_URL#">#APP_NAME#</a> Team'
            ),
-            array( // New order has been submitted
-               'subject' => '#STORE_NAME# | Order Status Update',
-               'message' => 'Hello #LAST_NAME#,<br/>
-Your #STORE_NAME# order-#ORDER_NO# status has been updated to "#ORDER_STATUS#".<br/>
-<p>#UPDATE_NOTE#</p>
-<br>Invoice : #INVOICE_URL# <br/><br/>
-Thank you,<br/>
-<a href="#STORE_URL#">#STORE_NAME#</a> Team'
-           ),
-           array( // Subsriber From has been submitted
-               'subject' => '#FORM_TITLE# | #SUBSCRIBER_NAME# Has Submitted Form',
-               'message' => '#SUBSCRIBER_NAME# has just submitted your form #FORM_TITLE# with below data. <br/><br/>
-#FORM_DATA#
-<br/><br/>
-Thank you,<br/>
-<a href="#APP_URL#">#APP_NAME#</a> Team'
-           )
 
        );
 
@@ -1473,13 +1404,9 @@ Thank you,<br/>
        {
            $post= $_POST;
 
-           $this->csrf_token_check();
-
            $i = 0;
            $subject = '';
            $message = '';
-
-           if(isset($post['csrf_token'])) unset($post['csrf_token']);
 
            foreach ($post as $key => $value) 
            {

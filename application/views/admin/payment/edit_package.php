@@ -13,7 +13,7 @@
   <div class="row">
     <div class="col-12">
 
-      <form class="form-horizontal" action="<?php echo site_url().'payment/edit_package_action';?>" method="POST">
+      <?php echo form_open_multipart(site_url('payment/edit_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
         <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
         <input name="id" value="<?php echo $value[0]["id"];?>"  class="form-control" type="hidden">              
         <input name="is_default" value="<?php echo $value[0]["is_default"];?>"  class="form-control" type="hidden">   

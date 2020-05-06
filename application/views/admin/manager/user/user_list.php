@@ -1,9 +1,8 @@
-<input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
 <section class="section section_custom">
   <div class="section-header">
     <h1><i class="fas fa-users"></i> <?php echo $page_title; ?></h1>
     <div class="section-header-button">
-     <a class="btn btn-primary"  href="<?php echo site_url('admin/add_user');?>">
+     <a class="btn btn-primary"  href="<?php echo site_url('member/add_user');?>">
         <i class="fas fa-plus-circle"></i> <?php echo $this->lang->line("New User"); ?>
      </a> 
     </div>
@@ -32,12 +31,11 @@
                     </th>
                     <th><?php echo $this->lang->line("ID"); ?></th>      
                     <th><?php echo $this->lang->line("Avatar"); ?></th>      
-                    <th><?php echo $this->lang->line("Name"); ?></th>   
+                    <th><?php echo $this->lang->line("Name"); ?></th>      
                     <th><?php echo $this->lang->line("Email"); ?></th>
-                    <th><?php echo $this->lang->line("Type"); ?></th>   
                     <th><?php echo $this->lang->line("Package"); ?></th>
                     <th><?php echo $this->lang->line("Status"); ?></th>
-                                   
+                    <th><?php echo $this->lang->line("Type"); ?></th>
                     <th><?php echo $this->lang->line("Expiry"); ?></th>
                     <th style="min-width: 150px"><?php echo $this->lang->line("Actions"); ?></th>
                     <th><?php echo $this->lang->line("Registered"); ?></th>
@@ -58,13 +56,6 @@
   </div>
 </section>
 
-<?php
-$drop_menu = '<div class="btn-group dropleft float-right"><button type="button" class="btn btn-primary btn-lg dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">  '.$this->lang->line("Options").'  </button>  <div class="dropdown-menu dropleft"> <a class="dropdown-item has-icon send_email_ui pointer"><i class="fas fa-paper-plane"></i> '.$this->lang->line("Send Email").'</a> <a class="dropdown-item has-icon" href="'.base_url('admin/login_log').'"><i class="fas fa-history"></i> '.$this->lang->line("Login Log").'</a>';
-if($this->session->userdata('license_type') == 'double')
-  $drop_menu .= '<a target="_BLANK" class="dropdown-item has-icon" href="'.base_url('dashboard/index/system').'"><i class="fas fa-tachometer-alt"></i> '.$this->lang->line("System Dashboard").'</a><a target="_BLANK" class="dropdown-item has-icon" href="'.base_url('admin/activity_log').'"><i class="fas fa-history"></i> '.$this->lang->line("User Activity Log").'</a>';
-$drop_menu .= '</div> </div>';
-?> 
-
 
 
 <script>       
@@ -73,11 +64,6 @@ $drop_menu .= '</div> </div>';
     $(document).ready(function() {
 
       $('div.note-group-select-from-files').remove();
-
-      var drop_menu = '<?php echo $drop_menu;?>';
-      setTimeout(function(){ 
-        $("#mytable_filter").append(drop_menu); 
-      }, 2000);
       
       var perscroll;
       var table = $("#mytable").DataTable({
@@ -87,7 +73,7 @@ $drop_menu .= '</div> </div>';
           order: [[ 2, "desc" ]],
           pageLength: 10,
           ajax: {
-              "url": base_url+'admin/user_manager_data',
+              "url": base_url+'member/user_manager_data',
               "type": 'POST'
           },
           language: 
@@ -169,7 +155,7 @@ $drop_menu .= '</div> </div>';
         var user_id =  $("#putid").val();
         var password =  $("#password").val();
         var confirm_password =  $("#confirm_password").val();
-        var csrf_token = $("#csrf_token").val();
+
         password = password.trim();
         confirm_password = confirm_password.trim();
 
@@ -199,7 +185,7 @@ $drop_menu .= '</div> </div>';
         url: base_url+'admin/change_user_password_action',
         type: 'POST',
         dataType: 'JSON',
-        data: {user_id:user_id,password:password,confirm_password:confirm_password,csrf_token:csrf_token},
+        data: {user_id:user_id,password:password,confirm_password:confirm_password},
           success:function(response)
           {
             $("#save_change_password_button").removeClass("btn-progress");
@@ -236,8 +222,7 @@ $drop_menu .= '</div> </div>';
                 
         var subject=$("#subject").val();
         var message=$("#message").val(); 
-        var csrf_token = $("#csrf_token").val();
-        
+
         var user_ids = [];
         $(".datatableCheckboxRow:checked").each(function ()
         {
@@ -276,7 +261,7 @@ $drop_menu .= '</div> </div>';
         context: this,
         type:'POST' ,
         url: "<?php echo site_url(); ?>admin/send_email_member",
-        data:{message:message,user_ids:user_ids,subject:subject,csrf_token:csrf_token},
+        data:{message:message,user_ids:user_ids,subject:subject},
         success:function(response){
           $(this).removeClass('btn-progress');                  
           $("#show_message").addClass("alert alert-primary");

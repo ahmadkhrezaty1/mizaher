@@ -34,6 +34,15 @@ class Home extends CI_Controller
     public $app_product_id;
     public $APP_VERSION;
 
+    public $is_botinboxer_exist=false;
+    public $is_broadcaster_exist=false;
+    public $is_drip_campaigner_exist=false;
+    public $is_messenger_bot_import_export_exist=false;
+    public $is_messenger_bot_analytics_exist=false;
+    public $is_engagement_exist=false;
+    public $is_ultrapost_exist=false;
+    public $is_webview_exist=false;
+    public $is_group_posting_exist=false;
 
     public function __construct()
     {
@@ -67,15 +76,13 @@ class Home extends CI_Controller
         ignore_user_abort(TRUE);
 
         $seg = $this->uri->segment(2);
-
-        if ($seg!="installation" && $seg!= "installation_action" && $seg!="central_webhook_callback" && $seg!="webhook_callback_main" ) {
+        if ($seg!="installation" && $seg!= "installation_action") {
             if (file_exists(APPPATH.'install.txt')) {
                 redirect('home/installation', 'location');
             }
         }
 
-        //if($seg!="central_webhook_callback" && $seg!="webhook_callback_main")
-        if ($seg!="installation" && $seg!= "installation_action") {
+        if (!file_exists(APPPATH.'install.txt')) {
             $this->load->database();
             $this->load->model('basic');
             $this->_time_zone_set();
@@ -84,22 +91,13 @@ class Home extends CI_Controller
             $this->load->helper('security');
             $this->upload_path = realpath(APPPATH . '../upload');
             $this->session->unset_userdata('set_custom_link');
-
-          /*  $query = 'SET SESSION group_concat_max_len=9990000000000000000';
-            $this->db->query($query); */
-
-            /*
+            $query = 'SET SESSION group_concat_max_len=9990000000000000000';
+            $this->db->query($query);
             $q= "SET SESSION wait_timeout=50000";
-            $this->db->query($q); */
-
-
+            $this->db->query($q);
             /**Disable STRICT_TRANS_TABLES mode if exist on mysql ***/
-
-            
             $query="SET SESSION sql_mode = ''";
-            $this->db->query($query); 
-        
-
+            $this->db->query($query);
             
             /**Change Datbase Collation **/
             $query="SET NAMES utf8mb4";
@@ -107,34 +105,71 @@ class Home extends CI_Controller
             
             
             //loading addon language
-            //$this->language_loader_addon();
-
-           /*
+            $this->language_loader_addon();
 
             if(function_exists('ini_set')){
-           		ini_set('memory_limit', '-1');
-            } 
+            ini_set('memory_limit', '-1');
+            }
 
-            */
+            $ad_config = $this->basic->get_data("ad_config");
+            if(isset($ad_config[0]["status"]))
+            {
+               if($ad_config[0]["status"]=="1")
+               {
+                    $this->is_ad_enabled = ($ad_config[0]["status"]=="1") ? true : false;
+                    if($this->is_ad_enabled)
+                    {
+                        $this->is_ad_enabled1 = ($ad_config[0]["section1_html"]=="" && $ad_config[0]["section1_html_mobile"]=="") ? false : true;
+                        $this->is_ad_enabled2 = ($ad_config[0]["section2_html"]=="") ? false : true;
+                        $this->is_ad_enabled3 = ($ad_config[0]["section3_html"]=="") ? false : true;
+                        $this->is_ad_enabled4 = ($ad_config[0]["section4_html"]=="") ? false : true;
 
+                        $this->ad_content1          = htmlspecialchars_decode($ad_config[0]["section1_html"],ENT_QUOTES);
+                        $this->ad_content1_mobile   = htmlspecialchars_decode($ad_config[0]["section1_html_mobile"],ENT_QUOTES);
+                        $this->ad_content2          = htmlspecialchars_decode($ad_config[0]["section2_html"],ENT_QUOTES);
+                        $this->ad_content3          = htmlspecialchars_decode($ad_config[0]["section3_html"],ENT_QUOTES);
+                        $this->ad_content4          = htmlspecialchars_decode($ad_config[0]["section4_html"],ENT_QUOTES);
+                    }
+               }
+
+            }
+            else
+            {
+                $this->is_ad_enabled  = true;
+                $this->is_ad_enabled1 = true;
+                $this->is_ad_enabled2 = true;
+                $this->is_ad_enabled3 = true;
+                $this->is_ad_enabled4 = true;
+
+                $this->ad_content1="<img src='".base_url('assets/images/placeholder/reserved-section-1.png')."'>";
+                $this->ad_content1_mobile="<img src='".base_url('assets/images/placeholder/reserved-section-1-mobile.png')."'>";
+                $this->ad_content2="<img src='".base_url('assets/images/placeholder/reserved-section-2.png')."'>";
+                $this->ad_content3="<img src='".base_url('assets/images/placeholder/reserved-section-3.png')."'>";
+                $this->ad_content4="<img src='".base_url('assets/images/placeholder/reserved-section-4.png')."'>";
+
+            }
 
             if ($this->session->userdata('logged_in') == 1 && $this->session->userdata('user_type') != 'Admin')
             {
-                $user = get_user_date();
                 $package_info=$this->session->userdata("package_info");
-                if($user->package_edited == 1){
-                    $package_info['module_ids'] = $user->module_ids;
-                    $package_info['monthly_limit'] = $user->monthly_limit;
-                    $package_info['bulk_limit'] = $user->bulk_limit;
-                    $this->session->set_userdata('package_info', $package_info);
-                }
                 $module_ids='';
                 if(isset($package_info["module_ids"])) $module_ids=$package_info["module_ids"];
                 $this->module_access=explode(',', $module_ids);
             }
 
-            
-            
+            $version_data=$this->basic->get_data("version",array("where"=>array("current"=>"1")));
+            $appversion=isset($version_data[0]['version']) ? $version_data[0]['version'] : "";
+            $this->APP_VERSION=$appversion;
+
+            $this->is_botinboxer_exist=$this->botinboxer_exist();  
+            $this->is_broadcaster_exist=$this->broadcaster_exist();  
+            $this->is_drip_campaigner_exist=$this->drip_campaigner_exist();  
+            $this->is_messenger_bot_import_export_exist=$this->messenger_bot_import_export_exist();  
+            $this->is_messenger_bot_analytics_exist=$this->messenger_bot_analytics_exist();
+            $this->is_engagement_exist=$this->engagement_exist();
+            $this->is_ultrapost_exist=$this->ultrapost_exist();
+            $this->is_webview_exist=$this->webview_exist();
+            $this->is_group_posting_exist=$this->group_posting_exist();
         }  
 
         if($this->config->item('force_https')=='1')  
@@ -150,12 +185,14 @@ class Home extends CI_Controller
 
         if($this->session->userdata('log_me_out') == '1') $this->logout();
 
-        if($this->session->userdata('csrf_token_session')=="")
-             $this->session->set_userdata('csrf_token_session',  bin2hex(random_bytes(32)));
+        
     }
 
 
-
+public function close_offer()
+    {
+        $this->session->set_userdata('close_offer','yes');
+    }
 
     public function _language_loader()
     {
@@ -853,14 +890,11 @@ class Home extends CI_Controller
         else
             $body_load = "site/default/theme_front";
 
-        if(file_exists(APPPATH.'core/licence_type.txt'))
-            $this->license_check_action();
-
         $this->load->view($body_load, $data);
     }
 
     public function _viewcontroller($data=array())
-    {	
+    {
         if (!isset($data['body'])) {
             $data['body']=$this->config->item('default_page_url');
         }
@@ -933,30 +967,6 @@ class Home extends CI_Controller
 
     public function _site_viewcontroller($data=array())
     {
-
-    	$ad_config = $this->basic->get_data("ad_config");
-        if(isset($ad_config[0]["status"]))
-        {
-           if($ad_config[0]["status"]=="1")
-           {
-                $this->is_ad_enabled = ($ad_config[0]["status"]=="1") ? true : false;
-                if($this->is_ad_enabled)
-                {
-                    $this->is_ad_enabled1 = ($ad_config[0]["section1_html"]=="" && $ad_config[0]["section1_html_mobile"]=="") ? false : true;
-                    $this->is_ad_enabled2 = ($ad_config[0]["section2_html"]=="") ? false : true;
-                    $this->is_ad_enabled3 = ($ad_config[0]["section3_html"]=="") ? false : true;
-                    $this->is_ad_enabled4 = ($ad_config[0]["section4_html"]=="") ? false : true;
-
-                    $this->ad_content1          = htmlspecialchars_decode($ad_config[0]["section1_html"],ENT_QUOTES);
-                    $this->ad_content1_mobile   = htmlspecialchars_decode($ad_config[0]["section1_html_mobile"],ENT_QUOTES);
-                    $this->ad_content2          = htmlspecialchars_decode($ad_config[0]["section2_html"],ENT_QUOTES);
-                    $this->ad_content3          = htmlspecialchars_decode($ad_config[0]["section3_html"],ENT_QUOTES);
-                    $this->ad_content4          = htmlspecialchars_decode($ad_config[0]["section4_html"],ENT_QUOTES);
-                }
-           }
-
-        }
-
         if (!isset($data['page_title'])) {
             $data['page_title']="";
         }
@@ -1008,9 +1018,6 @@ class Home extends CI_Controller
         else
             $body_load = "site/default/index";
 
-        if(file_exists(APPPATH.'core/licence_type.txt'))
-            $this->license_check_action();
-
         $this->load->view($body_load, $data);
     }
 
@@ -1018,7 +1025,6 @@ class Home extends CI_Controller
 
     public function login_page()
     {
-        $this->is_group_posting_exist=$this->group_posting_exist();
         if (file_exists(APPPATH.'install.txt'))
         {
             redirect('home/installation', 'location');
@@ -1058,7 +1064,6 @@ class Home extends CI_Controller
 
     public function login() //loads home view page after login (this )
     {
-        $this->is_group_posting_exist=$this->group_posting_exist();
         $is_mobile = '0';
         if(is_mobile()) $is_mobile = '1';
         $this->session->set_userdata("is_mobile",$is_mobile);
@@ -1100,10 +1105,7 @@ class Home extends CI_Controller
 
         else
         {
-            $this->csrf_token_check();
-
-
-            $username = strip_tags($this->input->post('username', true));
+            $username = $this->input->post('username', true);
             $password = md5($this->input->post('password', true));
 
             $table = 'users';
@@ -1279,21 +1281,6 @@ class Home extends CI_Controller
                 $package_info_session=$package_info[0];
                 $this->session->set_userdata('package_info', $package_info_session);
                 $this->session->set_userdata('current_package_id',0);
-
-                if (get_user_date())
-                {
-                    $user = get_user_date();
-                    $package_info=$this->session->userdata("package_info");
-                    if($user->package_edited == 1){
-                        $package_info['module_ids'] = $user->module_ids;
-                        $package_info['monthly_limit'] = $user->monthly_limit;
-                        $package_info['bulk_limit'] = $user->bulk_limit;
-                        $this->session->set_userdata('package_info', $package_info);
-                    }
-                    $module_ids='';
-                    if(isset($package_info["module_ids"])) $module_ids=$package_info["module_ids"];
-                    $this->module_access=explode(',', $module_ids);
-                }
 
                 $login_ip=$this->real_ip();
 
@@ -1534,17 +1521,6 @@ class Home extends CI_Controller
                 $package_info_session=$package_info[0];
                 $this->session->set_userdata('package_info', $package_info_session);
                 $this->session->set_userdata('current_package_id',$package_info_session["id"]);
-                if (get_user_date())
-                {
-                    $user = get_user_date();
-                    $package_info=$this->session->userdata("package_info");
-                    if($user->package_edited == 1){
-                        $package_info['module_ids'] = $user->module_ids;
-                        $package_info['monthly_limit'] = $user->monthly_limit;
-                        $package_info['bulk_limit'] = $user->bulk_limit;
-                        $this->session->set_userdata('package_info', $package_info);
-                    }
-                }
 
                 $this->basic->update_data("users",array("id"=>$user_id),array("last_login_at"=>date("Y-m-d H:i:s")));
 
@@ -1961,18 +1937,6 @@ class Home extends CI_Controller
                 $this->session->set_userdata('current_package_id',$package_info_session["id"]);
 
                 $this->basic->update_data("users",array("id"=>$user_id),array("last_login_at"=>date("Y-m-d H:i:s")));
-
-                if (get_user_date())
-                {
-                    $user = get_user_date();
-                    $package_info=$this->session->userdata("package_info");
-                    if($user->package_edited == 1){
-                        $package_info['module_ids'] = $user->module_ids;
-                        $package_info['monthly_limit'] = $user->monthly_limit;
-                        $package_info['bulk_limit'] = $user->bulk_limit;
-                        $this->session->set_userdata('package_info', $package_info);
-                    }
-                }
 
                 if ($this->session->userdata('logged_in') == 1 && $this->session->userdata('user_type') == 'Admin')
                 {
@@ -2654,163 +2618,6 @@ class Home extends CI_Controller
         echo json_encode(array('first_dropdown'=>$str,'second_dropdown'=>$str2,"pageinfo"=>$page_info,"push_postback"=>$push_postback));
     }
 
-    public function get_otn_broadcast_summary()
-    {
-        if($this->session->userdata('logged_in') != 1) exit();
-        $this->ajax_check();
-        $page_id=$this->input->post('page_id');// database id
-        $user_gender=$this->input->post('user_gender');
-        $user_time_zone=$this->input->post('user_time_zone');
-        $user_locale=$this->input->post('user_locale');
-        $load_label=$this->input->post('load_label');
-        $load_otn_postback=$this->input->post('load_otn_postback');
-        $otn_postback_ids=$this->input->post('otn_postback_ids');
-        $label_ids=$this->input->post('label_ids');
-        $excluded_label_ids=$this->input->post('excluded_label_ids');
-        $is_bot_subscriber=$this->input->post('is_bot_subscriber');
-        $broadcast_type=$this->input->post('broadcast_type');
-        $hidden_id=$this->input->post('hidden_id');
-
-        $postback_ids_array = [];
-        $label_ids_array = [];
-        $exclude_label_array = [];
-        if($hidden_id != '0')
-        {
-            $campaign_data = $this->basic->get_data('messenger_bot_broadcast_serial',['where'=>['id'=>$hidden_id,'user_id'=>$this->user_id]],['otn_postback_id','label_ids','excluded_label_ids']);
-            $postback_ids_array = explode(',', $campaign_data[0]['otn_postback_id']);
-            $label_ids_array = explode(',', $campaign_data[0]['label_ids']);
-            $exclude_label_array = explode(',', $campaign_data[0]['excluded_label_ids']);
-
-        }
-
-
-        if(!isset($label_ids) || !is_array($label_ids)) $label_ids =array();
-        if(!isset($excluded_label_ids) || !is_array($excluded_label_ids)) $excluded_label_ids =array();
-        if(!isset($otn_postback_ids) || !is_array($otn_postback_ids)) $otn_postback_ids =array();
-
-        $table_type = 'messenger_bot_broadcast_contact_group';
-        $where_type['where'] = array('user_id'=>$this->user_id,"page_id"=>$page_id,"unsubscribe"=>"0","invisible"=>"0");
-        $info_type = $this->basic->get_data($table_type,$where_type,$select='', $join='', $limit='', $start='', $order_by='group_name');
-
-        $result = array();
-        date_default_timezone_set('UTC');
-        $current_time  = date("Y-m-d H:i:s");
-        $previous_time = date("Y-m-d H:i:s",strtotime('-23 hour',strtotime($current_time)));
-        $this->_time_zone_set();
-        $dropdown=array();
-        $str = $str2 = "";
-        $otn_postback_str = '';
-        if($load_otn_postback == '1')
-        {
-            $otn_postback_str .= '<script>$("#otn_postback_ids").select2();</script> ';
-            $otn_postback_str .= '<select multiple="multiple"  class="form-control" id="otn_postback_ids" name="otn_postback_ids[]">';
-            $otn_postback_info = $this->basic->get_data('otn_postback',['where'=>['page_id'=>$page_id,'user_id'=>$this->user_id]],['id','template_name']);
-            foreach($otn_postback_info as $value)
-            {
-                $selected = '';
-                if(in_array($value['id'], $postback_ids_array)) $selected = 'selected';
-                $otn_postback_str.=  "<option value='".$value['id']."' ".$selected.">".$value['template_name']."</option>";
-            }
-            $otn_postback_str.= '</select>';
-        }
-
-        if($load_label=='1')
-        {
-            $str='<script>$("#label_ids").select2();</script> ';
-            $str2='<script>$("#excluded_label_ids").select2();</script> ';
-            $str .='<select multiple="multiple"  class="form-control" id="label_ids" name="label_ids[]">';
-            $str2.='<select multiple="multiple"  class="form-control" id="excluded_label_ids" name="excluded_label_ids[]">';        
-
-            foreach ($info_type as  $value)
-            {    
-                $selected = '';
-                if(in_array($value['id'], $label_ids_array)) $selected = 'selected';
-
-                $selected2 = '';
-                if(in_array($value['id'], $exclude_label_array)) $selected2 = 'selected';
-
-                $str.=  "<option value='".$value['id']."' ".$selected." >".$value['group_name']."</option>";
-                $str2.= "<option value='".$value['id']."' ".$selected2." >".$value['group_name']."</option>"; 
-            }
-
-            $str.= '</select>';
-            $str2.='</select>';
-        }
-
-        $pageinfo = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("id"=>$page_id,"user_id"=>$this->user_id)));
-        $page_info = isset($pageinfo[0])?$pageinfo[0]:array();
-
-        if(isset($page_info['page_access_token'])) unset($page_info['page_access_token']);
-
-        $subscriber_count = 0;
-
-        if($is_bot_subscriber=='1') $where_simple2 =array("messenger_bot_subscriber.page_table_id"=>$page_id,'is_bot_subscriber'=> '1','unavailable'=>'0','user_id'=>$this->user_id,'permission'=>'1');
-        else $where_simple2 =array("messenger_bot_subscriber.page_table_id"=>$page_id,'client_thread_id !='=> '','user_id'=>$this->user_id,'permission'=>'1','unavailable_conversation'=>'0');
-
-        if(isset($user_gender) && $user_gender!="")  $where_simple2['messenger_bot_subscriber.gender'] = $user_gender;
-        if(isset($user_time_zone) && $user_time_zone!="")  $where_simple2['messenger_bot_subscriber.timezone'] = $user_time_zone;
-        if(isset($user_locale) && $user_locale!="")  $where_simple2['messenger_bot_subscriber.locale'] = $user_locale;
-
-        if(isset($broadcast_type) && ($broadcast_type=='24H Promo' || $broadcast_type=='24+1 Promo'))  // bulk bradcast
-        {
-            if($broadcast_type=='24H Promo') $where_simple2['messenger_bot_subscriber.last_subscriber_interaction_time >'] = $previous_time;
-            else if($broadcast_type=='24+1 Promo')
-            {
-                $where_simple2['messenger_bot_subscriber.last_subscriber_interaction_time <'] = $previous_time;
-                $where_simple2['messenger_bot_subscriber.is_24h_1_sent'] = '0';
-            }
-        }
-        
-        $sql_part = "";
-        if($load_label=='0')
-        {
-           if(count($label_ids)>0) $sql_part="("; else $sql_part="";        
-           $sql_part_array=array();
-           foreach ($label_ids as $key => $value) 
-           {
-              $sql_part_array[]="FIND_IN_SET('".$value."',contact_group_id) !=0";
-           }
-           $sql_part.=implode(' OR ', $sql_part_array);
-           if(count($label_ids)>0) $sql_part.=")";
-           if($sql_part!="") $this->db->where($sql_part);
-
-           foreach ($excluded_label_ids as $key => $value) 
-           {
-              $sq="NOT FIND_IN_SET('".$value."',contact_group_id) !=0";
-              $this->db->where($sq);
-           }
-        }
-
-        if(!empty($otn_postback_ids))
-        {
-            $this->db->where_in('otn_optin_subscriber.otn_id',$otn_postback_ids);
-        }
-
-        $where_simple2['otn_optin_subscriber.is_sent'] = '0';
-        $where2 = array('where'=>$where_simple2);
-        $join = ['messenger_bot_subscriber'=>'otn_optin_subscriber.subscriber_id=messenger_bot_subscriber.subscribe_id,left'];
-        $bot_subscriber=$this->basic->get_data("otn_optin_subscriber",$where2,'count(messenger_bot_subscriber.id) as subscriber_count',$join);
-        $subscriber_count = isset($bot_subscriber[0]['subscriber_count'])? $bot_subscriber[0]['subscriber_count'] : 0;
-        $page_info['subscriber_count'] = $subscriber_count;
-
-        $push_postback="";
-        $total_subscriber_count = 0;
-        if($is_bot_subscriber=='1')
-        {
-            $postback_data=$this->basic->get_data("messenger_bot_postback",array("where"=>array("page_id"=>$page_id,'is_template'=>'1','template_for'=>'reply_message')),'','','',$start=NULL,$order_by='template_name ASC');
-            foreach ($postback_data as $key => $value) 
-            {
-                $push_postback.="<option value='".$value['postback_id']."'>".$value['template_name'].' ['.$value['postback_id'].']'."</option>";
-            }
-            $total_bot_subscriber=$this->basic->get_data("otn_optin_subscriber",array("where"=>array("messenger_bot_subscriber.page_table_id"=>$page_id,'otn_optin_subscriber.is_sent'=>'0','is_bot_subscriber'=> '1','user_id'=>$this->user_id,'permission'=>'1')),'count(messenger_bot_subscriber.id) as total_subscriber_count',$join);
-            $total_subscriber_count = isset($total_bot_subscriber[0]['total_subscriber_count'])? $total_bot_subscriber[0]['total_subscriber_count'] : 0;
-        }
-        $page_info['total_subscriber_count'] = $total_subscriber_count;
-
-        echo json_encode(array('first_dropdown'=>$str,'second_dropdown'=>$str2,"pageinfo"=>$page_info,"push_postback"=>$push_postback,'otn_postback_str'=>$otn_postback_str));
-    }
-
-
     protected function currecny_list_all()
     {
         $list =  array
@@ -2978,13 +2785,13 @@ class Home extends CI_Controller
             "ZMW"=> "Zambian kwacha",
             "ZWL"=> "Zimbabwean dollar"
         );
-        asort($list);
-        $return = array();
-        foreach ($list as $key => $val) 
-        {
-            $return[$key] = $val;
-        }
-        return $return;
+    asort($list);
+    $return = array();
+    foreach ($list as $key => $val) 
+    {
+        $return[$key] = $val;
+    }
+    return $return;
     }
 
     protected function currency_icon()
@@ -3408,7 +3215,7 @@ class Home extends CI_Controller
 
             if($test_mail == 1) $email_sending_option = 'smtp';
 
-          //  if($smtp != '1') $message=$message."<br/><br/>".$this->lang->line("The email was sent by"). ": ".$from;
+            $message=$message."<br/><br/>".$this->lang->line("The email was sent by"). ": ".$from;
 
             if($email_sending_option == 'smtp')
             {
@@ -3438,9 +3245,8 @@ class Home extends CI_Controller
                       'mailtype' => 'html',
                       'charset' => 'utf-8',
                       'newline' =>  "\r\n",
-                      'set_crlf'=> "\r\n",
-                      'smtp_timeout' => '30',
-                      'wrapchars'   => '998'
+                      'set_crlf'=>"\r\n",
+                      'smtp_timeout' => '30'
                      );
                     if($smtp_type != 'Default')
                         $config['smtp_crypto'] = $smtp_type;
@@ -3529,9 +3335,6 @@ class Home extends CI_Controller
 
     public function sign_up_action()
     {
-        $enable_signup_activation = $this->config->item('enable_signup_activation');
-        if($enable_signup_activation == '') $enable_signup_activation='1';
-
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             redirect('home/access_forbidden', 'location');
         }
@@ -3550,7 +3353,6 @@ class Home extends CI_Controller
             }
             else
             {
-                $this->csrf_token_check();
                 $captcha = $this->input->post('captcha', TRUE);
                 if($captcha!=$this->session->userdata("sign_up_captcha"))
                 {
@@ -3559,7 +3361,7 @@ class Home extends CI_Controller
 
                 }
 
-                $name = strip_tags($this->input->post('name', TRUE));
+                $name = $this->input->post('name', TRUE);
                 $email = $this->input->post('email', TRUE);
                 // $mobile = $this->input->post('mobile', TRUE);
                 $password = $this->input->post('password', TRUE);
@@ -3589,7 +3391,6 @@ class Home extends CI_Controller
                     'expired_date'=>$expiry_date,
                     'package_id'=>$package_id
                     );
-                if($enable_signup_activation=='0') $data['status']='1';
 
                 if ($this->basic->insert_data('users', $data)) {
 
@@ -3601,41 +3402,39 @@ class Home extends CI_Controller
                     $this->send_email_to_autoresponder($mail_service_id, $email,$name,'','singnup','0',$mailchimp_list_tag);
 
                     //email to user
-                    if($enable_signup_activation=='1')
+                    $email_template_info = $this->basic->get_data("email_template_management",array('where'=>array('template_type'=>"signup_activation")),array('subject','message'));
+
+                    $url = site_url()."home/account_activation";
+                    $url_final = "<a href='".$url."' target='_BLANK'>".$url."</a>";
+
+                    $productname = $this->config->item('product_name');
+
+                    if(isset($email_template_info[0]) && $email_template_info[0]['subject'] != '' && $email_template_info[0]['message'] != '')
                     {
-                        $email_template_info = $this->basic->get_data("email_template_management",array('where'=>array('template_type'=>"signup_activation")),array('subject','message'));
-                        $url = site_url()."home/account_activation";
-                        $url_final = "<a href='".$url."' target='_BLANK'>".$url."</a>";
-                        $productname = $this->config->item('product_name');
+                        $subject = str_replace('#APP_NAME#',$productname,$email_template_info[0]['subject']);
+                        $message = str_replace(array("#APP_NAME#","#ACTIVATION_URL#","#ACCOUNT_ACTIVATION_CODE#"),array($productname,$url_final,$code),$email_template_info[0]['message']);
+                        // echo "Database Has data"; exit();
 
-                        if(isset($email_template_info[0]) && $email_template_info[0]['subject'] != '' && $email_template_info[0]['message'] != '')
-                        {
-                            $subject = str_replace('#APP_NAME#',$productname,$email_template_info[0]['subject']);
-                            $message = str_replace(array("#APP_NAME#","#ACTIVATION_URL#","#ACCOUNT_ACTIVATION_CODE#"),array($productname,$url_final,$code),$email_template_info[0]['message']);
-                            // echo "Database Has data"; exit();
-
-                        } else
-                        {
-                            $subject = $productname." | Account activation";
-                            $message = "<p>".$this->lang->line("to activate your account please perform the following steps")."</p>
-                                        <ol>
-                                            <li>".$this->lang->line("go to this url").":".$url_final."</li>
-                                            <li>".$this->lang->line("enter this code").":".$code."</li>
-                                            <li>".$this->lang->line("activate your account")."</li>
-                                        </ol>";
-                        }
-
-                        $from = $this->config->item('institute_email');
-                        $to = $email;
-                        $mask = $this->config->item("product_name");
-                        $html = 1;
-
-                        $this->_mail_sender($from, $to, $subject, $message, $mask, $html);
-
-                        $this->session->set_userdata('reg_success',1);
-                        return $this->sign_up();
+                    } else
+                    {
+                        $subject = $productname." | Account activation";
+                        $message = "<p>".$this->lang->line("to activate your account please perform the following steps")."</p>
+                                    <ol>
+                                        <li>".$this->lang->line("go to this url").":".$url_final."</li>
+                                        <li>".$this->lang->line("enter this code").":".$code."</li>
+                                        <li>".$this->lang->line("activate your account")."</li>
+                                    </ol>";
                     }
-                    else return $this->login_page();
+
+                    $from = $this->config->item('institute_email');
+                    $to = $email;
+                    $mask = $this->config->item("product_name");
+                    $html = 1;
+
+                    $this->_mail_sender($from, $to, $subject, $message, $mask, $html);
+
+                    $this->session->set_userdata('reg_success',1);
+                    return $this->sign_up();
 
                 }
 
@@ -3891,22 +3690,6 @@ class Home extends CI_Controller
             if(array_key_exists(0, $package_data))
             $package_info=$package_data[0];
             if($package_info['user_type'] == 'Admin') return "1";
-
-
-            if (get_user_date())
-            {
-                $user = get_user_date();
-                $package_info=$this->session->userdata("package_info");
-                if($user->package_edited == 1){
-                    $package_info['module_ids'] = $user->module_ids;
-                    $package_info['monthly_limit'] = $user->monthly_limit;
-                    $package_info['bulk_limit'] = $user->bulk_limit;
-                    $this->session->set_userdata('package_info', $package_info);
-                }
-                $module_ids='';
-                if(isset($package_info["module_ids"])) $module_ids=$package_info["module_ids"];
-                $this->module_access=explode(',', $module_ids);
-            }
         }
 
         if(isset($package_info["bulk_limit"]))    $bulk_limit=json_decode($package_info["bulk_limit"],true);
@@ -5063,43 +4846,7 @@ class Home extends CI_Controller
 
     }
   
-    public function multiple_assign_label($psid,$fb_page_id,$label_auto_ids)
-    {
-    
-        $label_auto_ids=explode(",",$label_auto_ids);
-        $pageinfo=$this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("page_id"=>$fb_page_id,"bot_enabled"=>"1")));
-        $page_auto_id=isset($pageinfo[0]["id"])?$pageinfo[0]["id"]:"";
-        $page_access_token=isset($pageinfo[0]["page_access_token"])?$pageinfo[0]["page_access_token"]:"";
-
-        $label_info=$this->basic->get_data("messenger_bot_broadcast_contact_group",array("where_in"=>array("id"=>$label_auto_ids)));
-        
-        $this->load->library('fb_rx_login');
-        
-        foreach($label_info as $value)
-        {
-            
-            $label_auto_id=isset($value['id'])?$value['id']:0;
-            $label_id=isset($value['label_id'])?$value['label_id']:"";
-            
-            $response= $this->fb_rx_login->assign_label($page_access_token,$psid,$label_id);
-
-            $subscriberdata=$this->basic->get_data("messenger_bot_subscriber",array("where"=>array("subscribe_id"=>$psid,"page_id"=>$fb_page_id)));
-
-            $contact_group_id=isset($subscriberdata[0]["contact_group_id"])?$subscriberdata[0]["contact_group_id"]:"";
-            $explode=explode(',', $contact_group_id);
-            array_push($explode, $label_auto_id);
-            $new=array_unique($explode);
-            $contact_group_id=implode(',', $new);
-            $contact_group_id=trim($contact_group_id,',');
-
-            $this->basic->update_data("messenger_bot_subscriber",array("subscribe_id"=>$psid,"page_id"=>$fb_page_id),array("contact_group_id"=>$contact_group_id));
-            
-        }
-
-    }
-
-
-
+   
    
     public function assign_label_webhook_call()
     {
@@ -5383,34 +5130,6 @@ class Home extends CI_Controller
       if(!$this->input->is_ajax_request()) exit();
     }
 
-    // CSRF token check from during Form Submit 
-    
-    protected function csrf_token_check()
-    {
-        $csrf_token_form=$this->input->post('csrf_token',TRUE);
-        $csrf_token_session= $this->session->userdata('csrf_token_session');
-        $ajax_resposne = json_encode(array("status"=>"0","message"=>$this->lang->line("CSRF Token Mismatch!"),"error"=>$this->lang->line("CSRF Token Mismatch!")));
-        $is_error = false;
-
-        if(is_null($csrf_token_form) || is_null($csrf_token_session)) $is_error = true;
-        else if(!hash_equals($csrf_token_form,$csrf_token_session)) $is_error = true;
-
-        if($is_error)
-        {
-            if($this->input->is_ajax_request()) echo $ajax_resposne;
-            else redirect('home/error_csrf','location');
-            exit();
-        }
-        return true;
-    }
-
-
-    public function error_csrf()
-    {
-        $this->load->view('page/csrf');
-    }
-
-
     protected function botinboxer_exist()
     {
         if($this->session->userdata('user_type') == 'Admin') return true;
@@ -5465,31 +5184,11 @@ class Home extends CI_Controller
         if($this->session->userdata('user_type') == 'Admin'  && $this->basic->is_exist("add_ons",array("project_id"=>31))) return true;
         if($this->session->userdata('user_type') == 'Member' && in_array(261,$this->module_access)) return true;
         return false;
-    } 
-
-    protected function ecommerce_exist()
-    {
-        if($this->session->userdata('user_type') == 'Admin') return true;
-        if($this->session->userdata('user_type') == 'Member' && in_array(268,$this->module_access)) return true;
-        return false;
-    } 
-
-    protected function wp_social_sharing_exist()
-    {
-        if($this->session->userdata('user_type') == 'Admin'  && $this->basic->is_exist("add_ons",array("project_id"=>39))) return true;
-        if($this->session->userdata('user_type') == 'Member' && in_array(269,$this->module_access)) return true;
-        return false;
     }
 
     protected function group_posting_exist()
     {
         if($this->basic->is_exist("add_ons",array("project_id"=>32))) return true;
-        return false;
-    }
-
-    protected function addon_exist($unique_name="")
-    {
-        if($this->basic->is_exist("add_ons",array("unique_name"=>$unique_name))) return true;
         return false;
     }
 
@@ -5503,10 +5202,7 @@ class Home extends CI_Controller
 
         else if($trigger=='trigger_webview')
             $trigger="trigger_webview_".$form_canonical_id;
-
-        if(isset($this->user_id) && $this->user_id!="")
-         $where_simple['messenger_bot_thirdparty_webhook.user_id'] = $this->user_id;
-
+        
         $where_simple['messenger_bot_thirdparty_webhook.page_id'] = $page_id;
         $where_simple['messenger_bot_thirdparty_webhook_trigger.trigger_option'] = $trigger;
         $where=array('where'=>$where_simple);
@@ -5612,7 +5308,19 @@ class Home extends CI_Controller
             /**update messenger_bot_thirdparty_webhook table for last_trigger_time **/
             $update_data_last_trigger['last_trigger_time'] = $insert_data['post_time'];
             $this->basic->update_data("messenger_bot_thirdparty_webhook",array('id'=>$webhook_id),$update_data_last_trigger);
-            
+
+
+
+            /***Delete last activity except recent 10 ***/
+
+            $lastest_activity= $this->basic->get_data("messenger_bot_thirdparty_webhook_activity",$where=array('id'=>$webhook_id),$select='',$join='',$limit='10',$start=0,$order_by='id Desc');
+
+            foreach ($lastest_activity as $last_activity_info) {
+                $last_activity_ids[]=$last_activity_info['id'];
+            }
+
+            $this->db->where_not_in('id', $last_activity_ids);
+            $this->db->delete('messenger_bot_thirdparty_webhook_activity'); 
         }
     }
 
@@ -5652,33 +5360,33 @@ class Home extends CI_Controller
     {
         $date_time=date("Y-m-d H:i:s");
 
-        $engagement_table_id= $check_box_plugin_id;
-
-        if($drip_campaign_id!="") // Means Campaign id is passed directly, no need to get it from engagement table. 
-             $where=array("where"=>array("id"=>$drip_campaign_id,"page_id"=>$PAGE_AUTO_ID)); 
-
-        else{
-            // if $drip_campaign_id isn't set , that means, we need to check if the messenger enhancers add-on is avaialble or not. 
-
-           if(!$this->addon_exist("messenger_bot_enhancers")) return true; 
-
-            $where=array("where"=>array("engagement_table_id"=>$engagement_table_id,"drip_type"=>$drip_type,"page_id"=>$PAGE_AUTO_ID)); 
-        }
-
-
-        $drip_messaging_campaign_info= $this->basic->get_data("messenger_bot_drip_campaign",$where);
         
-        $drip_campaign_id= isset($drip_messaging_campaign_info[0]['id']) ? $drip_messaging_campaign_info[0]['id']: "";
-        $user_id= isset($drip_messaging_campaign_info[0]['user_id']) ? $drip_messaging_campaign_info[0]['user_id']: "";
+        if($this->db->table_exists('messenger_bot_drip_campaign')){
 
-        if($drip_campaign_id!=""){
+            $engagement_table_id= $check_box_plugin_id;
 
-            $sql="INSERT IGNORE INTO messenger_bot_drip_campaign_assign(user_id,page_table_id,subscribe_id,messenger_bot_drip_campaign_id,drip_type,messenger_bot_drip_initial_date) 
-                VALUES('$user_id','$PAGE_AUTO_ID','$subscriber_id','$drip_campaign_id','$drip_type','$date_time');";
+            if($drip_campaign_id!="") // Means Campaign id is passed directly, no need to get it from engagement table. 
+                 $where=array("where"=>array("id"=>$drip_campaign_id,"page_id"=>$PAGE_AUTO_ID)); 
+            else
+                $where=array("where"=>array("engagement_table_id"=>$engagement_table_id,"drip_type"=>$drip_type,"page_id"=>$PAGE_AUTO_ID)); 
 
-             $this->basic->execute_complex_query($sql);
 
-        }
+            $drip_messaging_campaign_info= $this->basic->get_data("messenger_bot_drip_campaign",$where);
+            
+            $drip_campaign_id= isset($drip_messaging_campaign_info[0]['id']) ? $drip_messaging_campaign_info[0]['id']: "";
+            $user_id= isset($drip_messaging_campaign_info[0]['user_id']) ? $drip_messaging_campaign_info[0]['user_id']: "";
+
+            if($drip_campaign_id!=""){
+
+                $sql="INSERT IGNORE INTO messenger_bot_drip_campaign_assign(user_id,page_table_id,subscribe_id,messenger_bot_drip_campaign_id,drip_type,messenger_bot_drip_initial_date) 
+                    VALUES('$user_id','$PAGE_AUTO_ID','$subscriber_id','$drip_campaign_id','$drip_type','$date_time');";
+
+                 $this->basic->execute_complex_query($sql);
+
+            }
+        
+        }           
+
     }
 
 
@@ -5995,15 +5703,6 @@ class Home extends CI_Controller
                       'dependent_tables' => 'ecommerce_attribute,ecommerce_cart,ecommerce_cart_item,ecommerce_category,ecommerce_coupon,ecommerce_product,ecommerce_reminder_report',
                       'dependent_table_column' => 'store_id,store_id,store_id,store_id,store_id,store_id,store_id',
                       'module_id' => ''
-                    ),
-                    70 => 
-                    array (
-                      'table_name' => 'otn_postback',
-                      'column_name' => 'page_id',
-                      'module_id' => '',
-                      'has_dependent_table' => 'yes',
-                      'dependent_tables' => 'otn_optin_subscriber',
-                      'dependent_table_column' =>'otn_id'
                     )
                   );
       return $tables;
@@ -6315,7 +6014,6 @@ class Home extends CI_Controller
     public function user_delete_action($user_id=0)
     {
         $this->ajax_check();
-        $this->csrf_token_check();
 
         if($this->is_demo == '1' && $this->session->userdata('user_type')=="Admin")
         {
@@ -6455,9 +6153,7 @@ class Home extends CI_Controller
               'mailtype' => 'html',
               'charset' => 'utf-8',
               'newline' =>"\r\n",
-              'set_crlf'=> "\r\n",
-              'smtp_timeout'=>'30',
-              'wrapchars'   => '998'
+              'smtp_timeout'=>'30'
             );
 
             if($smtp_type != 'Default')
@@ -6743,70 +6439,6 @@ class Home extends CI_Controller
 
             }
         }   
-    }
-
-    // Create labels and push them into dropdown
-    public function common_create_label_and_assign()
-    {
-        $this->ajax_check();
-        $this->load->library("fb_rx_login"); 
-
-        $page_table_id = $this->input->post("page_id",true);
-        $label_name = $this->input->post("label_name",true);
-
-        $getdata = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("id"=>$page_table_id)));      
-        $page_access_token = isset($getdata[0]['page_access_token'])?$getdata[0]['page_access_token']:"";
-
-        $is_exists = $this->basic->get_data("messenger_bot_broadcast_contact_group",array("where"=>array("page_id"=>$page_table_id,"group_name"=>$label_name)));
-
-        if(isset($is_exists[0]))
-        {
-           $insert_id = $is_exists[0]['id'];
-           $label_id = $is_exists[0]['label_id'];
-
-        } else {
-            
-            $response=$this->fb_rx_login->create_label($page_access_token,$label_name);
-
-            if(isset($response['error']) && !empty($response['error'])) {
-                echo json_encode(["error"=>$response['error']['message']]);
-                exit;
-            }
-            $label_id=isset($response['id']) ? $response['id'] : "";
-            $this->basic->insert_data("messenger_bot_broadcast_contact_group",array("page_id"=>$page_table_id,"group_name"=>$label_name,"user_id"=>$this->user_id,"label_id"=>$label_id));
-            $insert_id = $this->db->insert_id();
-        }
-
-        echo json_encode(array('id'=>$insert_id,"text"=>$label_name));
-    }
-
-    public function common_get_postback()
-    {
-        if(!$_POST) exit();
-        $is_from_add_button=$this->input->post('is_from_add_button');
-        $page_id=$this->input->post('page_id');// database id      
-        $order_by=$this->input->post('order_by');     
-        if($order_by=="") $order_by="id DESC";
-        else $order_by=$order_by." ASC";
-        $postback_data=$this->basic->get_data("messenger_bot_postback",array("where"=>array("page_id"=>$page_id,"is_template"=>"1",'template_for'=>'reply_message')),'','','',$start=NULL,$order_by);
-        $push_postback="";
-
-        if($is_from_add_button=='0')
-        {
-            $push_postback.="<option value=''>".$this->lang->line("Select")."</option>";
-        }
-        
-        foreach ($postback_data as $key => $value) 
-        {
-            $push_postback.="<option value='".$value['id']."'>".$value['template_name'].' ['.$value['postback_id'].']'."</option>";
-        }
-
-        if($is_from_add_button=='1' || $is_from_add_button=='')
-        {
-            $push_postback.="<option value=''>".$this->lang->line("Select")."</option>";
-        }
-
-        echo $push_postback;   
     }
 
 

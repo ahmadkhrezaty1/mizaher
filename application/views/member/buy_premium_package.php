@@ -21,20 +21,22 @@
           <div class="pricing <?php if($pack['highlight']=='1') echo 'pricing-highlight';?>">
             
             <div class="">
+				  
+										 
               <div class="pricing-price">
                 <div><?php echo $curency_icon; ?></sup><?php echo $pack["premium_price"]?></div>
                 <div><?php echo $this->lang->line("الصلاحية لكل مستخدم :    "); ?><?php echo $pack["premium_days"]?> يوم </div>
                 <div><?php echo $this->lang->line("عدد المستخدمين :  "); ?><?php echo $pack["premium_users"]?>  مستخدمين</div>
               </div>
               <div class="">
-                <div class="card" style="width: 17rem;">
+                 <div class="card" style="width: 280px;">
                   <?php
                     $src = base_url().'upload/package/default.jpg';
                     if(!empty($pack["package_premium_photo"])){
                       $src = base_url().$pack["package_premium_photo"];
                     }
                   ?>
-                  <img style="width: 300px; height: 200px" src="<?php echo $src ?>">
+                  <img style="width: 280px; height: 200px" src="<?php echo $src ?>">
                   <div class="card-body"> 
                     <div class="pricing-title">
                       <?php echo $pack["premium_name"]; ?>

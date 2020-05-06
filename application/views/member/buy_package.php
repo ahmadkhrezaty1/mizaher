@@ -7,6 +7,7 @@
     </div>
     <div class="section-header-breadcrumb">
       <div class="breadcrumb-item">باقات منصة ميلانا بروجكيت للمستخدمين</a></div>
+																	   
     </div>
   </div>
 
@@ -21,6 +22,8 @@
           <div class="pricing <?php if($pack['highlight']=='1') echo 'pricing-highlight';?>">
 
             <div class="">
+				  
+										 
               <div class="pricing-price">
                 <div><?php echo $curency_icon; ?></sup><?php echo $pack["price"]?></div>
                 <div><?php echo $pack["validity"]?> <?php echo $this->lang->line("days"); ?></div>
@@ -34,7 +37,7 @@
                     $src = base_url().$pack["package_photo"];
                   }
                 ?>
-                <img style="width: 300px; height: 200px" src="<?php echo $src ?>">
+                <img style="width: 271px; height: 200px" src="<?php echo $src ?>">
                 <div class="card-body"> 
                   <div class="pricing-title">
                     <?php echo $pack["package_name"]; ?>
@@ -216,6 +219,18 @@
 
     function get_payment_button(package) 
     {
+						   
+							  
+			
+		
+					  
+								 
+												 
+									
+			
+									
+												 
+			
                
                   
                   

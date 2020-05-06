@@ -3,7 +3,7 @@
     <h1><i class="fas fa-edit"></i> <?php echo $page_title; ?></h1>
     <div class="section-header-breadcrumb">
       <div class="breadcrumb-item"><?php echo $this->lang->line("Subscription"); ?></div>
-      <div class="breadcrumb-item active"><a href="<?php echo base_url('admin/user_manager'); ?>"><?php echo $this->lang->line("User Manager"); ?></a></div>
+      <div class="breadcrumb-item active"><a href="<?php echo base_url('member/user_manager'); ?>"><?php echo $this->lang->line("User Manager"); ?></a></div>
       <div class="breadcrumb-item"><?php echo $page_title; ?></div>
     </div>
   </div>
@@ -13,8 +13,7 @@
   <div class="row">
     <div class="col-12">
 
-      <form class="form-horizontal" action="<?php echo site_url().'admin/edit_user_action';?>" method="POST">
-          <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
+      <form class="form-horizontal" action="<?php echo site_url().'member/edit_user_action';?>" method="POST">
         <div class="card">
           <div class="card-body">
 
@@ -62,20 +61,15 @@
                             <span class="custom-switch-description"><?php echo $this->lang->line('Member'); ?></span>
                           </label>
                         </div>    
+                      <!--
                         <div class="col-6 col-md-4">
                           <label class="custom-switch">
                             <input type="radio" name="user_type" id="manager" value="Member" <?php if($xdata['user_type']=='Member' and $xdata['manager_type']!='') echo 'checked'; ?> class="user_type custom-switch-input">
                             <span class="custom-switch-indicator"></span>
                             <span class="custom-switch-description"><?php echo $this->lang->line('Manager'); ?></span>
                           </label>
-                        </div> 
-                        <div class="col-6 col-md-4">
-                          <label class="custom-switch">
-                            <input type="radio" name="user_type" id="member" value="Admin"  <?php if($xdata['user_type']=='Admin') echo 'checked'; ?> class="user_type custom-switch-input">
-                            <span class="custom-switch-indicator"></span>
-                            <span class="custom-switch-description"><?php echo $this->lang->line('Admin'); ?></span>
-                          </label>
-                        </div>   
+                        </div>  
+                      -->
                       </div>                                  
                     </div>
                     <span class="red"><?php echo form_error('user_type'); ?></span>
@@ -96,28 +90,32 @@
             </div>
 
             <div class="row" id="hidden">
-              <div class="col-6">
-                <div class="form-group">
-                  <label for="package_id"> <?php echo $this->lang->line("Package")?> *</label>
-                  <?php 
-                    $default_package = $xdata['package_id'];
-                    if($default_package=='0') $default_package = '1';
-                  ?>
-                  <?php echo form_dropdown('package_id', $packages, $default_package,'class="form-control select2" style="width:100%;"'); ?>                  
-                  <span class="red"><?php echo form_error('package_id'); ?></span>
+              <?php if(!is_manager_3()){ ?>
+                <div class="col-6">
+                  <div class="form-group">
+                    <label for="package_id"> <?php echo $this->lang->line("Package")?> *</label>
+                    <?php 
+                      $default_package = $xdata['package_id'];
+                      if($default_package=='0') $default_package = '1';
+                    ?>
+                    <?php echo form_dropdown('package_id', $packages, $default_package,'class="form-control select2" style="width:100%;"'); ?>                  
+                    <span class="red"><?php echo form_error('package_id'); ?></span>
+                  </div>
                 </div>
-              </div>
-              <div class="col-6">
-                <div class="form-group">
-                  <label for="expired_date"> <?php echo $this->lang->line("Expiry Date")?> *</label>
-                  <?php 
-                    $default_date = $xdata['expired_date'];
-                    if($default_date=='0000-00-00 00:00:00') $default_date = '';
-                  ?>
-                  <input name="expired_date" value="<?php echo $default_date;?>"  required class="form-control datepicker" type="text">
-                  <span class="red"><?php echo form_error('expired_date'); ?></span>
+              <?php } ?>
+              <?php if(!is_manager_3() and !is_manager_2()){ ?>
+                <div class="col-6">
+                  <div class="form-group">
+                    <label for="expired_date"> <?php echo $this->lang->line("Expiry Date")?> *</label>
+                    <?php 
+                      $default_date = $xdata['expired_date'];
+                      if($default_date=='0000-00-00 00:00:00') $default_date = '';
+                    ?>
+                    <input name="expired_date" value="<?php echo $default_date;?>"  required class="form-control datepicker" type="text">
+                    <span class="red"><?php echo form_error('expired_date'); ?></span>
+                  </div>
                 </div>
-              </div>
+              <?php } ?>
             </div>
 
             <div class="row" id="hidden_manager">
@@ -129,19 +127,13 @@
                     <span class="custom-switch-description"><?php echo $this->lang->line('Manager 1'); ?></span>
                   </label>
                 </div>   
-
-                <div class="col-6 col-md-4 mb-5 mt-5">
+                <div class="col-6 col-md-4">
                   <label class="custom-switch">
                     <input type="radio" name="manager_type" id="Manager_2" value="Manager 2"  <?php if($xdata['manager_type']=='Manager 2') echo 'checked'; ?> class="manager_type custom-switch-input">
                     <span class="custom-switch-indicator"></span>
                     <span class="custom-switch-description"><?php echo $this->lang->line('Manager 2'); ?></span>
                   </label>
-                  <div class="form-group">
-                    <label for="users"> <?php echo $this->lang->line("Number of users")?> </label>
-                    <input name="users" value="<?php echo $xdata['users'];?>"  class="form-control" type="number">
-                  </div>
-                </div>     
-
+                </div>                        
                 <div class="col-6 col-md-4">
                   <label class="custom-switch">
                     <input type="radio" name="manager_type" id="Manager_3" value="Manager 3"  <?php if($xdata['manager_type']=='Manager 3') echo 'checked'; ?> class="manager_type custom-switch-input">
@@ -170,37 +162,8 @@
 
 <script type="text/javascript">
   $(document).ready(function() {
-    var user_type = '<?php echo $xdata["user_type"];?>';
-    var manager_type = '<?php echo $xdata["manager_type"];?>';
-    if(user_type=="Admin") $("#hidden").hide();
-    else $("#validity").show();
-
+    $("#hidden").hide();
     $("#hidden_manager").hide();
-    if(manager_type == ''){
-     $('[name="manager_type"]').val('');
-     $("#hidden_manager").hide();
-    }
-    else $("#hidden_manager").show();
-    $(".user_type").click(function(){
-      if($(this).val()=="Admin") $("#hidden").hide();
-      else $("#hidden").show();
-    });
-
-    $(".user_type").click(function(){
-      if($(this).val()=="Admin" || $(this).attr("id")=="member") {
-        $('[name="manager_type"]').val('');
-        $("#hidden_manager").hide();
-      }
-      else {
-        $('#Manager_1').val('Manager 1');
-        $('#Manager_2').val('Manager 2');
-        $('#Manager_3').val('Manager 3');
-        $("#hidden_manager").show();
-        console.log($(this).val());
-      }
-    });
-    $(".manager_type").click(function(){
-      console.log($(this).val());
-    });  
+    
   });
 </script>

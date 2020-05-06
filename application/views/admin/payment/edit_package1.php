@@ -1,6 +1,6 @@
 <section class="section section_custom">
   <div class="section-header">
-    <h1><i class="fas fa-plus-circle"></i> <?php echo $page_title; ?></h1>
+    <h1><i class="fas fa-edit"></i> <?php echo $page_title; ?></h1>
     <div class="section-header-breadcrumb">
       <div class="breadcrumb-item"><?php echo $this->lang->line("Subscription"); ?></div>
       <div class="breadcrumb-item active"><a href="<?php echo base_url('payment/package_manager'); ?>"><?php echo $this->lang->line("Package Manager"); ?></a></div>
@@ -12,38 +12,55 @@
 
   <div class="row">
     <div class="col-12">
-<div class="card">
-          <div class="card-body">
-            <?php echo form_open_multipart(site_url('payment/add_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
-              <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
-              <div class="card">
+
+      <?php echo form_open_multipart(site_url('payment/edit_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
+        
+        <input name="id" value="<?php echo $value[0]["id"];?>"  class="form-control" type="hidden">              
+        <input name="is_default" value="<?php echo $value[0]["is_default"];?>"  class="form-control" type="hidden">   
+        
+        <div class="card">
+       
           <div class="card-body">
              
             <div class="row">
               <div class="col-6">
                 <div class="form-group">
                   <label for="name"> <?php echo $this->lang->line("Package Name")?> *</label>
-                  <input name="name" value="<?php echo set_value('name');?>"  class="form-control" type="text">
+                  <input name="name" value="<?php echo $value[0]["package_name"];?>"  class="form-control" type="text">
                   <span class="red"><?php echo form_error('name'); ?></span>
                 </div>
               </div>
               <div class="col-6">
                 <div class="form-group">
                   <label for="price"><?php echo $this->lang->line("Price")?> - <?php echo isset($payment_config[0]['currency']) ? $payment_config[0]['currency'] : 'USD'; ?> *</label>              
-                  <input name="price" value="<?php echo set_value('price');?>"  class="form-control" type="text">
+                    <?php 
+                    if($value[0]['is_default']=="1") 
+                    { ?>
+                      <select name="price" id="price_default" class="form-control select2">
+                          <option  value="Trial" <?php if( $value[0]["price"]=="Trial") echo 'selected="yes"'; ?>><?php echo $this->lang->line("Trial");?></option>
+                          <option  value="0" <?php if( $value[0]["price"]=="0") echo 'selected="yes"'; ?>><?php echo $this->lang->line("Free");?></option>
+                       </select>
+                     <?php
+                    }
+                    else
+                    { ?>
+                         <input name="price" value="<?php echo $value[0]["price"];?>"  class="form-control" type="text">
+                    <?php
+                    }
+                    ?>
                   <span class="red"><?php echo form_error('price'); ?></span>               
                 </div>
               </div>
             </div>         
 
-             <div class="form-group">
+             <div class="form-group" id="hidden">
                <label for="price"><?php echo $this->lang->line("Validity");?> *</label>              
                 <div class="row">
                   <div class="col-6">
-                    <input type="text" name="validity_amount" value="<?php echo set_value('validity_amount') ?>" class="form-control">
+                    <input type="text" name="validity_amount" value="<?php echo $validity_amount; ?>" class="form-control">
                   </div>
                   <div class="col-6">
-                    <?php echo form_dropdown('validity_type', $validity_type, set_value('validity_type'), 'class="form-control select2"'); ?>
+                    <?php echo form_dropdown('validity_type', $validity_type, $validity_type_info, 'class="form-control select2" style="width:100%"'); ?>
                   </div>
                 </div>
                <span class="red"><?php echo form_error('validity_amount'); ?></span>
@@ -54,28 +71,42 @@
                <label for="price"><?php echo $this->lang->line("Fastspring");?> *</label>              
                 <div class="row">
                   <div class="col-12">
-                    <input type="text" name="fastspring" value="<?php echo set_value('fastspring') ?>" class="form-control">
+                    <input type="text" name="fastspring" value="<?php echo $value[0]["fastspring"];?>" class="form-control">
                   </div>
                 </div>              
              </div>
 
              <div class="form-group">
                 <div class="row">
-                  <div class="col-6">
+                  <div class="col-5">
                     <label for="package_photo"><?php echo $this->lang->line("Package Photo");?> *</label>
-                    <input type="file" name="package_photo" class="form-control">
+                    <input type="file" name="package_photo" value="<?php echo $value[0]["package_photo"];?>" class="form-control">
                   </div>
-                  <div class="col-6">
+                  <div class="col-5">
                     <label for="package_premium_photo"><?php echo $this->lang->line("Package Premium Photo");?> *</label>
                     <input type="file" name="package_premium_photo" class="form-control">
                   </div>
+                  <div class="col-2">
+                   <div class="form-group">
+                     <label for="delete_files" ><?php echo $this->lang->line('Delete Photos');?></label>
+                       
+                       <div class="form-group">
+                         <label class="custom-switch mt-2">
+                           <input type="checkbox" name="delete_files" value="1" class="custom-switch-input">
+                           <span class="custom-switch-indicator"></span>
+                           <span class="custom-switch-description"><?php echo $this->lang->line('Yes');?></span>
+                         </label>
+                       </div>
+                   </div> 
+                 </div>
                 </div>              
              </div>
+
              <div class="row">
               <div class="col-12">
                 <div class="form-group">
-                  <label for="description"> <?php echo $this->lang->line("Description")?> *</label>
-                  <textarea id="" name="description" value="<?php echo set_value('description');?>" style="height:300px !important;" class="summernote form-control"></textarea>
+                  <label for="description"> <?php echo $this->lang->line("Description")?></label>
+                  <textarea name="description" value="<?php echo $value[0]["description"];?>"  class="form-control"><?php echo $value[0]["description"];?></textarea>
                   <span class="red"><?php echo form_error('description'); ?></span>
                 </div>
               </div>
@@ -85,14 +116,14 @@
               <div class="col-6">
                 <div class="form-group">
                   <label for="premium_name"> <?php echo $this->lang->line("Premium Package Name")?> *</label>
-                  <input name="premium_name" value="<?php echo set_value('premium_name');?>"  class="form-control" type="text">
+                  <input name="premium_name" value="<?php echo $value[0]["premium_name"];?>"  class="form-control" type="text">
                   <span class="red"><?php echo form_error('premium_name'); ?></span>
                 </div>
               </div>
               <div class="col-6">
                 <div class="form-group">
                   <label for="premium_price"><?php echo $this->lang->line("Premium Price")?> - <?php echo isset($payment_config[0]['currency']) ? $payment_config[0]['currency'] : 'USD'; ?> *</label>              
-                  <input name="premium_price" value="<?php echo set_value('premium_price');?>"  class="form-control" type="number" min="0">
+                  <input name="premium_price" value="<?php echo $value[0]["premium_price"];?>"  class="form-control" type="number" min="0">
                   <span class="red"><?php echo form_error('premium_price'); ?></span>               
                 </div>
               </div>
@@ -101,21 +132,21 @@
               <div class="col-4">
                 <div class="form-group">
                   <label for="premium_days"> <?php echo $this->lang->line("Premium Days")?> *</label>
-                  <input name="premium_days" value="<?php echo set_value('premium_days');?>"  class="form-control" type="number" min="0">
+                  <input name="premium_days" value="<?php echo $value[0]["premium_days"];?>"  class="form-control" type="number" min="0">
                   <span class="red"><?php echo form_error('premium_days'); ?></span>
                 </div>
               </div>
               <div class="col-4">
                 <div class="form-group">
                   <label for="premium_users"> <?php echo $this->lang->line("Premium Users")?> *</label>
-                  <input name="premium_users" value="<?php echo set_value('premium_users');?>"  class="form-control" type="number" min="0">
+                  <input name="premium_users" value="<?php echo $value[0]["premium_users"];?>"  class="form-control" type="number" min="0">
                   <span class="red"><?php echo form_error('premium_users'); ?></span>
                 </div>
               </div>
               <div class="col-4">
                 <div class="form-group">
                   <label for="premium_fastspring"> <?php echo $this->lang->line("Premium Fastspring")?> *</label>
-                  <input name="premium_fastspring" value="<?php echo set_value('premium_fastspring');?>"  class="form-control" type="text">
+                  <input name="premium_fastspring" value="<?php echo $value[0]["premium_fastspring"];?>"  class="form-control" type="text">
                   <span class="red"><?php echo form_error('premium_fastspring'); ?></span>
                 </div>
               </div>
@@ -128,7 +159,7 @@
                      
                      <div class="form-group">
                        <?php 
-                       $visible = set_value('visible');
+                       $visible = $value[0]["visible"];
                        if($visible == '') $visible='1';
                        ?>
                        <label class="custom-switch mt-2">
@@ -147,7 +178,7 @@
                      
                      <div class="form-group">
                        <?php 
-                       $highlight = set_value('highlight');
+                       $highlight = $value[0]["highlight"];
                        if($highlight == '') $highlight='0';
                        ?>
                        <label class="custom-switch mt-2">
@@ -163,10 +194,14 @@
 
              <div class="form-group">
                <label for=""><?php echo $this->lang->line("Modules")?> *</label>   
-               <?php $mandatory_modules = array(65,199,200); ?>
+                <?php $mandatory_modules = array(65,199,200); ?>
                <div class="table-responsive">
                   <table class="table table-bordered">
                    <?php                  
+                    $current_modules=array();
+                    $current_modules=explode(',',$value[0]["module_ids"]); 
+                    $monthly_limit=json_decode($value[0]["monthly_limit"],true);
+                    $bulk_limit=json_decode($value[0]["bulk_limit"],true);
 
                     echo "<tr>"; 
                         echo "<th class='info' width='20px'>"; 
@@ -192,16 +227,27 @@
                      $SL++;
                      echo "<tr>"; 
                         echo "<td class='text-center'>".$SL."</td>";   
-                        echo "<td class='text-center'>";?>
-                           <input  name="modules[]" id="box<?php echo $SL;?>" class="modules regular-checkbox <?php if(in_array($module['id'], $mandatory_modules)) echo 'mandatory';?>" <?php if(in_array($module['id'], $mandatory_modules)) echo 'checked onclick="return false;"';?>  type="checkbox" value="<?php echo $module['id']; ?>"/> <?php
+                        echo "<td class='text-center'>";
+                        $check_module = '';
+                        if(is_array($current_modules) && in_array($module['id'], $current_modules)) $check_module='checked';  ?>
+                          <input  name="modules[]" id="box<?php echo $SL;?>" class="modules regular-checkbox <?php if(in_array($module['id'], $mandatory_modules)) echo 'mandatory';?>" <?php echo $check_module; ?> <?php if(in_array($module['id'], $mandatory_modules)) echo 'checked onclick="return false;"';?> type="checkbox" value="<?php echo $module['id']; ?>"/> <?php
 
-                            $style="style='cursor:pointer;'";
-                            if(in_array($module['id'], $mandatory_modules)) $style = "style='border-color:#6777EF;cursor:pointer;' title='".$this->lang->line('This is a mandatory module and can not be unchecked.')."' data-toggle='tooltip'";
+                          $style="style='cursor:pointer;'";
+                          if(in_array($module['id'], $mandatory_modules)) $style = "style='border-color:#6777EF;cursor:pointer;' title='".$this->lang->line('This is a mandatory module and can not be unchecked.')."' data-toggle='tooltip'";
 
                            echo "<label for='box".$SL."' ".$style."></label>";                
                         echo "</td>";
 
-                        echo "<td>".$module['module_name']."</td>";   
+                        echo "<td>".$module['module_name']."</td>"; 
+
+                        $xmonthly_val=0;
+                        $xbulk_val=0;
+                     
+                        if(in_array($module["id"],$current_modules))
+                        {
+                          $xmonthly_val=$monthly_limit[$module["id"]];
+                          $xbulk_val=$bulk_limit[$module["id"]];
+                        }  
 
                         if($module["limit_enabled"]=='0')
                         {
@@ -217,7 +263,7 @@
                         }
 
 
-                        echo "<td align='center'>".$limit."</td><td align='center'><input type='number' ".$disabled." class='form-control' value='0' min='0' style='width:70px; ".$style."' name='monthly_".$module['id']."'></td>";
+                        echo "<td align='center'>".$limit."</td><td align='center'><input type='number' ".$disabled." class='form-control' value='".$xmonthly_val."' min='0' style='width:70px; ".$style."' name='monthly_".$module['id']."'></td>";
                       
                         if($module["bulk_limit_enabled"]=="0")
                         {
@@ -232,14 +278,14 @@
                             $limit="";
                             $style='';
                         }
-                        $xval=0;
+                        $xval=$xbulk_val;
 
                         echo "<td align='center'><input type='number' class='form-control' ".$disabled." value='".$xval."'  min='0' style='width:70px; ".$style."' name='bulk_".$module['id']."'></td>";
                       echo "</tr>";                 
                     }                
                     ?>            
                   </table> 
-               </div>    
+               </div>      
                <span class="red" ><?php echo "<br/><br/>".form_error('modules[]'); ?></span>
              </div>    
           </div>
@@ -249,7 +295,7 @@
           </div>
         </div>
       </form>  
-  </div>
+    </div>
   </div>
 </section>
 
@@ -258,11 +304,23 @@
 
 <script type="text/javascript">
   $(document).ready(function() {
+    if($("#price_default").val()=="0") $("#hidden").hide();
+    else $("#validity").show();
     $("#all_modules").change(function(){
       if ($(this).is(':checked')) 
       $(".modules:not(.mandatory)").prop("checked",true);
       else
       $(".modules:not(.mandatory)").prop("checked",false);
     });
+    $("#price_default").change(function(){
+      if($(this).val()=="0") $("#hidden").hide();
+      else $("#hidden").show();
+    });
   });
 </script>
+
+<style type="text/css" media="screen">
+  table label{margin-top: 10px;}
+</style>
+<script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
+<script>tinymce.init({ selector:'textarea' });</script>

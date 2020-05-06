@@ -14,9 +14,9 @@
     <div class="col-12">
 <div class="card">
           <div class="card-body">
-            <form class="form-horizontal" action="<?php echo site_url().'payment/add_package_action';?>" method="POST">
-              <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
-              <div class="card">
+       <?php echo form_open_multipart(site_url('payment/add_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
+       <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
+        <div class="card">
           <div class="card-body">
              
             <div class="row">
@@ -249,12 +249,9 @@
           </div>
         </div>
       </form>  
-  </div>
+    </div>
   </div>
 </section>
-
-          
-
 
 <script type="text/javascript">
   $(document).ready(function() {
@@ -266,3 +263,4 @@
     });
   });
 </script>
+

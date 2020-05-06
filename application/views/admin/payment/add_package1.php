@@ -14,9 +14,8 @@
     <div class="col-12">
 <div class="card">
           <div class="card-body">
-            <?php echo form_open_multipart(site_url('payment/add_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
-              <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->session->userdata('csrf_token_session'); ?>">
-              <div class="card">
+       <?php echo form_open_multipart(site_url('payment/add_package_action'),array('id'=>'form_transout', 'class' => 'form-horizontal')); ?>
+        <div class="card">
           <div class="card-body">
              
             <div class="row">
@@ -75,7 +74,7 @@
               <div class="col-12">
                 <div class="form-group">
                   <label for="description"> <?php echo $this->lang->line("Description")?> *</label>
-                  <textarea id="" name="description" value="<?php echo set_value('description');?>" style="height:300px !important;" class="summernote form-control"></textarea>
+                  <textarea name="description" value="<?php echo set_value('description');?>"  class="form-control" type="text"></textarea>
                   <span class="red"><?php echo form_error('description'); ?></span>
                 </div>
               </div>
@@ -249,7 +248,7 @@
           </div>
         </div>
       </form>  
-  </div>
+    </div>
   </div>
 </section>
 
@@ -266,3 +265,5 @@
     });
   });
 </script>
+<script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
+<script>tinymce.init({ selector:'textarea' });</script>

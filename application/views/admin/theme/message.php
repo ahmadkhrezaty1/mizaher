@@ -13,10 +13,9 @@
 	
 	if($this->session->flashdata('delete_error_message')==1)
 	echo "<div class='alert alert-danger text-center'><i class='fa fa-check-circle'></i> ".$this->lang->line("Your was failed to delete from the database.")."</div>";	
-
 	if($this->session->flashdata('limited')==1)
-	echo "<div class='alert alert-danger text-center'><i class='fa fa-check-circle'></i> ".$this->lang->line("You can't add more users")."</div>";	
-	
+	echo "<div class='alert alert-danger text-center'><i class='fa fa-check-circle'></i> ".$this->lang->line("You can't add more users")."</div>";
+
 	if($this->session->userdata('payment_cancel')==1)
 	{
 		echo "<div class='alert alert-warning text-center'><i class='fa fa-remove'></i> ".$this->lang->line("Payment has been cancelled.")."</div>";

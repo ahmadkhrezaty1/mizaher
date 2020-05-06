@@ -1687,11 +1687,6 @@ In this case, we suggest you to check the error message in report, and if you th
 
     public function otn_subscriber_bulk_broadcast_add_action()
     {
-         if(function_exists('ini_set')){
-            ini_set('memory_limit', '-1');
-         } 
-
-
         $this->ajax_check();
         $this->csrf_token_check();
 
@@ -2619,12 +2614,7 @@ In this case, we suggest you to check the error message in report, and if you th
     }
 
     public function otn_subscriber_bulk_broadcast_edit_action()
-    {   
-        
-        if(function_exists('ini_set')){
-            ini_set('memory_limit', '-1');
-        } 
-
+    {
         $this->ajax_check();
         if($this->session->userdata('user_type') != 'Admin' && !in_array(275,$this->module_access)) exit();
 

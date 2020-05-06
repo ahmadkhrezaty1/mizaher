@@ -11,7 +11,7 @@
       <li class="menu-header">&nbsp;</li>
 
       <?php
-        $admin_double_level2=array('admin/activity_log','payment/accounts','payment/earning_summary','payment/transaction_log','blog/posts');
+        $admin_double_level2=array('admin/activity_log','payment/accounts','payment/earning_summary','payment/transaction_log');
         $all_links=array();
         foreach($menus as $single_menu) 
         {              
@@ -25,7 +25,7 @@
             if($single_menu['url']=='social_apps/index' && $single_menu['only_member']=='1' && $this->config->item('backup_mode')==='0' && $this->session->userdata('user_type')=='Member') continue; // static condition not to
             if($single_menu['header_text']!='') $menu_html .= '<li class="menu-header">'.$this->lang->line($single_menu['header_text']).'</li>';
 
-            if($single_menu["header_text"]=='Administration' and $this->session->userdata('user_type') == 'Member' and is_manager())
+           if($single_menu["header_text"]=='Administration' and $this->session->userdata('user_type') == 'Member' and is_manager())
               echo '<li class="menu-header">'.$single_menu["header_text"].'</li>
                     <li class="nav-item dropdown">
                       <a href="'.base_url().'" class="nav-link has-dropdown">
@@ -84,7 +84,7 @@
 
                   
                   $hide_second_menu = '';
-                  if($this->session->userdata('user_type') != 'Admin' && !empty($module_access2) && count(array_intersect($this->module_access, $module_access2))==0) $hide_second_menu = 'hidden';
+                  if($this->session->userdata('user_type') != 'Admin' && count(array_intersect($this->module_access, $module_access2))==0) $hide_second_menu = 'hidden';
                   
                   $menu_html .= "<li class='".$hide_second_menu."'><a {$child_newtab} {$second_menu_href} class='nav-link'><i class='".$single_child_menu['icon']."'></i>".$this->lang->line($single_child_menu['name'])."</a>";
 
@@ -288,16 +288,10 @@ $custom_links=array
   base_url("comboposter/video_post/clone") => base_url("ultrapost"),
   base_url("comboposter/link_post/clone") => base_url("ultrapost"),
   base_url("comboposter/html_post/clone") => base_url("ultrapost"),
-
-  base_url("blog/add_post") => base_url("blog/posts"),
-  base_url("blog/edit_post") => base_url("blog/posts"),
-  base_url("blog/tag") => base_url("blog/posts"),
-  base_url("blog/category") => base_url("blog/posts"),
-
-  base_url("menu_manager/custom_page") => ""
 );
 
-$custom_links[base_url("payment/transaction_log_manual")]=base_url("payment/transaction_log");
+// if($this->session->userdata('user_type')=='Member')
+// $custom_links[base_url("payment/transaction_log")]=base_url("payment/buy_package");
 
 $custom_links_assoc_str="{";
 $loop=0;

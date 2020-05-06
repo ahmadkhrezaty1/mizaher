@@ -137,7 +137,7 @@ $checkout_amount = mec_number_format($checkout_amount,$decimal_point,$thousand_c
 $coupon_amount = mec_number_format($coupon_amount,$decimal_point,$thousand_comma);
 
 $store_name_formatted = '<a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'">'.$store_name.'</a>';
- $store_image = ($webhook_data_final['store_logo']!='') ? '<div class="col-lg-12 text-center"><a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'"><img src="'.base_url("upload/ecommerce/".$webhook_data_final['store_logo']).'"></a><hr></div>':'';
+ $store_image = ($webhook_data_final['store_logo']!='') ? '<div class="col-lg-12 text-center"><a href="'.base_url('ecommerce/store/'.$store_unique_id."?subscriber_id=".$subscriber_id).'"><img src="'.base_url("upload/ecommerce/".$webhook_data_final['store_logo']).'" style="height:50px"></a><hr></div>':'';
 
 $output = "";
 $after_checkout_details = 

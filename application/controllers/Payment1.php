@@ -52,7 +52,6 @@ class Payment extends Home
                         'package_id' => $package_id, 
                         'bot_status' => '1',
                         'users' => '0',
-                        'package_edited'=>0,
                         'manager_type' => ''
                     ];
             $this->basic->update_data('users', $user_where, $user_data);
@@ -117,7 +116,6 @@ class Payment extends Home
                 'users' => $old_users + $package->premium_users, 
                 'expired_date' => $cycle_expired_date, 
                 'package_id' => $package_id, 
-                'package_edited'=>0,
                 'bot_status' => '1'
             ];
             $this->basic->update_data('users', $user_where, $user_data);
@@ -137,7 +135,6 @@ class Payment extends Home
 
         curl_close($ch);
     }
-
  
     public function accounts()
     {     
@@ -184,10 +181,9 @@ class Payment extends Home
             else 
             {
                 // assign
-                $this->csrf_token_check();
                 $paypal_email=strip_tags($this->input->post('paypal_email',true));
                 $paypal_payment_type=strip_tags($this->input->post('paypal_payment_type',true));
-                $paypal_mode=$this->input->post('paypal_mode',true);
+                $paypal_mode=$this->input->post('paypal_mode');
                 $stripe_secret_key=strip_tags($this->input->post('stripe_secret_key',true));
                 $stripe_publishable_key=strip_tags($this->input->post('stripe_publishable_key',true));
                 $currency=strip_tags($this->input->post('currency',true));
@@ -206,7 +202,7 @@ class Payment extends Home
                     'stripe_secret_key'=>$stripe_secret_key,
                     'stripe_publishable_key'=>$stripe_publishable_key,
                     'currency'=>$currency,
-                    'manual_payment'=> ('' == $manual_payment) ? 'no' : 'yes',
+                    'manual_payment'=> (null === $manual_payment) ? 'no' : 'yes',
                     'manual_payment_instruction'=>$manual_payment_instruction,
                     'deleted' => '0'
                 );
@@ -452,7 +448,7 @@ class Payment extends Home
         }
         else redirect('home/access_forbidden', 'location');
     }
-
+    
     public function buy_premium_package()
     {
         if(is_manager_3()){
@@ -630,12 +626,12 @@ class Payment extends Home
         }
 
         // Grabs some vars
-        $paid_amount = $this->input->post('paid_amount',true);
-        $paid_currency = $this->input->post('paid_currency',true);
+        $paid_amount = $this->input->post('paid_amount');
+        $paid_currency = $this->input->post('paid_currency');
         $additional_info = strip_tags($this->input->post('additional_info'));
-        $package_id = (int) $this->input->post('package_id',true);
+        $package_id = (int) $this->input->post('package_id');
         $filename = $this->session->userdata('manual_payment_uploaded_file');
-        $mp_resubmitted_id = (int) $this->input->post('mp_resubmitted_id',true);
+        $mp_resubmitted_id = (int) $this->input->post('mp_resubmitted_id');
 
         if (! empty($mp_resubmitted_id)) {
             $mp_resubmitted_data = $this->basic->get_data('transaction_history_manual', ['where' => ['id' => $mp_resubmitted_id]], ['id', 'user_id', 'filename'], [], 1);
@@ -1691,7 +1687,6 @@ class Payment extends Home
             }
             else
             {
-                $this->csrf_token_check();
                 $validity_type_arr['D'] = 1;
                 $validity_type_arr['W'] = 7;
                 $validity_type_arr['M'] = 30;
@@ -1770,6 +1765,7 @@ class Payment extends Home
                     'monthly_limit'=>json_encode($monthly_limit),
                     'bulk_limit'=>json_encode($bulk_limit)
                 );
+				
                 $success = $this->basic->insert_data_and_return_insert_id('package',$data);
                 if($success){                         
                     $this->session->set_flashdata('success_message',1);   
@@ -1860,6 +1856,7 @@ class Payment extends Home
         $data['page_title']=$this->lang->line('Edit Package');     
         $data['modules']=$this->basic->get_data('modules',$where='',$select='',$join='',$limit='',$start='',$order_by='module_name asc',$group_by='',$num_rows=0);
         $data['value']=$this->basic->get_data('package',$where=array("where"=>array("id"=>$id)));
+        //echo '<pre>';var_dump($data['value']);exit;
         $data['payment_config']=$this->basic->get_data('payment_config');
         $data['validity_type'] = array('D' => $this->lang->line('Days'), 'W' => $this->lang->line('Weeks'), 'M' => $this->lang->line('Months'), 'Y' => $this->lang->line('Years'));
 
@@ -1887,102 +1884,6 @@ class Payment extends Home
         }
 
         $this->_viewcontroller($data);
-    }
-
-    public function edit_user_package($id=0)
-    {       
-        if($this->session->userdata('logged_in') == 1 && $this->session->userdata('user_type') != 'Admin') 
-        redirect('home/login_page', 'location');
-
-        if($id==0) 
-        redirect('home/access_forbidden','location');
-
-        $data['body']='admin/payment/edit_user_package';     
-        $data['page_title']=$this->lang->line('Edit User Package');     
-        $data['modules']=$this->basic->get_data('modules',$where='',$select='',$join='',$limit='',$start='',$order_by='module_name asc',$group_by='',$num_rows=0);
-        if(user_updated_package($id))
-            $data['value']=$this->basic->get_data('users',$where=array("where"=>array("id"=>$id)));
-        else
-            $data['value']=$this->basic->get_data('package',$where=array("where"=>array("id"=>get_user_package($id))));
-        //echo '<pre>';var_dump($data['value']);exit;
-        $data['id'] = $id;
-        $data['payment_config']=$this->basic->get_data('payment_config');
-        $data['validity_type'] = array('D' => $this->lang->line('Days'), 'W' => $this->lang->line('Weeks'), 'M' => $this->lang->line('Months'), 'Y' => $this->lang->line('Years'));
-
-       
-
-        $this->_viewcontroller($data);
-    }
-
-    public function edit_user_package_action()
-    {       
-        if($this->session->userdata('logged_in') == 1 && $this->session->userdata('user_type') != 'Admin') 
-        redirect('home/login_page', 'location');
-
-        if($_SERVER['REQUEST_METHOD'] === 'GET') 
-        redirect('home/access_forbidden','location');
-
-        if($_POST)
-        {
-            $id=$this->input->post("id");
-            $modules=array();
-            if(count($this->input->post('modules'))>0)  
-            {
-               $modules=$this->input->post('modules');                            
-            }
-            $bulk_limit=array();
-            $monthly_limit=array();
-
-            foreach ($modules as $value) 
-            {
-                $monthly_field="monthly_".$value;
-               
-                $val=$this->input->post($monthly_field);
-                if($val=="") $val=0;
-                $monthly_limit[$value]=$val;
-           
-
-                $bulk_field="bulk_".$value;
-                
-                $val=$this->input->post($bulk_field);
-                if($val=="") $val=0;
-                $bulk_limit[$value]=$val;                    
-            }
-
-
-            $modules_str=implode(',',$modules);
-
-            $data = array(
-                'module_ids'=>$modules_str,
-                'monthly_limit'=>json_encode($monthly_limit),
-                'bulk_limit'=>json_encode($bulk_limit),
-                'package_edited'=>1
-            );
-            if($this->basic->update_data('users',array("id"=>$id),$data))
-                //var_dump($data); exit;
-                $this->session->set_flashdata('success_message',1);
-
-            redirect('admin/user_manager','location');    
-        }
-
-       
-
-        $this->_viewcontroller($data);
-    }
-
-    public function default_user_package($id)
-    {
-        if($this->session->userdata('logged_in') == 1 && $this->session->userdata('user_type') != 'Admin') 
-        redirect('home/login_page', 'location');
-
-        $data = array(
-            'package_edited'=>0
-        );
-        if($this->basic->update_data('users',array("id"=>$id),$data))
-            //var_dump($data); exit;
-            $this->session->set_flashdata('success_message',1);
-
-        redirect('admin/user_manager','location'); 
     }
 
 
@@ -2023,7 +1924,6 @@ class Payment extends Home
             }
             else
             {
-                $this->csrf_token_check();
                 $description = $this->input->post('description');
                 $delete_files = $this->input->post('delete_files');
                 $package_name=$this->input->post('name');
@@ -2108,7 +2008,7 @@ class Payment extends Home
                             $data['package_photo'] = $val['path'];
                         }else{
                             $data['package_photo'] = null;
-                        }   
+                        }
                         $this->basic->update_data('package',array("id"=>$id),$data);
                     }
                     if (!empty($_FILES['package_premium_photo']['name'])) {
@@ -2143,7 +2043,6 @@ class Payment extends Home
     public function delete_package($id=0)
     {
         $this->ajax_check();
-        $this->csrf_token_check();
         if($this->is_demo == '1')
         {
             echo json_encode(array("status"=>"0","message"=>"This feature is disabled in this demo.")); 
@@ -2174,14 +2073,6 @@ class Payment extends Home
         $info = $this->basic->get_data($table="modules", $where="", $select = "usage_log.*,modules.module_name,modules.id as module_id,limit_enabled,extra_text,bulk_limit_enabled",$join=array('usage_log'=>"usage_log.module_id=modules.id AND user_id =".$this->session->userdata("user_id")." AND usage_month=".$current_month." AND usage_year=".$current_year.",left"),$limit='',$start=NULL,$order_by='module_name asc');  
 
         $package_info=$this->session->userdata("package_info");
-        $user = get_user_date();
-        //$package_info=$this->session->userdata("package_info");
-        if($user->package_edited == 1){
-            $package_info['module_ids'] = $user->module_ids;
-            $package_info['monthly_limit'] = $user->monthly_limit;
-            $package_info['bulk_limit'] = $user->bulk_limit;
-            $this->session->set_userdata('package_info', $package_info);
-        }
 
         // module count of not monthly
         $this->db->select('sum(usage_count) as usage_count,module_id');
