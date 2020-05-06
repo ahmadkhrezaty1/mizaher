@@ -1,3 +1,5 @@
+<?php $my_verify_token="123123123" 
+?>
 <?php 
 require_once("Home.php"); // including home controller
 
