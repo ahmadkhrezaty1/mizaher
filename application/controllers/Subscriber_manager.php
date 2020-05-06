@@ -748,6 +748,12 @@ class Subscriber_manager extends Home
 
     public function download_full($user_id_and_page_info)
     {        
+
+       if(function_exists('ini_set')){
+          ini_set('memory_limit', '-1');
+       } 
+
+       
         if($this->is_demo == '1')
         {
             if($this->session->userdata('user_type') == "Admin")
@@ -1333,7 +1339,13 @@ class Subscriber_manager extends Home
 
 
     public function download_result()
-    {        
+    {      
+
+       if(function_exists('ini_set')){
+          ini_set('memory_limit', '-1');
+       } 
+
+
         if($this->is_demo == '1')
         {
             if($this->session->userdata('user_type') == "Admin")

@@ -108,7 +108,20 @@
     var base_url="<?php echo site_url(); ?>";
     $(document).ready(function() {       
 
-        $('#ticket_reply_text').summernote();
+        $('#ticket_reply_text').summernote({
+          height: 300,
+          minHeight:300,
+          toolbar: [
+              ['style', ['style']],
+              ['font', ['bold', 'underline', 'clear']],
+              ['fontname', ['fontname']],
+              ['color', ['color']],
+              ['para', ['ul', 'ol', 'paragraph']],
+              ['table', ['table']],
+              ['insert', ['link', 'picture']],
+              ['view', ['codeview']]
+          ]
+        });
 
         $(document.body).on('click', '.ticket_action', function(e) {
           e.preventDefault();
@@ -142,3 +155,10 @@
       
     });
 </script>
+
+
+<style type="text/css">
+  .note-group-select-from-files {
+    display: none;
+  }
+</style>

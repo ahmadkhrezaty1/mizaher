@@ -33,14 +33,7 @@ class calendar extends Home
           * if broadcaster exist in inboxer
           */
         if( $this->broadcaster_exist())
-        {
-             /**
-             * Bulk Message Campaign
-             * @var array
-             */
-             $select =array("facebook_ex_conversation_campaign.id","facebook_ex_conversation_campaign.posting_status","facebook_ex_conversation_campaign.schedule_time","facebook_ex_conversation_campaign.campaign_type","facebook_ex_conversation_campaign.time_zone","facebook_ex_conversation_campaign.campaign_name","facebook_ex_conversation_campaign.total_thread","facebook_ex_conversation_campaign.added_at");
-             $table1 = $this->basic->get_data('facebook_ex_conversation_campaign',array('where'=>array('user_id'=>$this->user_id)),$select=$select);
-            
+        {     
 
             /**
              * facebook poster text,image,link,video
@@ -70,14 +63,12 @@ class calendar extends Home
              * @var array
              */
 
-            $select = array("messenger_bot_broadcast.id","messenger_bot_broadcast.posting_status","messenger_bot_broadcast.schedule_time","messenger_bot_broadcast.timezone","messenger_bot_broadcast.campaign_name","messenger_bot_broadcast.page_name","messenger_bot_broadcast.created_at","messenger_bot_broadcast.broadcast_id");
-            $table5= $this->basic->get_data('messenger_bot_broadcast',array('where'=>array('user_id'=>$this->user_id)),$select=$select);
 
             /**
              * Messenger Subscriber Broadcaster
              * @var array
              */
-            $select = array("messenger_bot_broadcast_serial.id","messenger_bot_broadcast_serial.posting_status","messenger_bot_broadcast_serial.schedule_time","messenger_bot_broadcast_serial.timezone","messenger_bot_broadcast_serial.campaign_name","messenger_bot_broadcast_serial.page_name","messenger_bot_broadcast_serial.created_at");
+            $select = array("messenger_bot_broadcast_serial.id","messenger_bot_broadcast_serial.posting_status","messenger_bot_broadcast_serial.schedule_time","messenger_bot_broadcast_serial.timezone","messenger_bot_broadcast_serial.campaign_name","messenger_bot_broadcast_serial.page_name","messenger_bot_broadcast_serial.created_at","broadcast_type");
             $table6= $this->basic->get_data('messenger_bot_broadcast_serial',array('where'=>array('user_id'=>$this->user_id)),$select=$select); 
             /**
              * Auto reply set date
@@ -97,9 +88,9 @@ class calendar extends Home
              $table8= $this->basic->get_data('auto_comment_reply_info',array('where'=>array('user_id'=>$this->user_id)),$select=$select);
 
 
-            $data['info'] = array_merge($table1,$table2,$table3,$table4,$table5,$table6,$table7,$table8);
+            $data_total['info'] = array_merge($table2,$table3,$table4,$table6,$table7,$table8);
 
-            foreach ($data['info'] as $key => $value) {
+            foreach ($data_total['info'] as $key => $value) {
                         
 
                     if(!empty(isset($value['auto_reply_campaign_name'])))
@@ -176,16 +167,21 @@ class calendar extends Home
                          $edit_url = site_url('ultrapost/edit_carousel_slider/'.$value['id']); 
                       } 
 
-                     else if(isset($value['broadcast_id']))
-                     {
-                         $c_type = $this->lang->line('quick boradcast');
-                         $edit_url = site_url('messenger_broadcaster/quick_bulk_broadcast_edit/'.$value['id']);
-                     }
-
                      else if(isset($value['page_name'])) 
                      {
-                           $c_type = $this->lang->line('subscriber boradcast');
-                           $edit_url = site_url('messenger_broadcaster/subscriber_bulk_broadcast_edit/'.$value['id']);
+
+
+                          if($value['broadcast_type']=='OTN'){
+
+                              $c_type = $this->lang->line('OTN broadcast');
+                              $edit_url = site_url('messenger_bot_broadcast/otn_edit_subscriber_broadcast_campaign/'.$value['id']);
+
+                          }
+                          else{
+                             $c_type = $this->lang->line('subscriber boradcast');
+                             $edit_url = site_url('messenger_bot_enhancers/edit_subscriber_broadcast_campaign/'.$value['id']);
+                          }
+                           
                            
                      }
 
@@ -208,30 +204,20 @@ class calendar extends Home
                       else if(isset($value['campaign_type']) && $value['campaign_type']== "lead-wise")
                           $edit_url = site_url('facebook_ex_campaign/edit_custom_campaign/'.$value['id']);
 
+                      $page_name_desc = isset($value['page_or_group_or_user_name']) ? $value['page_or_group_or_user_name'] : $value['page_name'];
+
+                      $data['data'][$key]['description'] = $this->lang->line('campaign name')." : ".$value['campaign_name']." <br> ".$this->lang->line("type")." : ".$c_type ." <br> ".$this->lang->line('posting status')." : ".$this->lang->line("completed"). " <br> ".$this->lang->line("page name") ." : " .$page_name_desc;
+
                       if( $posting_status == '2' || $posting_status == 'FINISHED'){
 
                           $data['data'][$key]['title'] = $c_type." ".$this->lang->line("completed");
-                          $data['data'][$key]['color'] = "#4CAF50";
-                          if(isset($value['total_thread']))
-                          {
-                              $data['data'][$key]['description'] = $this->lang->line('campaign name')." : ".$value['campaign_name']." <br> ".$this->lang->line("type")." : ".$c_type ." <br> ".$this->lang->line('posting status')." : ".$this->lang->line("completed"). " <br> ".$this->lang->line("number to send") ." : " .$value['total_thread'];
-                          }
-                          else if (isset($value['page_or_group_or_user_name'])){
-                              $data['data'][$key]['description'] = $this->lang->line('campaign name')." : ".$value['campaign_name']." <br> ".$this->lang->line("type")." : ".$c_type ." <br> ".$this->lang->line('posting status')." : ".$this->lang->line("completed"). " <br> ".$this->lang->line("page name") ." : " .$value['page_or_group_or_user_name'];
-                          }
-                          
+                          $data['data'][$key]['color'] = "#4CAF50";    
                       } 
                         
                       else if( $posting_status == '1' || $posting_status == 'IN_PROGRESS') 
                       {
                           $data['data'][$key]['title'] = $c_type." ".$this->lang->line("processing");
                           $data['data'][$key]['color'] = "#ffc107";
-                          if(isset($value['total_thread'])){
-                              $data['data'][$key]['description'] = $this->lang->line('campaign name')." : ".$value['campaign_name']." <br> ".$this->lang->line("type")." : ".$c_type ." <br> ".$this->lang->line('posting status')." : ".$this->lang->line("completed"). " <br> ".$this->lang->line("number to send") ." : " .$value['total_thread'];
-                          }
-                          else if(isset($value['page_or_group_or_user_name'])) {
-                              $data['data'][$key]['description'] = $this->lang->line('campaign name')." : ".$value['campaign_name']." <br> ".$this->lang->line("type")." : ".$c_type ." <br> ".$this->lang->line('posting status')." : ".$this->lang->line("completed"). " <br> ".$this->lang->line("page name") ." : " .$value['page_or_group_or_user_name'];
-                          }
                          
                       }
                       
@@ -239,13 +225,6 @@ class calendar extends Home
                       {
                           $data['data'][$key]['title'] = $c_type." ".$this->lang->line("stopped");
                           $data['data'][$key]['color'] = "#dc3545";
-                          if(isset($value['total_thread'])){
-                              $data['data'][$key]['description'] = $this->lang->line('campaign name')." : ".$value['campaign_name']." <br> ".$this->lang->line("type")." : ".$c_type ." <br> ".$this->lang->line('posting status')." : ".$this->lang->line("completed"). " <br> ".$this->lang->line("number to send") ." : " .$value['total_thread'];
-                          }
-                          else if(isset($value['page_or_group_or_user_name'])){
-                              $data['data'][$key]['description'] = $this->lang->line('campaign name')." : ".$value['campaign_name']." <br> ".$this->lang->line("type")." : ".$c_type ." <br> ".$this->lang->line('posting status')." : ".$this->lang->line("completed"). " <br> ".$this->lang->line("page") ." : " .$value['page_or_group_or_user_name'];
-                          }
-                         
                       }
 
                       else 
@@ -256,14 +235,7 @@ class calendar extends Home
                           $data['data'][$key]['color'] = "#007bff";
                       }
                    }
-
-                    // if($posting_status!='0' || $time_zone == "") 
-                    //     $data['data'][$key]['description'] = $this->lang->line("only pending campaigns are editable");
-
-
-
             }
-
 
                 $data['body'] = "calendar/full_calendar";
                 $data['page_title'] = $this->lang->line("activity calendar");
@@ -274,13 +246,6 @@ class calendar extends Home
          * if broadcaster not exist in inboxer 
          */
         else{
-
-             /**
-             * Bulk Message Campaign
-             * @var array
-             */
-             $select =array("facebook_ex_conversation_campaign.id","facebook_ex_conversation_campaign.posting_status","facebook_ex_conversation_campaign.schedule_time","facebook_ex_conversation_campaign.campaign_type","facebook_ex_conversation_campaign.time_zone","facebook_ex_conversation_campaign.campaign_name","facebook_ex_conversation_campaign.total_thread","facebook_ex_conversation_campaign.added_at");
-             $table1 = $this->basic->get_data('facebook_ex_conversation_campaign',array('where'=>array('user_id'=>$this->user_id)),$select=$select);
             
 
             /**
@@ -322,7 +287,7 @@ class calendar extends Home
 
 
 
-            $data['info'] = array_merge($table1,$table2,$table3,$table4,$table5,$table6);
+            $data['info'] = array_merge($table2,$table3,$table4,$table5,$table6);
             
             foreach ($data['info'] as $key => $value) {
 
@@ -394,21 +359,6 @@ class calendar extends Home
                        $c_type = $this->lang->line('video slide');  
                        $edit_url = site_url('ultrapost/edit_carousel_slider/'.$value['id']); 
                     } 
-
-                   // else if(isset($value['broadcast_id']))
-                   // {
-                   //     $c_type = $this->lang->line('quick boradcast');
-                   //     $edit_url = site_url('messenger_broadcaster/quick_bulk_broadcast_edit/'.$value['id']);
-                   // }
-
-                   // else if(isset($value['page_name'])) 
-                   // {
-                   //       $c_type = $this->lang->line('subscriber boradcast');
-                   //       $edit_url = site_url('messenger_broadcaster/subscriber_bulk_broadcast_edit/'.$value['id']);
-                         
-                   // }
-
-
                   else
                     {
                         
@@ -472,9 +422,6 @@ class calendar extends Home
                         $data['data'][$key]['url']=$edit_url;
                         $data['data'][$key]['color'] = "#007bff";
                     }
-
-                    // if($posting_status!='0' || $time_zone == "") 
-                    //     $data['data'][$key]['description'] = $this->lang->line("only pending campaigns are editable");
                 }
 
 
@@ -497,7 +444,7 @@ class calendar extends Home
 
     public function broadcaster_exist()
     {
-        if($this->session->userdata('user_type') == 'Admin'  && $this->basic->is_exist("add_ons",array("project_id"=>16))) return true;
+        if($this->session->userdata('user_type') == 'Admin'  && $this->basic->is_exist("add_ons",array("project_id"=>30))) return true;
         if($this->session->userdata('user_type') == 'Member' && (in_array(210,$this->module_access) || in_array(211,$this->module_access))) return true;
         return false;
     }

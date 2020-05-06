@@ -15,11 +15,11 @@ class Messenger_bot_broadcast extends Home
 
         if($function_name!="index" && $function_name!="")
         {
-        	if($this->session->userdata('user_type') != 'Admin' && !in_array(79,$this->module_access))
+        	if($this->session->userdata('user_type') != 'Admin' && !in_array(275,$this->module_access))
         	redirect('home/login_page', 'location');
        	}
 
-        if($function_name!="" && $function_name!="index" && $function_name!="conversation_broadcast_campaign" && $function_name!="conversation_broadcast_campaign_data")
+        if($function_name!="" && $function_name!="index" && $function_name!="otn_subscriber_broadcast_campaign" && $function_name!="otn_subscriber_broadcast_campaign_data")
         {
           if($this->session->userdata("facebook_rx_fb_user_info")==0)
           redirect('social_accounts/index','refresh');

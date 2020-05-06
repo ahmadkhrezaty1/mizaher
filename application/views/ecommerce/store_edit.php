@@ -18,7 +18,7 @@
 		<form action="#" enctype="multipart/form-data" id="plugin_form">
 			<input type="hidden" name="hidden_id" value="<?php echo $xdata['id']; ?>">
 			<div class="row">
-				<div class="col-12 col-lg-6">
+				<div class="col-12">
 					<div class="card main_card no_shadow">
 						<div class="card-header p-0 mb-3" style="border:none;min-height: 0;"><h4><i class="fas fa-store"></i> <?php echo $this->lang->line("Store Information"); ?></h4></div>	
 						<div class="card-body p-0">
@@ -280,7 +280,7 @@
 					</div>
 				</div>
 
-				<div class="col-12 col-lg-6">
+				<div class="col-12">
 					<div class="card main_card no_shadow">
 						<div class="card-header p-0 p-0 mb-3" style="border: none;min-height: 0;"><h4 class="full_width"><i class="fas fa-check-circle"></i> <?php echo $this->lang->line("Confirmation Message"); ?> <a id="variables" class="float-right text-warning pointer"><i class="fas fa-circle"></i> <?php echo  $this->lang->line("Variables"); ?></a></h4> </div>				
 							<div class="card-body p-0">

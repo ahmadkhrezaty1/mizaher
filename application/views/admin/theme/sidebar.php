@@ -11,7 +11,7 @@
       <li class="menu-header">&nbsp;</li>
 
       <?php
-        $admin_double_level2=array('admin/activity_log','payment/accounts','payment/earning_summary','payment/transaction_log');
+        $admin_double_level2=array('admin/activity_log','payment/accounts','payment/earning_summary','payment/transaction_log','blog/posts');
         $all_links=array();
         foreach($menus as $single_menu) 
         {              
@@ -288,10 +288,16 @@ $custom_links=array
   base_url("comboposter/video_post/clone") => base_url("ultrapost"),
   base_url("comboposter/link_post/clone") => base_url("ultrapost"),
   base_url("comboposter/html_post/clone") => base_url("ultrapost"),
+
+  base_url("blog/add_post") => base_url("blog/posts"),
+  base_url("blog/edit_post") => base_url("blog/posts"),
+  base_url("blog/tag") => base_url("blog/posts"),
+  base_url("blog/category") => base_url("blog/posts"),
+
+  base_url("menu_manager/custom_page") => ""
 );
 
-// if($this->session->userdata('user_type')=='Member')
-// $custom_links[base_url("payment/transaction_log")]=base_url("payment/buy_package");
+$custom_links[base_url("payment/transaction_log_manual")]=base_url("payment/transaction_log");
 
 $custom_links_assoc_str="{";
 $loop=0;
